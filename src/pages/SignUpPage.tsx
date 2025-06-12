@@ -157,7 +157,6 @@ const SignUpPage = () => {
       <div className="w-full max-w-md">
         <div className="rounded-xl shadow-lg overflow-hidden bg-white border border-gray-200">
           <div className="p-8 sm:p-10">
-            {/* Back Button */}
             <Link 
               to="/signup" 
               className="inline-flex items-center text-sm font-medium text-gray-600 hover:text-teal-600 mb-6 transition-colors"
@@ -166,7 +165,6 @@ const SignUpPage = () => {
               Back to selection
             </Link>
 
-            {/* Header */}
             <div className="text-center mb-8">
               <div className="flex justify-center mb-4">
                 <div className={`p-3 bg-gradient-to-r ${config.gradient} rounded-full`}>
@@ -181,9 +179,7 @@ const SignUpPage = () => {
               </p>
             </div>
 
-            {/* Sign Up Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Name Field */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium mb-2 text-gray-700">
                   Full Name
@@ -204,7 +200,6 @@ const SignUpPage = () => {
                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
               </div>
 
-              {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-2 text-gray-700">
                   Email Address
@@ -225,7 +220,6 @@ const SignUpPage = () => {
                 {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
               </div>
 
-              {/* Contact Number Field (for Guide and Restaurant) */}
               {userType !== 'explorer' && (
                 <div>
                   <label htmlFor="contactNumber" className="block text-sm font-medium mb-2 text-gray-700">
@@ -248,7 +242,6 @@ const SignUpPage = () => {
                 </div>
               )}
 
-              {/* Guide ID Field (for Guide only) */}
               {userType === 'guide' && (
                 <div>
                   <label htmlFor="guideId" className="block text-sm font-medium mb-2 text-gray-700">
@@ -271,7 +264,6 @@ const SignUpPage = () => {
                 </div>
               )}
 
-              {/* Restaurant Type Field (for Restaurant only) */}
               {userType === 'restaurant' && (
                 <>
                   <div>
@@ -297,7 +289,6 @@ const SignUpPage = () => {
                     {errors.restaurantType && <p className="mt-1 text-sm text-red-500">{errors.restaurantType}</p>}
                   </div>
 
-                  {/* Address Field */}
                   <div>
                     <label htmlFor="address" className="block text-sm font-medium mb-2 text-gray-700">
                       Address
@@ -320,7 +311,6 @@ const SignUpPage = () => {
                 </>
               )}
 
-              {/* Password Field */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium mb-2 text-gray-700">
                   Password
@@ -353,7 +343,6 @@ const SignUpPage = () => {
                 {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
               </div>
 
-              {/* Confirm Password Field */}
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2 text-gray-700">
                   Confirm Password
