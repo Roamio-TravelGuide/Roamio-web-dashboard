@@ -1,7 +1,7 @@
 // src/components/layout/RootLayout.tsx
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
-// import Footer from './Footer'; // Create if needed
+import Footer from './Footer'; // Create if needed
 
 const RootLayout = () => {
   return (
@@ -10,7 +10,7 @@ const RootLayout = () => {
       <main>
         <Outlet /> {/* Renders child routes */}
       </main>
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 };
