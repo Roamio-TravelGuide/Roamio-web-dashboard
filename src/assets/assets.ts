@@ -1,7 +1,34 @@
 import lightLogo from './Landing/romioLight.png'
 import darkLogo from './Landing/romioDark.png'
+import landingBG from "./Landing/landingBG.jpg";
+import Tourist from "./Landing/tourist.jpg";
+import Grouptrip from "./Landing/grouptrip.jpg";
+import Map from "./Landing/map.jpg";
+import PlayStore from "./Landing/playstoreicon.png";
+import AppStore from "./Landing/appstoreicon.png";
+import Phone from "./Landing/phone.png";
+import Creator from "./Landing/creator.jpg";
+import Explore from "./Landing/explore.jpg";
+import Contactus from "./Landing/contactus.avif";
+import River from "./Landing/River.jpg";
+import  Rock from "./Landing/rock.jpg";
+import Sunset from "./Landing/sunset.jpg";
+
 
 export const images = {
   lightLogo,
-  darkLogo
+  darkLogo,
+  landingBG,
+  Tourist,
+  Grouptrip,
+  Map,
+  PlayStore,
+  AppStore, 
+  Phone,
+  Creator,
+  Explore,
+  Contactus,
+  River,
+  Rock,
+  Sunset
 };
