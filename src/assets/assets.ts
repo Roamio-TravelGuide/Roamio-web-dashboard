@@ -13,6 +13,11 @@ import Contactus from "./Landing/contactus.avif";
 import River from "./Landing/River.jpg";
 import  Rock from "./Landing/rock.jpg";
 import Sunset from "./Landing/sunset.jpg";
+import waterfall from "./Landing/hidden-waterfall-paradise.jpg";
+import team from "./Landing/people-traveling-enjoying-their-vacation.jpg";
+import sarah from "./Landing/sarah.jpg";
+import kyler from './Landing/kyler.jpg';
+import jhon from './Landing/jhon.jpg';
 
 
 export const images = {
@@ -30,5 +35,10 @@ export const images = {
   Contactus,
   River,
   Rock,
-  Sunset
+  Sunset,
+  waterfall,
+  team,
+  sarah,
+  kyler,
+  jhon
 };

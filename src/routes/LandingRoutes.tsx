@@ -3,12 +3,17 @@ import Home from '../pages/Landing/Home';
 import SignInPage from '../pages/SignInPage';
 import SignUpPage from '../pages/SignUpPage';
 import UserTypeSelection from '../pages/UserTypeSelection';
+import About from '../pages/Landing/About';
 
 
 const LandingRoutes: RouteObject[] = [
   {
     path: '',
     element: <Home />,
+  },
+  {
+    path: 'about',
+    element: <About/>
   },
   {
     path: '/signin',
