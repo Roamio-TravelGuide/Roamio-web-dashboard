@@ -12,7 +12,7 @@ const Footer = () => {
       <div className="space-y-4">
         <div className="logo">
           <img 
-            src={images.lightLogo} 
+            src={images.darkLogo} 
             alt="Roamio Logo" 
             className="h-12 w-auto" 
           />
