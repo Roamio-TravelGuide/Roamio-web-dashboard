@@ -16,35 +16,49 @@ const Home = (props : Props) => {
   // State to track current image index
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) =>
-        (prevIndex + 1) % backgroundImages.length
-      );
-    }, 6000);
+useEffect(() => {
+  // Preload all images
+  backgroundImages.forEach((src) => {
+    const img = new Image();
+    img.src = src;
+  });
 
-    return () => clearInterval(interval);
-  }, []);
+  const interval = setInterval(() => {
+    setCurrentImageIndex((prevIndex) =>
+      (prevIndex + 1) % backgroundImages.length
+    );
+  }, 6000);
+
+  return () => clearInterval(interval);
+}, []);
+
 
 
  
   return (
     <>
-      <div
-        className="flex flex-col items-center md:w-full   justify-center bg-gray-100 h-100"
-        style={{
-          backgroundImage: `url(${backgroundImages[currentImageIndex]})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <p className="flex sm:text-3xl md:text-5xl lg:text-7xl sm:items-center sm:justify-center font-bold mb-4 text-white">
-          Stories that Move you
-        </p>
-        <p className="md:text-3xl sm:text-xl lg:4xl text-white mb-8">
-          Explore at your own pace with Roamio immersive audio app
-        </p>
-      </div>
+<div
+  className="relative flex flex-col items-center md:w-full justify-center h-150 bg-transparent"
+  style={{
+    backgroundImage: `url(${backgroundImages[currentImageIndex]})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  }}
+>
+
+
+  <div className="absolute inset-0 bg-black opacity-30 z-0"></div>
+
+  {/* Content goes here */}
+  <div className="relative z-10 text-center px-4">
+    <p className="flex sm:text-3xl md:text-5xl lg:text-7xl sm:items-center sm:justify-center font-bold mb-4 text-white">
+      Where footsteps find meaning
+    </p>
+    <p className="md:text-3xl sm:text-xl lg:4xl text-white mb-8">
+      It’s your intelligent, cultural travel companion
+    </p>
+  </div>
+</div>
 
       <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-8 p-8 ">
         <div className="flex flex-raw items-center justify-center h-40 bg-white mr-5">
@@ -57,7 +71,7 @@ const Home = (props : Props) => {
               No awkward groups <br /> or right schedule
             </p>
           </div>
-          <div>
+          <div className='ml-30'>
             <img src={images.Grouptrip} alt="" className="w-60 ml-30 " />
           </div>
         </div>
@@ -87,23 +101,23 @@ const Home = (props : Props) => {
           right now.
         </p>
         <div className="flex flex-row items-center mt-8">
-          <div className="w-2/5g ml-40 mt-20 h-100">
+          <div className="w-2/5g ml-40 mt-10 h-100">
             <ul className="list-disc pl-5 space-y-4">
               <li>
-                VoiceMap's tours are produced by insightful local storytellers,
+                Roamio's tours are produced by insightful local storytellers,
                 including journalists, filmmakers, novelists, podcasters, and
                 tour guides.
               </li>
               <li>
-                VoiceMap works offline. After you download a tour, the audio
+                Roamio works offline. After you download a tour, the audio
                 will be available offline along with an offline map.
               </li>
               <li>
                 With GPS autoplay, you can focus on your surroundings. Put in
-                your headphones, tap on Start, and let VoiceMap guide you.
+                your headphones, tap on Start, and let Roamio guide you.
               </li>
               <li>
-                If you do wander off in the wrong direction, VoiceMap will play
+                If you do wander off in the wrong direction, Roamio will play
                 an audio alert, and you can follow the map on your screen to the
                 next location.
               </li>
@@ -147,95 +161,77 @@ const Home = (props : Props) => {
         </div>
       </div>
 
-      <div className="flex flex-col mt-12">
-        <p className="flex justify-center items-center text-red-500">
-          PARTNERS
-        </p>
-        <p className="flex justify-center items-center text-4xl font-bold text-gray-600">
-          Publish your tour with VoiceMap
-        </p>
-        <p className="flex justify-center items-center text-2xl text-gray-500">
-          Choose the market-leading audio tour platform and get a partner that
-          believes in quality
-        </p>
-
-        <div className="flex flex-col items-center mt-10">
-          {/* Row 1 - 3 items */}
-          <div className="flex flex-row flex-wrap justify-center items-start gap-25">
-            <div className="w-1/5 p-4 flex flex-col">
-              <FaHome className="w-6 h-6 text-red-500 text-3xl" />
-              <p className="text-lg font-bold text-gray-600">
-                Users find us first
-              </p>
-              <p className="text-gray-500">
-                VoiceMap is the most discoverable audio tour app. It’s optimised
-                for search and it offers distribution through a wide network of
-                partners. (Punch “audio tour” into Google or the App Store if
-                you don’t believe us.)
-              </p>
+     <section className="py-16 px-4 max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <span className="text-teal-600 font-medium">PARTNERS</span>
+          <h2 className="text-3xl md:text-4xl font-bold mt-2 mb-4">Publish Your Tour With Roamio</h2>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Choose the market-leading audio tour platform and get a partner committed to quality
+          </p>
+        </div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <FaHome className="text-teal-600 text-xl" />
             </div>
-            <div className="w-1/5 p-4 flex flex-col">
-              <FaHandshake className="text-red-500 text-3xl" />
-              <p className="text-lg font-bold text-gray-600">
-                Partners from map to mic to market
-              </p>
-              <p className="text-gray-500">
-                We know what works from experience and we’ll help you through
-                every step of publishing and promoting the perfect tour.
-              </p>
-            </div>
-            <div className="w-1/5 p-4 flex flex-col">
-              <FaUser className="text-red-500 text-2xl" />
-              <p className="text-lg font-bold text-gray-600">
-                Public or private, paid or free
-              </p>
-              <p className="text-gray-500">
-                Mix and match distribution options. Sell your tour, give it away
-                to guests, or keep it private and build it into other products.
-                It’s up to you.
-              </p>
-            </div>
+            <h3 className="text-xl font-bold mb-3">Top Discoverability</h3>
+            <p className="text-gray-600">
+              Roamio is the most discoverable audio tour app, optimized for search and distributed through a wide partner network.
+            </p>
           </div>
-
-          {/* Row 2 - 3 items */}
-          <div className="flex flex-row flex-wrap justify-center items-start  mt-10 gap-25">
-            <div className="w-1/5 p-4 flex flex-col">
-              <FaMapMarkerAlt className="text-red-600 text-2xl" />
-              <p className="text-lg font-bold text-gray-600">
-                Use it outside, indoors or at home
-              </p>
-              <p className="text-gray-500">
-                Navigating backroads by car isn’t the same as weaving through
-                alleyways on foot. Neither is listening at museums and taking a
-                virtual tour at home. That’s why the VoiceMap app has features
-                that fit your context.
-              </p>
+          
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <FaHandshake className="text-teal-600 text-xl" />
             </div>
-            <div className="w-1/5 p-4 flex flex-col">
-              <FaMobileAlt className="text-red-500 text-2xl" />
-              <p className="text-lg font-bold text-gray-600">
-                Images, music, 360 videos and AR
-              </p>
-              <p className="text-gray-500">
-                If the screen helps to tell your story, you can add photos, 360
-                videos and 3D objects to any location. You can also add music
-                that plays independently.
-              </p>
+            <h3 className="text-xl font-bold mb-3">End-to-End Support</h3>
+            <p className="text-gray-600">
+              We know what works and will guide you through publishing and promoting the perfect tour.
+            </p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <FaUser className="text-teal-600 text-xl" />
             </div>
-            <div className="w-1/5 p-4 flex flex-col">
-              <FaBroadcastTower className="text-red-600 text-2xl" />
-              <p className="text-lg font-bold text-gray-600">
-                Live reporting, regular payments
-              </p>
-              <p className="text-gray-500">
-                Our dashboard for publishers makes it easy to track key metrics
-                like ratings, downloads and sales. You can manage vouchers there
-                too, as well as monthly payments.
-              </p>
+            <h3 className="text-xl font-bold mb-3">Flexible Distribution</h3>
+            <p className="text-gray-600">
+              Choose public or private, paid or free. Sell your tour or build it into other products.
+            </p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <FaBroadcastTower className="text-teal-600 text-xl" />
             </div>
+            <h3 className="text-xl font-bold mb-3">Comprehensive Features</h3>
+            <p className="text-gray-600">
+              Add images, music, 360 videos and AR to enhance your storytelling.
+            </p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <FaMapMarkerAlt className="text-teal-600 text-xl" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Multiple Use Cases</h3>
+            <p className="text-gray-600">
+              Whether outdoors, indoors, or virtual, our app has features that fit your context.
+            </p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <FaMobileAlt className="text-teal-600 text-xl" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Transparent Reporting</h3>
+            <p className="text-gray-600">
+              Track metrics like ratings and sales through our publisher dashboard with regular payments.
+            </p>
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="flex flex-row  bg-gray-100 p-8 mt-12 gap-10 -ml-4">
         <div className="flex flex-row  bg-white p-8 mt-12 w-150 h-50 border border-transparent rounded-lg ml-30">
@@ -255,7 +251,7 @@ const Home = (props : Props) => {
             </p>
             <a
               href="#"
-              className="text-white no-underline bg-red-600 ml-7 mt-3 px-4 py-2 rounded transition inline-block border-3 border-transparent hover:border-blue-300"
+              className="text-white no-underline bg-gradient-to-r from-teal-600 to-blue-700 ml-7 mt-3 px-4 py-2 rounded transition inline-block  hover:from-teal-700 hover:to-blue-800"
             >
               <p className="text-white">Start Now</p>
             </a>
@@ -277,7 +273,7 @@ const Home = (props : Props) => {
             </p>
             <a
               href="#"
-              className="text-white no-underline bg-red-600 ml-7 mt-3 px-4 py-2 rounded transition inline-block border-3 border-transparent hover:border-blue-300"
+              className="text-white no-underline bg-gradient-to-r from-teal-600 to-blue-700 ml-7 mt-3 px-4 py-2 rounded transition inline-block hover:from-teal-700 hover:to-blue-800"
             >
               <p className="text-white">Learn More</p>
             </a>
@@ -285,11 +281,11 @@ const Home = (props : Props) => {
         </div>
       </div>
 
-      <div className="flex flex-row p-8 mt-12 w-250 justify-center items-center ml-65">
+      {/* <div className="flex flex-row p-8 mt-12 w-250 justify-center items-center ml-65">
         <img src={images.Contactus} alt="" className="w-50 rounded" />
         <div className="flex flex-col ml-30">
           <p className="text-3xl text-gray-700">
-            Celebrate curiosity with VoiceMap’s newsletter
+            Celebrate curiosity with Roamio’s newsletter
           </p>
           <p className="text-lg text-gray-500 mt-5">
             Subscribe to our monthly newsletter. It celebrates the human
@@ -303,13 +299,13 @@ const Home = (props : Props) => {
             />
             <a
               href="#"
-              className="text-white no-underline bg-red-600 ml- 1 px-4 py-2 rounded-lg rounded-l-none transition inline-block border-3 border-transparent hover:border-blue-300"
+              className="text-white no-underline bg-gradient-to-r from-teal-600 to-blue-700 ml- 1 px-4 py-2 rounded-lg rounded-l-none transition inline-block-transparent hover:from-teal-700 hover:to-blue-800"
             >
               <p className="text-white">Subscribe</p>
             </a>
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   );
 }
