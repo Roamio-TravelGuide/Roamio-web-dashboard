@@ -18,7 +18,17 @@ import team from "./Landing/people-traveling-enjoying-their-vacation.jpg";
 import sarah from "./Landing/sarah.jpg";
 import kyler from './Landing/kyler.jpg';
 import jhon from './Landing/jhon.jpg';
-
+import seegiriya from './Landing/seegiriya.mp3';
+import Island from './Landing/island.jpg';
+import Morning from './Landing/morning.jpg';
+import Waterfall from './Landing/waterfall.jpg';
+import Woodframe from './Landing/woodframe.jpg';
+import Mosque from './Landing/mosque.jpg';
+import Evening from './Landing/evening.jpg';
+import Train from './Landing/train.jpg';
+import Lake from './Landing/PanoramicRiver.jpg';
+import Church from './Landing/Church.jpg';
+import Kovil from './Landing/Kovil.jpg';
 
 export const images = {
   lightLogo,
@@ -40,5 +50,19 @@ export const images = {
   team,
   sarah,
   kyler,
-  jhon
+  jhon,
+  Island,
+  Morning,
+  Waterfall,
+  Woodframe,
+  Mosque,
+  Evening,
+  Train,
+  Lake,
+  Church,
+  Kovil
+};
+
+export const audio = {
+  seegiriya
 };
