@@ -60,7 +60,7 @@ export const images = {
   Train,
   Lake,
   Church,
-  Kovil
+  Kovil,
 };
 
 export const audio = {
