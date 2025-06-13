@@ -11,26 +11,35 @@ import { useState, useEffect } from "react";
 type Props = {};
 
 const Home = (props : Props) => {
-  const backgroundImages  = [images.River,images.Sunset,images.Rock,images.landingBG];
+  const backgroundImages  = [images.Evening,images.Mosque,images.Church,images.Train,images.Lake,images.Kovil];
   
   // State to track current image index
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+const [isImageLoaded, setIsImageLoaded] = useState(true);
 
 useEffect(() => {
-  // Preload all images
+  // Preload images
   backgroundImages.forEach((src) => {
     const img = new Image();
     img.src = src;
   });
 
   const interval = setInterval(() => {
-    setCurrentImageIndex((prevIndex) =>
-      (prevIndex + 1) % backgroundImages.length
-    );
+    setIsImageLoaded(false); // Show loader or keep current image
+
+    const nextIndex = (currentImageIndex + 1) % backgroundImages.length;
+    const img = new Image();
+    img.src = backgroundImages[nextIndex];
+
+    img.onload = () => {
+      setCurrentImageIndex(nextIndex);
+      setIsImageLoaded(true);
+    };
   }, 6000);
 
   return () => clearInterval(interval);
-}, []);
+}, [currentImageIndex]);
+
 
 
 
