@@ -1,8 +1,8 @@
 import type { RouteObject } from 'react-router-dom'; 
 import Home from '../pages/Landing/Home'; 
-import SignInPage from '../pages/SignInPage';
-import SignUpPage from '../pages/SignUpPage';
-import UserTypeSelection from '../pages/UserTypeSelection';
+import SignInPage from '../pages/Auth/SignInPage';
+import SignUpPage from '../pages/Auth/SignUpPage';
+import UserTypeSelection from '../pages/Auth/UserTypeSelection';
 import About from '../pages/Landing/About';
 
 
