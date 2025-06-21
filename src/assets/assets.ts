@@ -29,6 +29,9 @@ import Train from './Landing/train.jpg';
 import Lake from './Landing/PanoramicRiver.jpg';
 import Church from './Landing/Church.jpg';
 import Kovil from './Landing/Kovil.jpg';
+import ella from './Landing/ella.jpg';
+import beach from './Landing/beach.jpg';
+
 
 export const images = {
   lightLogo,
@@ -61,6 +64,8 @@ export const images = {
   Lake,
   Church,
   Kovil,
+  ella,
+  beach,
 };
 
 export const audio = {

@@ -7,7 +7,7 @@ import { audio } from "../../assets/assets";
 type Props = {};
 
 const Home = (props : Props) => {
-  const backgroundImages  = [images.Evening,images.Mosque,images.Church,images.Train,images.Lake,images.Kovil];
+  const backgroundImages  = [images.Evening,images.Mosque,images.beach,images.Train,images.Lake,images.Kovil];
   
   // State to track current image index
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
