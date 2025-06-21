@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiCompass } from 'react-icons/fi';
-import { FaGoogle, FaFacebook } from 'react-icons/fa';
+import {login} from '../../api/auth/authApi'
+// import { FaGoogle, FaFacebook } from 'react-icons/fa';
 
 const SignInPage = () => {
   const [email, setEmail] = useState<string>('');
@@ -16,10 +17,18 @@ const SignInPage = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Signed in with:', { email, password });
-      // navigate('/discover'); // Redirect to travel discovery page
+        
+      const response = await login({ email, password });
+      
+      // if (rememberMe) {
+      //   localStorage.setItem('authToken', response.token);
+      // } else {
+      //   sessionStorage.setItem('authToken', response.token);
+      // }
+
+
+      console.log(response);
+      // navigate('/'); // Redirect to travel discovery page
     } catch (error) {
       console.error('Login error:', error);
     } finally {

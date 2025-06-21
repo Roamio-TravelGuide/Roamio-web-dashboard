@@ -23,14 +23,12 @@ import Island from './Landing/island.jpg';
 import Morning from './Landing/morning.jpg';
 import Waterfall from './Landing/waterfall.jpg';
 import Woodframe from './Landing/woodframe.jpg';
-import Mosque from './Landing/mosque.jpg';
-import Evening from './Landing/evening.jpg';
+import Mosque from './Landing/Mosque.jpg';
+import Evening from './Landing/Evening.jpg';
 import Train from './Landing/train.jpg';
 import Lake from './Landing/PanoramicRiver.jpg';
 import Church from './Landing/Church.jpg';
 import Kovil from './Landing/Kovil.jpg';
-import ella from './Landing/ella.jpg';
-import beach from './Landing/beach.jpg';
 
 
 export const images = {
@@ -64,8 +62,7 @@ export const images = {
   Lake,
   Church,
   Kovil,
-  ella,
-  beach,
+  
 };
 
 export const audio = {
