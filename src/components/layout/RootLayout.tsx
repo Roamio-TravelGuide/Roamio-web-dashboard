@@ -7,16 +7,18 @@ const RootLayout = () => {
   
   const isAuthPage = location.pathname.startsWith('/signin') || 
                      location.pathname.startsWith('/signup');
+  
+  const travelerDashboard = location.pathname.startsWith('/create')
 
   return (
     <div className="app flex flex-col min-h-screen">
-      {!isAuthPage && <Navbar />}
+      {!isAuthPage && !travelerDashboard && <Navbar />}
 
       <main className="flex-grow">
         <Outlet /> 
       </main>
 
-      {!isAuthPage && <Footer />}
+      {!isAuthPage &&!travelerDashboard && <Footer />}
     </div>
   );
 };

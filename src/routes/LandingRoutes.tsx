@@ -4,7 +4,7 @@ import SignInPage from '../pages/Auth/SignInPage';
 import SignUpPage from '../pages/Auth/SignUpPage';
 import UserTypeSelection from '../pages/Auth/UserTypeSelection';
 import About from '../pages/Landing/About';
-
+import Dashboard from '../pages/Guide/Dashboard'
 
 const LandingRoutes: RouteObject[] = [
   {
@@ -26,6 +26,10 @@ const LandingRoutes: RouteObject[] = [
    {
     path: '/signup/:userType',
     element: <SignUpPage />,
+  },
+  {
+    path: '/create',
+    element: <Dashboard />,
   },
 ];
 
