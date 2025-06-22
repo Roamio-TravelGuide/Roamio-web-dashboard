@@ -110,6 +110,160 @@ function Dashboard() {
       image:
         "https://images.pexels.com/photos/1271619/pexels-photo-1271619.jpeg?auto=compress&cs=tinysrgb&w=400",
     },
+    {
+      id: "5",
+      name: "Kandy Cultural Experience",
+      destination: "Kandy",
+      price: 4800,
+      status: "published",
+      rating: 4.7,
+      totalRatings: 112,
+      listeners: 789,
+      revenue: 378720,
+      lastUpdated: "2024-01-18",
+      image:
+        "https://images.pexels.com/photos/3025490/pexels-photo-3025490.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "6",
+      name: "Sigiriya Rock Adventure",
+      destination: "Sigiriya",
+      price: 7500,
+      status: "published",
+      rating: 4.9,
+      totalRatings: 145,
+      listeners: 923,
+      revenue: 692250,
+      lastUpdated: "2024-01-20",
+      image:
+        "https://images.pexels.com/photos/3290068/pexels-photo-3290068.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "7",
+      name: "Nuwara Eliya Tea Tour",
+      destination: "Nuwara Eliya",
+      price: 5200,
+      status: "published",
+      rating: 4.6,
+      totalRatings: 78,
+      listeners: 567,
+      revenue: 294840,
+      lastUpdated: "2024-01-14",
+      image:
+        "https://images.pexels.com/photos/634038/pexels-photo-634038.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "8",
+      name: "Anuradhapura Ancient City",
+      destination: "Anuradhapura",
+      price: 5800,
+      status: "draft",
+      rating: 0,
+      totalRatings: 0,
+      listeners: 0,
+      revenue: 0,
+      lastUpdated: "2024-01-05",
+      image:
+        "https://images.pexels.com/photos/3581363/pexels-photo-3581363.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "9",
+      name: "Yala Safari Expedition",
+      destination: "Yala",
+      price: 8900,
+      status: "published",
+      rating: 4.9,
+      totalRatings: 203,
+      listeners: 1245,
+      revenue: 1108050,
+      lastUpdated: "2024-01-22",
+      image:
+        "https://images.pexels.com/photos/247502/pexels-photo-247502.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "10",
+      name: "Trinco Beach Getaway",
+      destination: "Trincomalee",
+      price: 6700,
+      status: "published",
+      rating: 4.7,
+      totalRatings: 56,
+      listeners: 432,
+      revenue: 289440,
+      lastUpdated: "2024-01-17",
+      image:
+        "https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "11",
+      name: "Ella Nature Trek",
+      destination: "Ella",
+      price: 4500,
+      status: "archived",
+      rating: 4.8,
+      totalRatings: 98,
+      listeners: 654,
+      revenue: 294300,
+      lastUpdated: "2023-12-15",
+      image:
+        "https://images.pexels.com/photos/3293148/pexels-photo-3293148.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "12",
+      name: "Polonnaruwa Ruins Tour",
+      destination: "Polonnaruwa",
+      price: 5100,
+      status: "published",
+      rating: 4.5,
+      totalRatings: 43,
+      listeners: 321,
+      revenue: 163710,
+      lastUpdated: "2024-01-09",
+      image:
+        "https://images.pexels.com/photos/3581367/pexels-photo-3581367.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "13",
+      name: "Bentota Water Sports",
+      destination: "Bentota",
+      price: 7300,
+      status: "published",
+      rating: 4.6,
+      totalRatings: 87,
+      listeners: 543,
+      revenue: 396390,
+      lastUpdated: "2024-01-19",
+      image:
+        "https://images.pexels.com/photos/1139040/pexels-photo-1139040.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "14",
+      name: "Dambulla Cave Temple",
+      destination: "Dambulla",
+      price: 4200,
+      status: "draft",
+      rating: 0,
+      totalRatings: 0,
+      listeners: 0,
+      revenue: 0,
+      lastUpdated: "2024-01-07",
+      image:
+        "https://images.pexels.com/photos/3581365/pexels-photo-3581365.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      id: "15",
+      name: "Mirissa Whale Watching",
+      destination: "Mirissa",
+      price: 6800,
+      status: "published",
+      rating: 4.9,
+      totalRatings: 134,
+      listeners: 876,
+      revenue: 595680,
+      lastUpdated: "2024-01-21",
+      image:
+        "https://images.pexels.com/photos/847393/pexels-photo-847393.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
   ];
 
   const createTourSteps = [
@@ -118,12 +272,12 @@ function Dashboard() {
       description: "Tour name and start details",
     },
     {
-      title: "Pricing & Details",
-      description: "Price, transport, and duration",
-    },
-    {
       title: "Description",
       description: "Tour description and highlights",
+    },
+    {
+      title: "Pricing & Details",
+      description: "Price, transport, and duration",
     },
   ];
 
@@ -187,6 +341,14 @@ function Dashboard() {
     }).format(amount);
   };
 
+const [currentPage, setCurrentPage] = useState(1);
+const toursPerPage = 6; // Changed from 10 to 6
+
+// Get current tours
+const indexOfLastTour = currentPage * toursPerPage;
+const indexOfFirstTour = indexOfLastTour - toursPerPage;
+const currentTours = filteredTours.slice(indexOfFirstTour, indexOfLastTour);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
@@ -213,52 +375,44 @@ function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white shadow rounded-lg p-5 relative">
+          <div className="bg-white shadow rounded-lg p-5 relative h-30">
             <div className="flex flex-col justify-between">
               <p className="text-xl">Total Listeners</p>
-              <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-blue-700">
-                2002
-              </p>
+              <p className="text-xl font-bold mt-5">2002</p>
             </div>
-            <div className="absolute bottom-5 right-5 bg-gradient-to-r from-teal-600 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
+            <div className="absolute bottom-10 right-5 bg-gradient-to-r from-teal-600 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
               <FaUsers className="text-xl text-white" />
             </div>
           </div>
 
-          <div className="bg-white shadow rounded-lg p-5 relative">
+          <div className="bg-white shadow rounded-lg p-5 relative h-30">
             <div className="flex flex-col justify-between">
               <p className="text-xl">Total Revenue</p>
-              <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-blue-700">
-                LKR 320198
-              </p>
+              <p className="text-xl font-bold mt-5">LKR 320198</p>
             </div>
-            <div className="absolute bottom-5 right-5 bg-gradient-to-r from-teal-600 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
+            <div className="absolute bottom-10 right-5 bg-gradient-to-r from-teal-600 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
               <FaMoneyCheck className="text-xl text-white" />
             </div>
           </div>
 
-          <div className="bg-white shadow rounded-lg p-5 relative">
+          <div className="bg-white shadow rounded-lg p-5 relative h-30">
             <div className="flex flex-col justify-between">
               <p className="text-xl">Average Ratings</p>
-              <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-blue-700">
-                4.3
-              </p>
+              <p className="text-xl font-bold mt-5">4.3</p>
             </div>
-            <div className="absolute bottom-5 right-5 bg-gradient-to-r from-teal-600 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
+            <div className="absolute bottom-10 right-5 bg-gradient-to-r from-teal-600 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
               <FaRegStar className="text-xl text-white" />
             </div>
           </div>
 
-          <div className="bg-white shadow rounded-lg p-5 relative">
+          <div className="bg-white shadow rounded-lg p-5 relative h-30">
             <div className="flex flex-col justify-between">
               <p className="text-xl">Current Month Buyers</p>
-              <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-blue-700">
-                32
-              </p>
+              <p className="text-xl font-bold mt-5">32</p>
             </div>
-            <div className="absolute bottom-5 right-5 bg-gradient-to-r from-teal-600 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
+            <div className="absolute bottom-10 right-5 bg-gradient-to-r from-teal-600 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
               <FaCalendar className="text-xl text-white" />
             </div>
           </div>
@@ -266,131 +420,139 @@ function Dashboard() {
       </div>
 
       {/* Tours Table Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-xl font-semibold text-gray-800">Tour Packages</h2>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-64 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Search tours..."
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
+  <div className="bg-white shadow rounded-lg overflow-hidden p-6">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <h2 className="text-xl font-semibold text-gray-800">Tour Packages</h2>
+      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-64 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Search tours..."
+        />
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="all">All</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+    </div>
+
+    {/* Card Grid Layout - 6 per page */}
+    {filteredTours.length > 0 ? (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {currentTours.slice(0, 6).map((tour) => (
+          <div key={tour.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+            <div className="relative">
+              <img
+                className="w-full h-48 object-cover"
+                src={tour.image}
+                alt={tour.name}
               />
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              <span
+                className={`absolute top-2 right-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                  tour.status
+                )}`}
               >
-                <option value="all">All</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-                <option value="archived">Archived</option>
-              </select>
+                {tour.status.charAt(0).toUpperCase() + tour.status.slice(1)}
+              </span>
+            </div>
+
+            <div className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{tour.name}</h3>
+                  <div className="flex items-center text-sm text-gray-500 mt-1">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    {tour.destination}
+                  </div>
+                </div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {formatCurrency(tour.price)}
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center">
+                  <Users className="w-4 h-4 mr-2 text-gray-400" />
+                  <span>{tour.listeners} listeners</span>
+                </div>
+                <div className="flex items-center">
+                  <Star className="w-4 h-4 mr-2 text-yellow-400" />
+                  <span>
+                    {tour.rating > 0
+                      ? `${tour.rating} (${tour.totalRatings})`
+                      : "No ratings"}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Revenue: {formatCurrency(tour.revenue)}</span>
+                    <span>Updated: {tour.lastUpdated}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-end space-x-2">
+                <button className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50">
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-50">
+                  <Edit3 className="w-4 h-4" />
+                </button>
+                <button className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-50">
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
+        ))}
+      </div>
+    ) : (
+      <div className="text-center py-10 text-gray-500">
+        No tours found matching your criteria
+      </div>
+    )}
 
-          <div className="overflow-x-auto max-h-[calc(100vh-400px)]">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tour
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Performance
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredTours.length > 0 ? (
-                  filteredTours.map((tour) => (
-                    <tr key={tour.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <img
-                            className="h-12 w-12 rounded-lg object-cover"
-                            src={tour.image}
-                            alt={tour.name}
-                          />
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {tour.name}
-                            </div>
-                            <div className="text-sm text-gray-500 flex items-center">
-                              <MapPin className="w-3 h-3 mr-1" />
-                              {tour.destination}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                            tour.status
-                          )}`}
-                        >
-                          {tour.status.charAt(0).toUpperCase() + tour.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatCurrency(tour.price)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          <div className="flex items-center">
-                            <Users className="w-4 h-4 mr-1 text-gray-400" />
-                            {tour.listeners} listeners
-                          </div>
-                          <div className="flex items-center mt-1">
-                            <Star className="w-4 h-4 mr-1 text-yellow-400" />
-                            {tour.rating > 0
-                              ? `${tour.rating} (${tour.totalRatings})`
-                              : "No ratings"}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center gap-2">
-                          <button className="text-blue-600 hover:text-blue-900 p-1 rounded">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="text-gray-600 hover:text-gray-900 p-1 rounded">
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button className="text-gray-600 hover:text-gray-900 p-1 rounded">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                      No tours found matching your criteria
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+    {/* Pagination controls for 6 items per page */}
+    {filteredTours.length > 6 && (
+      <div className="mt-6 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div className="text-sm text-gray-700">
+          Showing <span className="font-medium">{(currentPage - 1) * 6 + 1}</span> to{' '}
+          <span className="font-medium">
+            {Math.min(currentPage * 6, filteredTours.length)}
+          </span>{' '}
+          of <span className="font-medium">{filteredTours.length}</span> results
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => setCurrentPage(prev => prev + 1)}
+            disabled={currentPage * 6 >= filteredTours.length}
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
         </div>
       </div>
-
-      {/* Create Tour Modal */}
+    )}
+  </div>
+</div>{/* Create Tour Modal */}
       {isCreatingTour && (
-<div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">
@@ -446,7 +608,9 @@ function Dashboard() {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
                       placeholder="e.g., Galle Heritage Walk"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
@@ -458,7 +622,9 @@ function Dashboard() {
                     <input
                       type="text"
                       value={formData.start}
-                      onChange={(e) => handleInputChange("start", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("start", e.target.value)
+                      }
                       placeholder="e.g., Galle, Sri Lanka"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
@@ -466,7 +632,7 @@ function Dashboard() {
                 </div>
               )}
 
-              {currentStep === 2 && (
+              {currentStep === 3 && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -476,7 +642,9 @@ function Dashboard() {
                       <input
                         type="number"
                         value={formData.price}
-                        onChange={(e) => handleInputChange("price", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("price", e.target.value)
+                        }
                         placeholder="4999"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
@@ -488,7 +656,9 @@ function Dashboard() {
                       <input
                         type="text"
                         value={formData.duration}
-                        onChange={(e) => handleInputChange("duration", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("duration", e.target.value)
+                        }
                         placeholder="e.g., 4 hours"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
@@ -497,7 +667,7 @@ function Dashboard() {
                 </div>
               )}
 
-              {currentStep === 3 && (
+              {currentStep === 2 && (
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -505,7 +675,9 @@ function Dashboard() {
                     </label>
                     <textarea
                       value={formData.description}
-                      onChange={(e) => handleInputChange("description", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("description", e.target.value)
+                      }
                       placeholder="Describe your tour..."
                       rows={6}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
@@ -528,10 +700,16 @@ function Dashboard() {
                 Previous
               </button>
               <button
-                onClick={currentStep === createTourSteps.length ? handleCreateTour : nextStep}
+                onClick={
+                  currentStep === createTourSteps.length
+                    ? handleCreateTour
+                    : nextStep
+                }
                 className="px-6 py-2 bg-gradient-to-r from-teal-600 to-blue-600 text-white rounded-lg font-medium hover:from-teal-700 hover:to-blue-700 transition-all duration-200"
               >
-                {currentStep === createTourSteps.length ? "Create Tour" : "Next"}
+                {currentStep === createTourSteps.length
+                  ? "Create Tour"
+                  : "Next"}
               </button>
             </div>
           </div>
