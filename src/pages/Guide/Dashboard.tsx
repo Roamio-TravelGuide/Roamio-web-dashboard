@@ -341,13 +341,13 @@ function Dashboard() {
     }).format(amount);
   };
 
-const [currentPage, setCurrentPage] = useState(1);
-const toursPerPage = 6; // Changed from 10 to 6
+  const [currentPage, setCurrentPage] = useState(1);
+  const toursPerPage = 6; // Changed from 10 to 6
 
-// Get current tours
-const indexOfLastTour = currentPage * toursPerPage;
-const indexOfFirstTour = indexOfLastTour - toursPerPage;
-const currentTours = filteredTours.slice(indexOfFirstTour, indexOfLastTour);
+  // Get current tours
+  const indexOfLastTour = currentPage * toursPerPage;
+  const indexOfFirstTour = indexOfLastTour - toursPerPage;
+  const currentTours = filteredTours.slice(indexOfFirstTour, indexOfLastTour);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
@@ -356,10 +356,20 @@ const currentTours = filteredTours.slice(indexOfFirstTour, indexOfLastTour);
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-blue-700">
-                Guide Dashboard
-              </h1>
-              <p className="text-gray-600">
+              <div className="flex items-center gap-4">
+                <img
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=256&h=256&q=80"
+                  alt="Guide profile"
+                />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">
+                    Sarah Johnson
+                  </h1>
+                  <p className="text-gray-600">Adventure Tour Guide</p>
+                </div>
+              </div>
+              <p className="text-gray-600 mt-2 ml-16">
                 Manage your tours and track performance
               </p>
             </div>
@@ -421,136 +431,150 @@ const currentTours = filteredTours.slice(indexOfFirstTour, indexOfLastTour);
 
       {/* Tours Table Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
-  <div className="bg-white shadow rounded-lg overflow-hidden p-6">
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <h2 className="text-xl font-semibold text-gray-800">Tour Packages</h2>
-      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-64 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Search tours..."
-        />
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="all">All</option>
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-          <option value="archived">Archived</option>
-        </select>
-      </div>
-    </div>
-
-    {/* Card Grid Layout - 6 per page */}
-    {filteredTours.length > 0 ? (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentTours.slice(0, 6).map((tour) => (
-          <div key={tour.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-            <div className="relative">
-              <img
-                className="w-full h-48 object-cover"
-                src={tour.image}
-                alt={tour.name}
+        <div className="bg-white shadow rounded-lg overflow-hidden p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Tour Packages
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-64 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Search tours..."
               />
-              <span
-                className={`absolute top-2 right-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                  tour.status
-                )}`}
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                {tour.status.charAt(0).toUpperCase() + tour.status.slice(1)}
-              </span>
-            </div>
-
-            <div className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{tour.name}</h3>
-                  <div className="flex items-center text-sm text-gray-500 mt-1">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    {tour.destination}
-                  </div>
-                </div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {formatCurrency(tour.price)}
-                </div>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center">
-                  <Users className="w-4 h-4 mr-2 text-gray-400" />
-                  <span>{tour.listeners} listeners</span>
-                </div>
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 mr-2 text-yellow-400" />
-                  <span>
-                    {tour.rating > 0
-                      ? `${tour.rating} (${tour.totalRatings})`
-                      : "No ratings"}
-                  </span>
-                </div>
-                <div className="col-span-2">
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>Revenue: {formatCurrency(tour.revenue)}</span>
-                    <span>Updated: {tour.lastUpdated}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex justify-end space-x-2">
-                <button className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50">
-                  <Eye className="w-4 h-4" />
-                </button>
-                <button className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-50">
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-50">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-              </div>
+                <option value="all">All</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+                <option value="archived">Archived</option>
+              </select>
             </div>
           </div>
-        ))}
-      </div>
-    ) : (
-      <div className="text-center py-10 text-gray-500">
-        No tours found matching your criteria
-      </div>
-    )}
 
-    {/* Pagination controls for 6 items per page */}
-    {filteredTours.length > 6 && (
-      <div className="mt-6 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-        <div className="text-sm text-gray-700">
-          Showing <span className="font-medium">{(currentPage - 1) * 6 + 1}</span> to{' '}
-          <span className="font-medium">
-            {Math.min(currentPage * 6, filteredTours.length)}
-          </span>{' '}
-          of <span className="font-medium">{filteredTours.length}</span> results
-        </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => setCurrentPage(prev => prev + 1)}
-            disabled={currentPage * 6 >= filteredTours.length}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
+          {/* Card Grid Layout - 6 per page */}
+          {filteredTours.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentTours.slice(0, 6).map((tour) => (
+                <div
+                  key={tour.id}
+                  className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <div className="relative">
+                    <img
+                      className="w-full h-48 object-cover"
+                      src={tour.image}
+                      alt={tour.name}
+                    />
+                    <span
+                      className={`absolute top-2 right-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                        tour.status
+                      )}`}
+                    >
+                      {tour.status.charAt(0).toUpperCase() +
+                        tour.status.slice(1)}
+                    </span>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {tour.name}
+                        </h3>
+                        <div className="flex items-center text-sm text-gray-500 mt-1">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {tour.destination}
+                        </div>
+                      </div>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {formatCurrency(tour.price)}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 mr-2 text-gray-400" />
+                        <span>{tour.listeners} listeners</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 mr-2 text-yellow-400" />
+                        <span>
+                          {tour.rating > 0
+                            ? `${tour.rating} (${tour.totalRatings})`
+                            : "No ratings"}
+                        </span>
+                      </div>
+                      <div className="col-span-2">
+                        <div className="flex justify-between text-sm text-gray-500">
+                          <span>Revenue: {formatCurrency(tour.revenue)}</span>
+                          <span>Updated: {tour.lastUpdated}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex justify-end space-x-2">
+                      <button className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-50">
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-50">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 text-gray-500">
+              No tours found matching your criteria
+            </div>
+          )}
+
+          {/* Pagination controls for 6 items per page */}
+          {filteredTours.length > 6 && (
+            <div className="mt-6 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing{" "}
+                <span className="font-medium">{(currentPage - 1) * 6 + 1}</span>{" "}
+                to{" "}
+                <span className="font-medium">
+                  {Math.min(currentPage * 6, filteredTours.length)}
+                </span>{" "}
+                of <span className="font-medium">{filteredTours.length}</span>{" "}
+                results
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  disabled={currentPage * 6 >= filteredTours.length}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    )}
-  </div>
-</div>{/* Create Tour Modal */}
+      {/* Create Tour Modal */}
       {isCreatingTour && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
