@@ -310,16 +310,18 @@ function Dashboard() {
     });
   };
 
-  const filteredTours = tours.filter((tour) => {
-    const matchesSearch =
-      search === "" ||
-      tour.name.toLowerCase().includes(search.toLowerCase()) ||
-      tour.destination.toLowerCase().includes(search.toLowerCase());
+ const filteredTours = tours.filter((tour) => {
+  const matchesSearch =
+    search === "" ||
+    tour.name.toLowerCase().includes(search.toLowerCase()) ||
+    tour.destination.toLowerCase().includes(search.toLowerCase());
 
-    const matchesStatus = filter === "all" || tour.status === filter;
+  const matchesStatus = 
+    filter === "all" || 
+    tour.status.toLowerCase() === filter.toLowerCase();
 
-    return matchesSearch && matchesStatus;
-  });
+  return matchesSearch && matchesStatus;
+});
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -445,15 +447,15 @@ function Dashboard() {
                 placeholder="Search tours..."
               />
               <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-                <option value="archived">Archived</option>
-              </select>
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="all">All</option>
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                    <option value="archived">Archived</option>
+                  </select>
             </div>
           </div>
 
@@ -565,7 +567,7 @@ function Dashboard() {
                 <button
                   onClick={() => setCurrentPage((prev) => prev + 1)}
                   disabled={currentPage * 6 >= filteredTours.length}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-white bg-gradient-to-r from-teal-600 to-blue-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
