@@ -909,7 +909,8 @@ function Dashboard() {
 
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex flex-col md:fl                                For best results, use high-quality landscape images that
+                                represent your tour. Avoid text-heavy images.ex-row gap-6">
                     {/* Image Upload Section (Left) */}
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -981,7 +982,7 @@ function Dashboard() {
                                 or drag and drop
                               </p>
                               <p className="text-xs text-gray-500">
-                                Recommended: 1200×800px JPG/PNG
+                                Recommended: 1200×800px JPG/PNG<br/>
                               </p>
                             </div>
                           )}
@@ -1038,14 +1039,6 @@ function Dashboard() {
                         className="w-full h-full min-h-[250px] px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all hover:border-gray-400"
                       />
                     </div>
-                  </div>
-
-                  {/* Image Requirements Note */}
-                  <div className="text-xs text-gray-500">
-                    <p className="mt-10">
-                      For best results, use high-quality landscape images that
-                      represent your tour. Avoid text-heavy images.
-                    </p>
                   </div>
                 </div>
               )}
