@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiCompass } from 'react-icons/fi';
 import {login} from '../../api/auth/authApi'
+import { useNavigate } from 'react-router-dom';
 // import { FaGoogle, FaFacebook } from 'react-icons/fa';
 
 const SignInPage = () => {
@@ -9,6 +10,15 @@ const SignInPage = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(false);
+
+type UserRole = 'admin' | 'guide' | 'travel_guide';
+const navigate = useNavigate();
+
+const roleRoutes: Record<UserRole, string> = {
+  admin: '/admin/dashboard',
+  guide: '/create',
+  travel_guide: '/create'
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +38,11 @@ const SignInPage = () => {
 
 
       console.log(response);
-      // navigate('/'); // Redirect to travel discovery page
+      const userRole = response.user.role.toLowerCase() as UserRole;
+      const redirectPath = roleRoutes[userRole] || '/';
+    
+      navigate(redirectPath);
+
     } catch (error) {
       console.error('Login error:', error);
     } finally {
