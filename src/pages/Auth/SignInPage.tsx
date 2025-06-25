@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiCompass } from 'react-icons/fi';
-import {login} from '../../api/auth/authApi'
-import { useNavigate } from 'react-router-dom';
-// import { FaGoogle, FaFacebook } from 'react-icons/fa';
+import { login } from '../../api/auth/authApi';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/authContext'; // You'll need to create this context
+
+type UserRole = 'admin' | 'travel_guide';
 
 const SignInPage = () => {
   const [email, setEmail] = useState<string>('');
@@ -10,56 +12,81 @@ const SignInPage = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { setAuthState } = useAuth(); // Assuming your AuthContext provides this
 
-type UserRole = 'admin' | 'guide' | 'travel_guide';
-const navigate = useNavigate();
-
-const roleRoutes: Record<UserRole, string> = {
-  admin: '/admin/dashboard',
-  guide: '/create',
-  travel_guide: '/create'
-};
+  const roleRoutes: Record<UserRole, string> = {
+    admin: '/admin/dashboard',
+    travel_guide: '/guide/dashboard',
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
     
     setIsLoading(true);
+    setError('');
     
     try {
-        
       const response = await login({ email, password });
       
-      // if (rememberMe) {
-      //   localStorage.setItem('authToken', response.token);
-      // } else {
-      //   sessionStorage.setItem('authToken', response.token);
-      // }
+      // Store token based on rememberMe preference
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('authToken', response.token);
+      
+      // Update auth context state
+      setAuthState({
+        isAuthenticated: true,
+        token: response.token,
+        user: response.user
+      });
 
-
-      console.log(response);
+      // Determine redirect path
       const userRole = response.user.role.toLowerCase() as UserRole;
       const redirectPath = roleRoutes[userRole] || '/';
-    
-      navigate(redirectPath);
+      
+      // Redirect to intended path or role-specific dashboard
+      const from = location.state?.from?.pathname || redirectPath;
+      navigate(from, { replace: true });
 
     } catch (error) {
       console.error('Login error:', error);
+      setError(
+        typeof error === 'string' 
+          ? error 
+          : error instanceof Error 
+            ? error.message 
+            : 'Login failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50">
+      {/* Error message display */}
+      {error && (
+        <div className="fixed z-50 px-4 py-3 text-red-700 transform -translate-x-1/2 bg-red-100 border border-red-400 rounded top-4 left-1/2">
+          {error}
+        </div>
+      )}
+
       {/* Video Background Container - Only shows on larger screens */}
-      <div className="hidden lg:block fixed inset-0 w-full h-full overflow-hidden">
+      <div className="fixed inset-0 hidden w-full h-full overflow-hidden lg:block">
         <video
           autoPlay
           muted
           loop
           playsInline
-          className="absolute top-0 left-0 w-full h-full object-cover"
+          className="absolute top-0 left-0 object-cover w-full h-full"
         >
           <source src="/uploads/roamio3.mp4" type="video/mp4" />
           Your browser does not support the video tag.
@@ -68,16 +95,16 @@ const roleRoutes: Record<UserRole, string> = {
       </div>
 
       {/* Main Content */}
-      <div className="w-full max-w-md z-10">
+      <div className="z-10 w-full max-w-md">
         {/* Card with conditional background based on screen size */}
         <div className={`rounded-xl shadow-xl overflow-hidden ${window.innerWidth >= 1024 ? 'bg-white/10 backdrop-blur-md border border-white/20' : 'bg-white'}`}>
           <div className="p-8 sm:p-10">
             {/* Branding Section */}
-            <div className="text-center mb-8">
+            <div className="mb-8 text-center">
               <div className="flex justify-center">
-                <FiCompass className="h-10 w-10 text-teal-600" />
+                <FiCompass className="w-10 h-10 text-teal-600" />
               </div>
-              <h1 className="text-3xl font-bold mt-3 text-gray-800 lg:text-white">Welcome to Roamio</h1>
+              <h1 className="mt-3 text-3xl font-bold text-gray-800 lg:text-white">Welcome to Roamio</h1>
               <p className={`mt-2 ${window.innerWidth >= 1024 ? 'text-white/80' : 'text-gray-600'}`}>
                 Sign in to manage your travel experiences
               </p>
@@ -90,7 +117,7 @@ const roleRoutes: Record<UserRole, string> = {
                   Email address
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                     <FiMail className={`h-5 w-5 ${window.innerWidth >= 1024 ? 'text-white/70' : 'text-gray-400'}`} />
                   </div>
                   <input
@@ -99,7 +126,7 @@ const roleRoutes: Record<UserRole, string> = {
                     className={`block w-full pl-10 pr-3 py-3 rounded-lg ${window.innerWidth >= 1024 ? 'bg-white/20 text-white placeholder-white/70 border-white/30 focus:ring-white' : 'bg-white text-gray-800 border-gray-300 focus:ring-teal-500'} border focus:outline-none focus:ring-2 focus:border-transparent transition-all`}
                     placeholder="your@email.com"
                     value={email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -110,7 +137,7 @@ const roleRoutes: Record<UserRole, string> = {
                   Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                     <FiLock className={`h-5 w-5 ${window.innerWidth >= 1024 ? 'text-white/70' : 'text-gray-400'}`} />
                   </div>
                   <input
@@ -119,12 +146,12 @@ const roleRoutes: Record<UserRole, string> = {
                     className={`block w-full pl-10 pr-10 py-3 rounded-lg ${window.innerWidth >= 1024 ? 'bg-white/20 text-white placeholder-white/70 border-white/30 focus:ring-white' : 'bg-white text-gray-800 border-gray-300 focus:ring-teal-500'} border focus:outline-none focus:ring-2 focus:border-transparent transition-all`}
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
@@ -145,7 +172,7 @@ const roleRoutes: Record<UserRole, string> = {
                     type="checkbox"
                     className={`h-4 w-4 rounded ${window.innerWidth >= 1024 ? 'text-white border-white/50 focus:ring-white' : 'text-teal-600 border-gray-300 focus:ring-teal-500'} focus:ring-2`}
                     checked={rememberMe}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRememberMe(e.target.checked)}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                   />
                   <label htmlFor="remember-me" className={`ml-2 block text-sm ${window.innerWidth >= 1024 ? 'text-white/80' : 'text-gray-700'}`}>
                     Remember me
@@ -166,7 +193,7 @@ const roleRoutes: Record<UserRole, string> = {
               >
                 {isLoading ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 mr-2 -ml-1 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
