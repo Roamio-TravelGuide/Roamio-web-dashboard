@@ -1,5 +1,5 @@
 // src/utils/menuConfig.ts
-import { FaPlus, FaUsers, FaChartLine, FaCog } from 'react-icons/fa';
+import { FaUsers, FaChartLine, FaCog, FaMapMarkedAlt, FaCalendarAlt, FaWallet } from 'react-icons/fa';
 import React from 'react';
 
 export interface MenuItem {
@@ -10,21 +10,13 @@ export interface MenuItem {
   subItems?: MenuItem[];
 }
 
-export interface ActionButtonConfig {
-  title: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-  className: string;
-}
-
 export interface MenuConfig {
   navItems: MenuItem[];
-  actionButton: ActionButtonConfig;
 }
 
 // Helper function to create icon elements
-const createIcon = (IconComponent: React.ComponentType<{ className?: string }>, className: string) => (
-  React.createElement(IconComponent, { className })
+const createIcon = (IconComponent: React.ComponentType<{ className?: string }>) => (
+  React.createElement(IconComponent, { className: "w-5 h-5" })
 );
 
 export const menuConfig: Record<string, MenuConfig> = {
@@ -33,15 +25,23 @@ export const menuConfig: Record<string, MenuConfig> = {
       {
         title: "Dashboard",
         path: "/guide/dashboard",
-        icon: createIcon(FaChartLine, "w-5 h-5")
+        icon: createIcon(FaChartLine),
       },
-      // ... other guide menu items
+      {
+        title: "Creat Tours",
+        path: "/guide/tours",
+        icon: createIcon(FaMapMarkedAlt),
+      },
+      {
+        title: "Earnings",
+        path: "/guide/earnings",
+        icon: createIcon(FaWallet),
+      },
+      {
+        title: "Settings",
+        path: "/guide/settings",
+        icon: createIcon(FaCog),
+      },
     ],
-    actionButton: {
-      title: "Create New Tour",
-      icon: createIcon(FaPlus, "w-4 h-4"),
-      onClick: () => {}, // This will be overridden by the parent component
-      className: "bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700"
-    }
   },
 };
