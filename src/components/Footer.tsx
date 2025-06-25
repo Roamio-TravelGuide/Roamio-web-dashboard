@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
-import { images } from '../../assets/assets';
+import { images } from '../assets/assets';
 
 const Footer = () => {
   return (
