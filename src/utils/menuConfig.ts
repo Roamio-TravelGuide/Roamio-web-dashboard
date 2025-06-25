@@ -29,7 +29,7 @@ export const menuConfig: Record<string, MenuConfig> = {
       },
       {
         title: "Creat Tours",
-        path: "/guide/tours",
+        path: "/guide/tourcreate",
         icon: createIcon(FaMapMarkedAlt),
       },
       {
