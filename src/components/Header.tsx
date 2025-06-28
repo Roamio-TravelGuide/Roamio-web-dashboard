@@ -126,7 +126,7 @@ const Header = () => {
           </Link>
           <div className="flex flex-col pt-3 mt-3 space-y-2 border-t border-slate-200">
             <Link 
-              to="/login" 
+              to="/signin" 
               className="px-4 py-3 font-medium text-teal-600 transition-colors rounded-lg hover:text-teal-700 hover:bg-teal-50"
             >
               Sign in

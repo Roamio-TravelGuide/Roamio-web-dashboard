@@ -13,6 +13,12 @@ interface NavbarProps {
 
 const Navbar = ({ userType, user }: NavbarProps) => {
   const config = menuConfig[userType];
+
+   if (!config || !config.navItems) {
+    console.error(`No menu configuration found for user type: ${userType}`);
+    return null; // or return a fallback UI
+  }
+  
   const location = useLocation();
   const activeColorClass = "bg-gradient-to-r from-teal-600 to-blue-600 text-white";
   const inactiveColorClass = "text-gray-600 hover:bg-gray-100";

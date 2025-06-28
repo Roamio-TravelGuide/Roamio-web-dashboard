@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiCompass } from 'react-icons/fi';
 import { login } from '../../api/auth/authApi';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/authContext'; // You'll need to create this context
+import { useAuth } from '../../contexts/authContext';
 
-type UserRole = 'admin' | 'travel_guide';
+type UserRole = 'admin' | 'travel_guide' | 'moderator';
 
 const SignInPage = () => {
   const [email, setEmail] = useState<string>('');
@@ -16,11 +16,12 @@ const SignInPage = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { setAuthState } = useAuth(); // Assuming your AuthContext provides this
+  const { setAuthState } = useAuth();
 
   const roleRoutes: Record<UserRole, string> = {
     admin: '/admin/dashboard',
     travel_guide: '/guide/dashboard',
+    moderator: '/moderator/dashboard' // Fixed typo in "dashboard"
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

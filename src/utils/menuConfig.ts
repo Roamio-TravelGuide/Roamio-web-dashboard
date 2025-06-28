@@ -44,4 +44,14 @@ export const menuConfig: Record<string, MenuConfig> = {
       },
     ],
   },
+  moderator :{
+    navItems:[
+      {
+      title:"Profile",
+      path:"/moderator/dashboard",
+      icon:createIcon(FaCog),
+      }
+    ]
+
+  }
 };
