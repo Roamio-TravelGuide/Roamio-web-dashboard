@@ -5,7 +5,7 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
   size = 24, 
   className = '' 
 }) => {
@@ -18,3 +18,5 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     </div>
   );
 };
+
+export default LoadingSpinner;

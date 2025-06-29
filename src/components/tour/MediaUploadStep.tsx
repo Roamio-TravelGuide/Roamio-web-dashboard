@@ -43,10 +43,10 @@ export const MediaUploadStep: React.FC<MediaUploadStepProps> = ({
         return total + (audio.duration_seconds || 0);
       }, 0);
 
-      if (totalAudioDuration > maxRecommendedAudioTime) {
+      if (totalAudioDuration < maxRecommendedAudioTime) {
         warnings.push({
           stopIndex: index,
-          message: `Audio duration (${formatTime(totalAudioDuration)}) exceeds 80% of walking time (${formatTime(maxRecommendedAudioTime)})`,
+          message: `Audio duration (${formatTime(totalAudioDuration)}) have to exceeds 80% of walking time (${formatTime(maxRecommendedAudioTime)})`,
           severity: 'warning'
         });
       }
