@@ -16,6 +16,12 @@ import ModeratorLayout from '../layouts/ModeratorLayout';
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
 import TourDetail from '../pages/Moderator/TourDetail';
 
+import VendorLayout from '../layouts/VendorLayout';
+import BusinessProfile from '../pages/Vendor/BusinessProfile'
+import ImageGallery from '../pages/Vendor/ImageGallery';
+import Overview from '../pages/Vendor/Overview';
+import Payments from '../pages/Vendor/Payments';
+import Reviews from '../pages/Vendor/Reviews';
 
 const AppRoutes = () => {
   return (
@@ -44,6 +50,14 @@ const AppRoutes = () => {
               <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
               <Route path = "/tour/:id" element={<TourDetail/>}> </Route>
 
+          </Route>
+
+              <Route element={<VendorLayout/>}>
+              <Route path="/vendor/businessprofile" element={<BusinessProfile />} />
+              <Route path="/vendor/imagegallery" element={<ImageGallery />} />
+              <Route path="/vendor/overview" element={<Overview />} />
+              <Route path="/vendor/payments" element={<Payments onBack={() => { /* implement navigation logic here */ }} />} />
+              <Route path="/vendor/reviews" element={<Reviews />} />
           </Route>
         {/* </Route> */}
 
