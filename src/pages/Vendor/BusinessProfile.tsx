@@ -199,21 +199,7 @@ const BusinessProfile: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center justify-center space-x-2 px-6 py-3 bg-white text-blue-600 rounded-xl hover:bg-white/90 transition-all duration-300 shadow-xl font-semibold"
-                  >
-                    <Edit3 className="w-5 h-5" />
-                    <span>Edit Profile</span>
-                  </button>
-                  <button onClick={() => navigate("/vendor/imagegallery")} className="flex items-center justify-center space-x-2 px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white hover:bg-white/20 transition-all duration-300">
-                    <Image className="w-5 h-5" />
-                    <span>Manage Gallery</span>
-                  </button>
-                  <button onClick={() => navigate("/vendor/payments")} className="flex items-center justify-center space-x-2 px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white hover:bg-white/20 transition-all duration-300">
-                    <CreditCard className="w-5 h-5" />
-                    <span>Subscription</span>
-                  </button>
+                  
                 </>
               )}
             </div>
