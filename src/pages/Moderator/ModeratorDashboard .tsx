@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, X, Search, Filter, ChevronDown, Check } from 'lucide-react';
+import { Calendar, MapPin, Users, X, Search, Filter, ChevronDown, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 // Define types
 type TourStatus = 'pending_approval' | 'published' | 'rejected';
@@ -42,6 +43,14 @@ const ModeratorDashboard = () => {
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage] = useState(5);
+
   const [selectedCities, setSelectedCities] = useState<CityFilter>({
     galle: false,
     matara: false,
@@ -103,8 +112,8 @@ const ModeratorDashboard = () => {
       const params: RequestParams = {
         status: selectedTab.toLowerCase().replace('pending', 'pending_approval'),
         search: searchQuery,
-        page: 1,
-        limit: 10
+        page: currentPage,
+        limit: itemsPerPage
       };
 
       // Add optional properties conditionally
@@ -129,9 +138,14 @@ const ModeratorDashboard = () => {
         }
       });
       
-      const apiTours = response.data.data?.packages || [];
+      const responseData = response.data.data;
+      const apiTours = responseData?.packages || [];
       const convertedTours = apiTours.map(convertApiResponseToTour);
+      
       setTours(convertedTours);
+      setTotalItems(responseData?.total || 0);
+      setTotalPages(Math.ceil((responseData?.total || 0) / itemsPerPage));
+      
     } catch (err) {
       setError('Failed to load tours. Please try again.');
       console.error('Error fetching tours:', err);
@@ -155,16 +169,26 @@ const ModeratorDashboard = () => {
     }
   };
 
+  // Reset to first page when filters change
+  const resetToFirstPage = () => {
+    setCurrentPage(1);
+  };
+
   // Initial data fetch
   useEffect(() => {
     fetchTourPackages();
     fetchStatistics();
   }, []);
 
-  // Refetch when filters change
+  // Refetch when filters change (reset to page 1)
+  useEffect(() => {
+    resetToFirstPage();
+  }, [selectedTab, searchQuery, selectedCities, dateFrom, dateTo]);
+
+  // Refetch when page changes
   useEffect(() => {
     fetchTourPackages();
-  }, [selectedTab, searchQuery, selectedCities, dateFrom, dateTo]);
+  }, [currentPage, selectedTab, searchQuery, selectedCities, dateFrom, dateTo]);
 
   // Handle tour approval
   const handleApprove = async (tourId: number, event: React.MouseEvent) => {
@@ -199,7 +223,7 @@ const ModeratorDashboard = () => {
       });
       
       fetchTourPackages();
-      // fetchStatistics();
+      fetchStatistics();
       setShowRejectModal(false);
       setRejectReason('');
       setSelectedTour(null);
@@ -209,12 +233,69 @@ const ModeratorDashboard = () => {
     }
   };
 
+  const handleView = (tourId: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    navigate(`/tours/${tourId}`);
+  };
+
   // Toggle city filter
   const handleCityToggle = (city: City) => {
     setSelectedCities(prev => ({
       ...prev,
       [city]: !prev[city]
     }));
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total pages is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show smart pagination
+      if (currentPage <= 3) {
+        // Show first 5 pages
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+      } else if (currentPage >= totalPages - 2) {
+        // Show last 5 pages
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Show current page and 2 pages on each side
+        for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+          pages.push(i);
+        }
+      }
+    }
+    
+    return pages;
   };
 
   // Format duration
@@ -259,7 +340,7 @@ const ModeratorDashboard = () => {
               <div className="mb-6">
                 <h2 className="text-xl font-semibold text-gray-800">Welcome Back!</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  {tours.length} {tours.length === 1 ? 'Tour' : 'Tours'} Found
+                  {totalItems} {totalItems === 1 ? 'Tour' : 'Tours'} Found
                 </p>
               </div>
 
@@ -451,22 +532,14 @@ const ModeratorDashboard = () => {
                             <div className="flex flex-col justify-between space-y-4 sm:flex-row sm:space-y-0 sm:items-center">
                               <div className="text-xl font-bold text-teal-600">${tour.price.toFixed(2)}</div>
                               
-                              {tour.status === 'pending_approval' && (
-                                <div className="flex space-x-3">
-                                  <button
-                                    onClick={(e) => handleApprove(tour.id, e)}
-                                    className="px-6 py-2 text-sm font-medium text-white bg-teal-500 rounded-lg hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-                                  >
-                                    APPROVE
-                                  </button>
-                                  <button
-                                    onClick={(e) => handleReject(tour, e)}
-                                    className="px-6 py-2 text-sm font-medium text-white bg-gray-500 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                                  >
-                                    REJECT
-                                  </button>
-                                </div>
-                              )}
+                              <div className="flex space-x-3">
+                                <button
+                                  onClick={(e) => handleView(tour.id, e)}
+                                  className="px-6 py-2 text-sm font-medium text-white bg-teal-500 rounded-lg hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                                >
+                                  View
+                                </button>                                
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -505,6 +578,77 @@ const ModeratorDashboard = () => {
                     </div>
                   )}
                 </div>
+                
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col items-center justify-between mt-8 space-y-4 sm:flex-row sm:space-y-0">
+                    {/* Results info */}
+                    <div className="text-sm text-gray-600">
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} results
+                    </div>
+                    
+                    {/* Pagination controls */}
+                    <div className="flex items-center space-x-2">
+                      {/* Previous button */}
+                      <button
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 1}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          currentPage === 1
+                            ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Previous
+                      </button>
+                      
+                      {/* Page numbers */}
+                      <div className="flex items-center space-x-1">
+                        {getPageNumbers().map((pageNum) => (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                              currentPage === pageNum
+                                ? 'text-white bg-teal-600 hover:bg-teal-700'
+                                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ))}
+                        
+                        {/* Show ellipsis and last page if needed */}
+                        {totalPages > 5 && currentPage < totalPages - 2 && (
+                          <>
+                            <span className="px-2 text-gray-500">...</span>
+                            <button
+                              onClick={() => handlePageChange(totalPages)}
+                              className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                              {totalPages}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Next button */}
+                      <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          currentPage === totalPages
+                            ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        Next
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
