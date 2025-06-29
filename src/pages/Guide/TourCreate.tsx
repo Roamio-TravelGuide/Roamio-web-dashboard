@@ -146,11 +146,60 @@ function TourCreate(){
     setIsSubmitting(true);
     
     try {
-      console.log('Submitting tour:', tourData);
+      const tourSubmissionData = {
+        guide_id: 1,
+        title: tourData.title,
+        description: tourData.description,
+        price: tourData.price,
+        duration_minutes: tourData.duration_minutes,
+        status: 'pending_approval' as const,
+        tour_stops: tourData.tour_stops.map(stop => ({
+          sequence_no: stop.sequence_no,
+          stop_name: stop.stop_name,
+          description: stop.description,
+          location: stop.location.id ? { 
+            connect: { id: stop.location.id } 
+          } : {
+            create: {
+              longitude: stop.location.longitude,
+              latitude: stop.location.latitude,
+              address: stop.location.address,
+              city: stop.location.city,
+              province: stop.location.province,
+              district: stop.location.district,
+              postal_code: stop.location.postal_code
+            }
+          },
+          media: stop.media ? {
+            create: stop.media.map(mediaItem => ({
+              media: {
+                connect: { id: mediaItem.id }
+              }
+            }))
+          } : undefined
+        })),
+        cover_image: tourData.cover_image_id ? {
+          connect: { id: tourData.cover_image_id }
+        } : undefined
+      };
+
+      console.log('Submitting tour:', tourSubmissionData);
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Example API call (replace with your actual API endpoint)
+      // const response = await fetch('/api/tours', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(tourSubmissionData),
+      // });
+
+      // if (!response.ok) {
+      //   throw new Error('Failed to submit tour');
+      // }
       
-      alert('Tour submitted successfully! It will be reviewed before publication.');
+      // const result = await response.json();
+      // alert('Tour submitted successfully! It will be reviewed before publication.');
       
     } catch (error) {
       console.error('Error submitting tour:', error);
