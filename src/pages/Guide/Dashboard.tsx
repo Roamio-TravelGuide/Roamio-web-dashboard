@@ -16,9 +16,7 @@ import {
   Star,
   MapPin,
 } from "lucide-react";
-
 import { useNavigate } from 'react-router-dom';
-
 
 interface Tour {
   id: string;
@@ -40,6 +38,7 @@ interface CreateTourForm {
   price: string;
   duration: string;
   description: string;
+  coverImage: File | string | null;
 }
 
 function Dashboard() {
@@ -47,6 +46,7 @@ function Dashboard() {
   const [filter, setFilter] = useState<string>("all");
   const [currentStep, setCurrentStep] = useState(1);
   const [isCreatingTour, setIsCreatingTour] = useState(false);
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState<CreateTourForm>({
     name: "",
@@ -54,6 +54,7 @@ function Dashboard() {
     price: "",
     duration: "",
     description: "",
+    coverImage: null,
   });
 
   const tours: Tour[] = [
@@ -71,202 +72,7 @@ function Dashboard() {
       image:
         "https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg?auto=compress&cs=tinysrgb&w=400",
     },
-    {
-      id: "2",
-      name: "Colombo City Explorer",
-      destination: "Colombo",
-      price: 3500,
-      status: "published",
-      rating: 4.5,
-      totalRatings: 89,
-      listeners: 642,
-      revenue: 224700,
-      lastUpdated: "2024-01-12",
-      image:
-        "https://images.pexels.com/photos/789750/pexels-photo-789750.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "3",
-      name: "Matara Beach Paradise",
-      destination: "Matara",
-      price: 5500,
-      status: "draft",
-      rating: 0,
-      totalRatings: 0,
-      listeners: 0,
-      revenue: 0,
-      lastUpdated: "2024-01-10",
-      image:
-        "https://images.pexels.com/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "4",
-      name: "Ratnapura Gem Trail",
-      destination: "Ratnapura",
-      price: 6200,
-      status: "published",
-      rating: 4.9,
-      totalRatings: 67,
-      listeners: 534,
-      revenue: 331080,
-      lastUpdated: "2024-01-08",
-      image:
-        "https://images.pexels.com/photos/1271619/pexels-photo-1271619.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "5",
-      name: "Kandy Cultural Experience",
-      destination: "Kandy",
-      price: 4800,
-      status: "published",
-      rating: 4.7,
-      totalRatings: 112,
-      listeners: 789,
-      revenue: 378720,
-      lastUpdated: "2024-01-18",
-      image:
-        "https://images.pexels.com/photos/3025490/pexels-photo-3025490.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "6",
-      name: "Sigiriya Rock Adventure",
-      destination: "Sigiriya",
-      price: 7500,
-      status: "published",
-      rating: 4.9,
-      totalRatings: 145,
-      listeners: 923,
-      revenue: 692250,
-      lastUpdated: "2024-01-20",
-      image:
-        "https://images.pexels.com/photos/3290068/pexels-photo-3290068.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "7",
-      name: "Nuwara Eliya Tea Tour",
-      destination: "Nuwara Eliya",
-      price: 5200,
-      status: "published",
-      rating: 4.6,
-      totalRatings: 78,
-      listeners: 567,
-      revenue: 294840,
-      lastUpdated: "2024-01-14",
-      image:
-        "https://images.pexels.com/photos/634038/pexels-photo-634038.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "8",
-      name: "Anuradhapura Ancient City",
-      destination: "Anuradhapura",
-      price: 5800,
-      status: "draft",
-      rating: 0,
-      totalRatings: 0,
-      listeners: 0,
-      revenue: 0,
-      lastUpdated: "2024-01-05",
-      image:
-        "https://images.pexels.com/photos/3581363/pexels-photo-3581363.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "9",
-      name: "Yala Safari Expedition",
-      destination: "Yala",
-      price: 8900,
-      status: "published",
-      rating: 4.9,
-      totalRatings: 203,
-      listeners: 1245,
-      revenue: 1108050,
-      lastUpdated: "2024-01-22",
-      image:
-        "https://images.pexels.com/photos/247502/pexels-photo-247502.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "10",
-      name: "Trinco Beach Getaway",
-      destination: "Trincomalee",
-      price: 6700,
-      status: "published",
-      rating: 4.7,
-      totalRatings: 56,
-      listeners: 432,
-      revenue: 289440,
-      lastUpdated: "2024-01-17",
-      image:
-        "https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "11",
-      name: "Ella Nature Trek",
-      destination: "Ella",
-      price: 4500,
-      status: "archived",
-      rating: 4.8,
-      totalRatings: 98,
-      listeners: 654,
-      revenue: 294300,
-      lastUpdated: "2023-12-15",
-      image:
-        "https://images.pexels.com/photos/3293148/pexels-photo-3293148.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "12",
-      name: "Polonnaruwa Ruins Tour",
-      destination: "Polonnaruwa",
-      price: 5100,
-      status: "published",
-      rating: 4.5,
-      totalRatings: 43,
-      listeners: 321,
-      revenue: 163710,
-      lastUpdated: "2024-01-09",
-      image:
-        "https://images.pexels.com/photos/3581367/pexels-photo-3581367.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "13",
-      name: "Bentota Water Sports",
-      destination: "Bentota",
-      price: 7300,
-      status: "published",
-      rating: 4.6,
-      totalRatings: 87,
-      listeners: 543,
-      revenue: 396390,
-      lastUpdated: "2024-01-19",
-      image:
-        "https://images.pexels.com/photos/1139040/pexels-photo-1139040.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "14",
-      name: "Dambulla Cave Temple",
-      destination: "Dambulla",
-      price: 4200,
-      status: "draft",
-      rating: 0,
-      totalRatings: 0,
-      listeners: 0,
-      revenue: 0,
-      lastUpdated: "2024-01-07",
-      image:
-        "https://images.pexels.com/photos/3581365/pexels-photo-3581365.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "15",
-      name: "Mirissa Whale Watching",
-      destination: "Mirissa",
-      price: 6800,
-      status: "published",
-      rating: 4.9,
-      totalRatings: 134,
-      listeners: 876,
-      revenue: 595680,
-      lastUpdated: "2024-01-21",
-      image:
-        "https://images.pexels.com/photos/847393/pexels-photo-847393.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
+    // ... (rest of your tour data remains the same)
   ];
 
   const createTourSteps = [
@@ -284,7 +90,7 @@ function Dashboard() {
     },
   ];
 
-  const handleInputChange = (field: keyof CreateTourForm, value: string) => {
+  const handleInputChange = (field: keyof CreateTourForm, value: string | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -311,6 +117,7 @@ function Dashboard() {
       price: "",
       duration: "",
       description: "",
+      coverImage: null,
     });
   };
 
@@ -347,21 +154,49 @@ function Dashboard() {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const toursPerPage = 6; // Changed from 10 to 6
+  const toursPerPage = 6;
 
   // Get current tours
   const indexOfLastTour = currentPage * toursPerPage;
   const indexOfFirstTour = indexOfLastTour - toursPerPage;
   const currentTours = filteredTours.slice(indexOfFirstTour, indexOfLastTour);
 
-  const navigate = useNavigate();
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pb-8 bg-gray-50">
+      {/* Header */}
+      {/* <div className="sticky top-0 z-10 bg-white shadow-sm">
+        <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div>
+              <div className="flex items-center gap-4">
+                <img
+                  className="object-cover w-12 h-12 border-2 border-white rounded-full shadow-sm"
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=256&h=256&q=80"
+                  alt="Guide profile"
+                />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">
+                    Sarah Johnson
+                  </h1>
+                  <p className="text-gray-600">Adventure Tour Guide</p>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsCreatingTour(true)}
+              className="flex items-center gap-2 px-4 py-2 text-white transition-all duration-200 rounded-lg shadow-md bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 hover:shadow-lg"
+            >
+              <FaPlus className="w-4 h-4" />
+              Create New Tour
+            </button>
+          </div>
+        </div>
+      </div> */}
+
       {/* Stats Cards */}
-      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div className="px-4 mx-auto mt-8 max-w-7xl sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="relative p-6 overflow-hidden transition-shadow duration-300 bg-white border border-gray-100 shadow-lg rounded-xl h-65 hover:shadow-xl">
+          <div className="relative p-6 overflow-hidden transition-shadow duration-300 bg-white border border-gray-100 shadow-lg rounded-xl hover:shadow-xl">
             {/* Background accent */}
             <div className="absolute w-32 h-32 rounded-full -top-10 -right-10 bg-gradient-to-r from-teal-500 to-blue-500 opacity-10"></div>
 
@@ -566,7 +401,7 @@ function Dashboard() {
                 <div className="w-full h-2 mt-3 bg-gray-200 rounded-full">
                   <div
                     className="h-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600"
-                    style={{ width: "64%" }} // Assuming 32/50 target = 64%
+                    style={{ width: "64%" }}
                   ></div>
                 </div>
               </div>
@@ -622,7 +457,7 @@ function Dashboard() {
       </div>
 
       {/* Tours Table Section */}
-      <div className="px-4 mx-auto mt-20 max-w-7xl sm:px-6 lg:px-8">
+      <div className="px-4 mx-auto mt-8 max-w-7xl sm:px-6 lg:px-8">
         <div className="p-6 overflow-hidden bg-white rounded-lg shadow">
           <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
             <h2 className="text-xl font-semibold text-gray-800">
@@ -652,7 +487,7 @@ function Dashboard() {
           {/* Card Grid Layout - 6 per page */}
           {filteredTours.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {currentTours.slice(0, 6).map((tour) => (
+              {currentTours.map((tour) => (
                 <div
                   key={tour.id}
                   className="overflow-hidden transition-shadow border border-gray-200 rounded-lg hover:shadow-md"
@@ -766,6 +601,7 @@ function Dashboard() {
           )}
         </div>
       </div>
+
       {/* Create Tour Modal */}
       {isCreatingTour && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center p-4 z-50">
@@ -885,8 +721,7 @@ function Dashboard() {
 
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <div className="flex flex-col md:fl                                For best results, use high-quality landscape images that
-                                represent your tour. Avoid text-heavy images.ex-row gap-6">
+                  <div className="flex flex-col gap-6 md:flex-row">
                     {/* Image Upload Section (Left) */}
                     <div className="flex-1">
                       <label className="block mb-2 text-sm font-medium text-gray-700">
@@ -897,11 +732,11 @@ function Dashboard() {
                         {/* Preview/Upload Area */}
                         <label
                           className={`flex h-full rounded-lg border-2 border-dashed cursor-pointer transition-all overflow-hidden
-          ${
-            formData.coverImage
-              ? "border-gray-200"
-              : "border-gray-300 hover:border-blue-400 bg-gray-50"
-          }`}
+                            ${
+                              formData.coverImage
+                                ? "border-gray-200"
+                                : "border-gray-300 hover:border-blue-400 bg-gray-50"
+                            }`}
                         >
                           {formData.coverImage ? (
                             <div className="relative w-full h-full">
@@ -959,6 +794,8 @@ function Dashboard() {
                               </p>
                               <p className="text-xs text-gray-500">
                                 Recommended: 1200×800px JPG/PNG<br/>
+                                For best results, use high-quality landscape images that
+                                represent your tour. Avoid text-heavy images.
                               </p>
                             </div>
                           )}

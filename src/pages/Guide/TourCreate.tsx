@@ -44,12 +44,21 @@ function TourCreate(){
   // Validate current step
   const validateCurrentStep = (): boolean => {
     switch (currentStep) {
-      case 1: // Basic Info
-        return !!(tourData.title && tourData.price > 0 && tourData.duration_minutes > 0);
-      
-      case 2: // Route Map
-        return tourData.tour_stops.length >= 2 && 
-               tourData.tour_stops.every(stop => stop.location);
+      case 1:
+        return (
+          <BasicInfoStep
+            tourData={tourData}
+            onUpdate={handleTourDataUpdate}
+          />
+      );
+    
+      case 2:
+        return (
+          <RouteMapStep
+            stops={tourData.tour_stops}
+            onStopsUpdate={handleStopsUpdate}
+          />
+        );
       
       case 3: // Media Upload
         return tourData.tour_stops.every(stop => 
@@ -137,13 +146,10 @@ function TourCreate(){
     setIsSubmitting(true);
     
     try {
-      // Here you would submit to your API
       console.log('Submitting tour:', tourData);
       
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Show success message or redirect
       alert('Tour submitted successfully! It will be reviewed before publication.');
       
     } catch (error) {
