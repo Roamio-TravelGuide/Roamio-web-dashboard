@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaUser, FaUserTie, FaUserShield, FaStore, FaSearch, FaTimes } from 'react-icons/fa';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
-
 
 interface User {
   id: string;
   name: string;
   email: string;
   phone?: string;
-  status: 'active' | 'banned';
+  status: 'active' | 'banned' | 'blocked' | 'pending';
   role: string;
   avatar: string;
   registeredDate: string;
@@ -21,11 +19,8 @@ interface User {
   totalReviews?: number;
   averageRating?: number;
 }
-
-const API_BASE_URL = 'http://localhost:3001/api/v1';
-
-
 const ITEMS_PER_PAGE = 6;
+const API_BASE_URL = 'http://localhost:3001/api/v1'; // Default for Expressconst ITEMS_PER_PAGE = 6;
 
 const Users = () => {
   const [usersDropdownOpen, setUsersDropdownOpen] = useState(false);
@@ -37,61 +32,57 @@ const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
 
-    
-  const fetchUsers = async () => {
-    try {
-        setIsLoading(true);
-        setError(null);
+  useEffect(() => {
+    // Inside your fetchUsers function:
+const fetchUsers = async () => {
+  try {
+    setIsLoading(true);
+    setError(null);
 
-        const response = await axios.get(`${API_BASE_URL}/users/getAllUsers`, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-        });
+    const response = await axios.get(`${API_BASE_URL}/users`, { // 👈 Updated endpoint
+      params: {
+        role: selectedUserType === 'all' ? undefined : selectedUserType,
+        search: searchTerm,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+      },
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-        // Transform the data before setting state
-        const transformedUsers = response.data.users.map((user: any) => ({
-        id: user.id.toString(),
-        name: user.name,
-        email: user.email,
-        phone: user.phone_no,
-        status: user.status.toLowerCase(),
-        role: user.role,
-        avatar: user.profile_picture_url || '/default-avatar.png',
-        registeredDate: user.registered_date,
-        lastLogin: user.last_login,
-        bio: user.bio,
-        totalBookings: user.traveler_count || 0,
-        totalReviews: user.report_count || 0,
-        averageRating: 0,
-        }));
-
-        setUsers(transformedUsers);
-        console.log('Users loaded successfully');
-    } catch (err) {
-        setError('Failed to load users. Please try again.');
-        console.error('Error fetching users:', err);
-    } finally {
-        setIsLoading(false);
+    if (!response.data.data) {
+      throw new Error('Invalid response structure');
     }
-   };
 
-  // Filter users based on selected type and search term
-  const filteredUsers = users.filter(user => {
-    const matchesType = selectedUserType === 'all' || user.role === selectedUserType;
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesType && matchesSearch;
-  });
+    const transformedUsers = response.data.data.map((user: any) => ({
+      id: user.id.toString(),
+      name: user.name,
+      email: user.email,
+      phone: user.phone_no,
+      status: user.status.toLowerCase(),
+      role: user.role,
+      avatar: user.profile_picture_url || '/default-avatar.png',
+      registeredDate: user.registered_date,
+      lastLogin: user.last_login,
+      bio: user.bio,
+      totalBookings: user.traveler_count || 0,
+      totalReviews: user.report_count || 0,
+      averageRating: 0,
+    }));
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const currentUsers = filteredUsers.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+    setUsers(transformedUsers);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to load users';
+    setError(errorMessage);
+    console.error('Error fetching users:', err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+    fetchUsers();
+  }, [selectedUserType, searchTerm, currentPage]);
 
   const handleUserTypeSelect = (type: string) => {
     setSelectedUserType(type);
@@ -103,9 +94,11 @@ const Users = () => {
     const colorClasses = {
       active: 'bg-green-100 text-green-800',
       banned: 'bg-red-100 text-red-800',
+      blocked: 'bg-red-100 text-red-800',
+      pending: 'bg-yellow-100 text-yellow-800'
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs ${colorClasses[status as keyof typeof colorClasses]}`}>
+      <span className={`px-2 py-1 rounded-full text-xs ${colorClasses[status as keyof typeof colorClasses] || 'bg-gray-100 text-gray-800'}`}>
         {status}
       </span>
     );
@@ -121,27 +114,37 @@ const Users = () => {
     setSelectedUser(null);
   };
 
-  const toggleBlockUser = () => {
-    if (selectedUser) {
+  const toggleBlockUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const newStatus = selectedUser.status === 'active' ? 'blocked' : 'active';
+      
+      await axios.patch(`${API_BASE_URL}/users/${selectedUser.id}/status`, {
+        status: newStatus
+      });
+
+      // Update the user in the local state
       const updatedUsers = users.map(u => 
         u.id === selectedUser.id 
-          ? { ...u, status: u.status === 'active' ? 'banned' : 'active' } 
+          ? { ...u, status: newStatus } 
           : u
       );
       
       setUsers(updatedUsers);
       setSelectedUser({
         ...selectedUser,
-        status: selectedUser.status === 'active' ? 'banned' : 'active'
+        status: newStatus
       });
-      
-      // Here you would typically make an API call to update the user status
-      // await updateUserStatus(selectedUser.id, selectedUser.status === 'active' ? 'banned' : 'active');
+    } catch (err) {
+      console.error('Error updating user status:', err);
+      setError('Failed to update user status');
     }
   };
 
   return (
     <div className="p-6">
+      {/* Header and Filters */}
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-bold">
           {selectedUserType === 'all' ? 'All Users' : 
@@ -240,7 +243,7 @@ const Users = () => {
           <h4 className="text-lg font-medium text-red-600">Error</h4>
           <p className="text-gray-500 mt-2">{error}</p>
           <button 
-            onClick={fetchUsers}
+            onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Retry
@@ -252,8 +255,8 @@ const Users = () => {
       {!isLoading && !error && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {currentUsers.length > 0 ? (
-              currentUsers.map(user => (
+            {users.length > 0 ? (
+              users.map(user => (
                 <div 
                   key={user.id} 
                   className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
@@ -265,6 +268,9 @@ const Users = () => {
                         src={user.avatar}
                         alt={user.name}
                         className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/default-avatar.png';
+                        }}
                       />
                       <div>
                         <h4 className="font-semibold text-lg">{user.name}</h4>
@@ -296,7 +302,7 @@ const Users = () => {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && currentUsers.length > 0 && (
+          {users.length > 0 && (
             <div className="flex justify-center mt-6">
               <nav className="inline-flex rounded-md shadow">
                 <button
@@ -306,18 +312,9 @@ const Users = () => {
                 >
                   Previous
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1 border-t border-b border-gray-300 ${currentPage === page ? 'bg-blue-50 text-blue-600 font-medium' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
-                  >
-                    {page}
-                  </button>
-                ))}
                 <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={users.length < ITEMS_PER_PAGE}
                   className="px-3 py-1 rounded-r-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
@@ -349,6 +346,9 @@ const Users = () => {
                     src={selectedUser.avatar}
                     alt={selectedUser.name}
                     className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/default-avatar.png';
+                    }}
                   />
                   <div className="mt-4 flex justify-center">
                     <button
@@ -403,13 +403,6 @@ const Users = () => {
                     <div className="mt-4">
                       <h4 className="font-semibold text-gray-700">Bio</h4>
                       <p className="mt-1 text-gray-600">{selectedUser.bio}</p>
-                    </div>
-                  )}
-                  
-                  {selectedUser.address && (
-                    <div className="mt-4">
-                      <h4 className="font-semibold text-gray-700">Address</h4>
-                      <p className="mt-1 text-gray-600">{selectedUser.address}</p>
                     </div>
                   )}
                 </div>
