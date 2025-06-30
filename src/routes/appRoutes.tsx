@@ -21,7 +21,11 @@ import Dashboard from '../pages/Admin/Dashboard'
 import Users from '../pages/Admin/Users'
 import Complaints from '../pages/Admin/Complaint';
 
-
+import VendorLayout from '../layouts/VendorLayout';
+import BusinessProfile from '../pages/Vendor/BusinessProfile'
+import ImageGallery from '../pages/Vendor/ImageGallery';
+import Overview from '../pages/Vendor/Overview';
+import Payments from '../pages/Vendor/Payments';
 
 
 const AppRoutes = () => {
@@ -58,6 +62,13 @@ const AppRoutes = () => {
               <Route path="/admin/complaints" element={<Complaints/>} />
           </Route>
         {/* </Route> */}
+
+        <Route element={<VendorLayout/>}>
+              <Route path="/vendor/businessprofile" element={<BusinessProfile />} />
+              <Route path="/vendor/imagegallery" element={<ImageGallery />} />
+              <Route path="/vendor/overview" element={<Overview />} />
+              <Route path="/vendor/payments/" element={<Payments onBack={() => { /* implement navigation logic here */ }} />} />
+        </Route>
 
         {/* Optional: 404 catch-all route */}
         <Route path="*" element={<Navigate to="/" replace />} />

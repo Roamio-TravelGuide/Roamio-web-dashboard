@@ -40,7 +40,7 @@ const fetchUsers = async () => {
     setIsLoading(true);
     setError(null);
 
-    const response = await axios.get(`${API_BASE_URL}/users`, { // 👈 Updated endpoint
+    const response = await axios.get(`${API_BASE_URL}/users`, { 
       params: {
         role: selectedUserType === 'all' ? undefined : selectedUserType,
         search: searchTerm,
