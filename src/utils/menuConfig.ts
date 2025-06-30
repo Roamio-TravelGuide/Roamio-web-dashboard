@@ -1,5 +1,15 @@
 // src/utils/menuConfig.ts
-import { FaUsers, FaChartLine, FaCog, FaMapMarkedAlt, FaCalendarAlt, FaWallet } from 'react-icons/fa';
+import { 
+  FaUsers, 
+  FaChartLine, 
+  FaCog, 
+  FaUser, 
+  FaUserTie, 
+  FaUserShield,
+  FaStore,
+  FaMapMarkedAlt,
+  FaWallet
+} from 'react-icons/fa';
 import React from 'react';
 
 export interface MenuItem {
@@ -44,4 +54,32 @@ export const menuConfig: Record<string, MenuConfig> = {
       },
     ],
   },
+  moderator :{
+    navItems:[
+      {
+      title:"Profile",
+      path:"/moderator/dashboard",
+      icon:createIcon(FaCog),
+      }
+    ]
+  },
+  admin: {
+    navItems: [
+      {
+        title: "Dashboard",
+        path: "/admin/dashboard",
+        icon: createIcon(FaChartLine)
+      },
+      {
+        title: "Users",
+        path: "/admin/users",
+        icon: createIcon(FaUsers),
+      },
+      {
+        title: "Complaints",
+        path: "/admin/complaints",
+        icon: createIcon(FaUsers),
+      },
+    ]
+  }
 };
