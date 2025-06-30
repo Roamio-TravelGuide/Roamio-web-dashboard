@@ -1,5 +1,5 @@
 // src/utils/menuConfig.ts
-import { FaUsers, FaChartLine, FaCog, FaMapMarkedAlt, FaCalendarAlt, FaWallet } from 'react-icons/fa';
+import { FaUsers, FaChartLine, FaCog, FaMapMarkedAlt, FaCalendarAlt, FaWallet,FaUserCog, FaImages, FaMoneyBillWave } from 'react-icons/fa';
 import React from 'react';
 
 export interface MenuItem {
@@ -52,6 +52,24 @@ export const menuConfig: Record<string, MenuConfig> = {
       icon:createIcon(FaCog),
       }
     ]
-
+  },
+  vendor :{
+    navItems:[
+      {
+      title:"Profile",
+      path:"/vendor/businessprofile",
+      icon:createIcon(FaUserCog),
+      },
+      {
+      title:"Image Gallary",
+      path:"/vendor/imagegallery",
+      icon:createIcon(FaImages),
+      },
+      {
+      title:"Subcription",
+      path:"/vendor/payments",
+      icon:createIcon(FaMoneyBillWave),
+      },
+    ]
   }
 };

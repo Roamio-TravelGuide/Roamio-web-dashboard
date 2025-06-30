@@ -51,12 +51,11 @@ const AppRoutes = () => {
               <Route path = "/tour/:id" element={<TourDetail/>}> </Route>
 
           </Route>
-
               <Route element={<VendorLayout/>}>
               <Route path="/vendor/businessprofile" element={<BusinessProfile />} />
               <Route path="/vendor/imagegallery" element={<ImageGallery />} />
               <Route path="/vendor/overview" element={<Overview />} />
-              <Route path="/vendor/payments" element={<Payments onBack={() => { /* implement navigation logic here */ }} />} />
+              <Route path="/vendor/payments/" element={<Payments onBack={() => { /* implement navigation logic here */ }} />} />
               <Route path="/vendor/reviews" element={<Reviews />} />
           </Route>
         {/* </Route> */}
