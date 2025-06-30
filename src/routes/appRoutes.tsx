@@ -16,12 +16,13 @@ import ModeratorLayout from '../layouts/ModeratorLayout';
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
 import TourDetail from '../pages/Moderator/TourDetail';
 
-import VendorLayout from '../layouts/VendorLayout';
-import BusinessProfile from '../pages/Vendor/BusinessProfile'
-import ImageGallery from '../pages/Vendor/ImageGallery';
-import Overview from '../pages/Vendor/Overview';
-import Payments from '../pages/Vendor/Payments';
-import Reviews from '../pages/Vendor/Reviews';
+import AdminLayout from '../layouts/AdminLayout'
+import Dashboard from '../pages/Admin/Dashboard'
+import Users from '../pages/Admin/Users'
+import Complaints from '../pages/Admin/Complaint';
+
+
+
 
 const AppRoutes = () => {
   return (
@@ -49,14 +50,12 @@ const AppRoutes = () => {
           <Route element={<ModeratorLayout/>}>
               <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
               <Route path = "/tour/:id" element={<TourDetail/>}> </Route>
-
           </Route>
-              <Route element={<VendorLayout/>}>
-              <Route path="/vendor/businessprofile" element={<BusinessProfile />} />
-              <Route path="/vendor/imagegallery" element={<ImageGallery />} />
-              <Route path="/vendor/overview" element={<Overview />} />
-              <Route path="/vendor/payments/" element={<Payments onBack={() => { /* implement navigation logic here */ }} />} />
-              <Route path="/vendor/reviews" element={<Reviews />} />
+
+          <Route element={<AdminLayout/>}>
+              <Route path="/admin/dashboard" element={<Dashboard/>} />
+              <Route path="/admin/users" element={<Users/>} />
+              <Route path="/admin/complaints" element={<Complaints/>} />
           </Route>
         {/* </Route> */}
 
