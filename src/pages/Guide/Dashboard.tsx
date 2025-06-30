@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import {
   FaPlus,
   FaUsers,
@@ -17,6 +17,8 @@ import {
   MapPin,
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "../../contexts/authContext";
+import { getTourPackageById } from "../../api/tour/tourApi";
 
 interface Tour {
   id: string;
@@ -56,6 +58,33 @@ function Dashboard() {
     description: "",
     coverImage: null,
   });
+  
+    
+  const { authState } = useAuth();
+  const userId = authState.user.id
+
+  const fetchTourPackages = async () => {
+    try {
+      if (!userId) {
+        console.error('User ID not available');
+        return;
+      }
+      
+      const response = await getTourPackageById(userId);
+      console.log('Tour packages:', response);
+      
+      // Process the response data as needed
+      // const convertedTours = response.data.map(convertApiResponseToTour);
+      // setTours(convertedTours);
+    } catch (err) {
+      console.error('Error fetching tours:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTourPackages();
+  }, [userId]);
+
 
   const tours: Tour[] = [
     {
@@ -163,37 +192,7 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen pb-8 bg-gray-50">
-      {/* Header */}
-      {/* <div className="sticky top-0 z-10 bg-white shadow-sm">
-        <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div>
-              <div className="flex items-center gap-4">
-                <img
-                  className="object-cover w-12 h-12 border-2 border-white rounded-full shadow-sm"
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=256&h=256&q=80"
-                  alt="Guide profile"
-                />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">
-                    Sarah Johnson
-                  </h1>
-                  <p className="text-gray-600">Adventure Tour Guide</p>
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsCreatingTour(true)}
-              className="flex items-center gap-2 px-4 py-2 text-white transition-all duration-200 rounded-lg shadow-md bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 hover:shadow-lg"
-            >
-              <FaPlus className="w-4 h-4" />
-              Create New Tour
-            </button>
-          </div>
-        </div>
-      </div> */}
 
-      {/* Stats Cards */}
       <div className="px-4 mx-auto mt-8 max-w-7xl sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="relative p-6 overflow-hidden transition-shadow duration-300 bg-white border border-gray-100 shadow-lg rounded-xl hover:shadow-xl">
