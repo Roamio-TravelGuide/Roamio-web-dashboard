@@ -1,14 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
-import { 
-  APIProvider, 
-  Map, 
-  AdvancedMarker, 
-  Pin,
-  useMap,
-  useMapsLibrary
-} from '@vis.gl/react-google-maps';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
-import LoadingSpinner from '../ui/LoadingSpinner'
+import LoadingSpinner from '../ui/LoadingSpinner';
+
+// Set your Mapbox access token
+const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiYWJkdWwwMTEiLCJhIjoiY21jYnN5OXl0MDBvMDJrc2I1MjU2Z28yZSJ9.jzJqzPye1bItMiZf7Tyzhg';
+mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
 
 interface Location {
   id?: number;
@@ -31,11 +29,9 @@ interface TourStop {
 }
 
 interface MapClickEvent {
-  detail?: {
-    latLng?: {
-      lat: number;
-      lng: number;
-    };
+  lngLat: {
+    lat: number;
+    lng: number;
   };
 }
 
@@ -48,149 +44,308 @@ const toast = {
 };
 
 async function reverseGeocode(lat: number, lng: number): Promise<Location> {
-  const geocoder = new google.maps.Geocoder();
-  const latLng = new google.maps.LatLng(lat, lng);
-  
-  return new Promise((resolve, reject) => {
-    geocoder.geocode({ location: latLng }, (results, status) => {
-      if (status === 'OK' && results?.[0]) {
-        const address = results[0].formatted_address || '';
-        let city = '';
-        let province = '';
-        let district = '';
-        let postal_code = '';
+  try {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?` +
+      new URLSearchParams({
+        access_token: MAPBOX_ACCESS_TOKEN,
+        limit: '1',
+        types: 'address,place,region,postcode,locality,neighborhood',
+        country: 'lk'
+      });
 
-        for (const component of results[0].address_components) {
-          const types = component.types;
-          if (types.includes('locality')) {
-            city = component.long_name;
-          } else if (types.includes('administrative_area_level_1')) {
-            province = component.long_name;
-          } else if (types.includes('administrative_area_level_2')) {
-            district = component.long_name;
-          } else if (types.includes('postal_code')) {
-            postal_code = component.long_name;
-          }
-        }
+    const response = await fetch(url);
+    const data = await response.json();
 
-        resolve({
-          longitude: lng,
-          latitude: lat,
-          address,
-          city,
-          province,
-          district,
-          postal_code
-        });
-      } else {
-        reject(new Error('Geocoding failed'));
-      }
-    });
-  });
-}
+    if (!data.features?.length) throw new Error('No results found');
 
-function DirectionsRenderer({ stops }: { stops: TourStop[] }) {
-  const map = useMap();
-  const routesLibrary = useMapsLibrary('routes');
-  const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService>();
-  const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer>();
-  const polylinesRef = useRef<google.maps.Polyline[]>([]);
+    const feature = data.features[0];
+    console.log('Raw geocoding data:', feature); // Debug log
 
-  useEffect(() => {
-    if (!routesLibrary || !map) return;
-    
-    setDirectionsService(new routesLibrary.DirectionsService());
-    setDirectionsRenderer(new routesLibrary.DirectionsRenderer({
-      map,
-      suppressMarkers: true,
-      polylineOptions: {
-        strokeColor: '#3B82F6',
-        strokeOpacity: 0.8,
-        strokeWeight: 4,
-        zIndex: 1
-      }
-    }));
-  }, [routesLibrary, map]);
+    // Sri Lanka-specific parsing
+    const address = feature.place_name || '';
+    let city = '';
+    let province = '';
+    let district = '';
+    let postal_code = '';
 
-  useEffect(() => {
-    if (!directionsService || !directionsRenderer || !map) return;
-
-    // Clear existing polylines
-    polylinesRef.current.forEach(polyline => polyline.setMap(null));
-    polylinesRef.current = [];
-
-    if (stops.length < 2) {
-      directionsRenderer.setMap(null);
-      return;
+    // Parse context items
+    if (feature.context) {
+      feature.context.forEach((ctx: any) => {
+        const [type] = ctx.id.split('.');
+        if (type === 'region') province = ctx.text; // Western Province
+        if (type === 'district') district = ctx.text;
+        if (type === 'postcode') postal_code = ctx.text;
+        if (type === 'place') city = ctx.text;
+      });
     }
 
-    // Sort stops by sequence_no to ensure correct order
-    const sortedStops = [...stops].sort((a, b) => a.sequence_no - b.sequence_no);
+    // Colombo-specific fallbacks
+    if (!province && address.includes('Colombo')) {
+      province = 'Western Province';
+      district = 'Colombo District';
+    }
 
-    const waypoints = sortedStops
-      .slice(1, -1)
-      .map(stop => ({
-        location: { lat: stop.location.latitude, lng: stop.location.longitude },
-        stopover: true
-      }));
-
-    const origin = {
-      lat: sortedStops[0].location.latitude,
-      lng: sortedStops[0].location.longitude
+    return {
+      longitude: lng,
+      latitude: lat,
+      address,
+      city: city || 'Colombo',
+      province: province || 'Western Province',
+      district: district || 'Colombo District',
+      postal_code
     };
-    const destination = {
-      lat: sortedStops[sortedStops.length - 1].location.latitude,
-      lng: sortedStops[sortedStops.length - 1].location.longitude
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return {
+      longitude: lng,
+      latitude: lat,
+      address: `Location at ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+      city: 'Colombo',
+      province: 'Western Province',
+      district: 'Colombo District'
     };
+  }
+}
 
-    directionsService.route({
-      origin,
-      destination,
-      waypoints,
-      travelMode: google.maps.TravelMode.WALKING,
-      optimizeWaypoints: false // Don't optimize to maintain sequence
-    })
-    .then(response => {
-      directionsRenderer.setDirections(response);
-    })
-    .catch(error => {
-      console.error('Directions request failed:', error);
-      drawStraightLines(sortedStops, map);
+
+function MapboxMap({ 
+  stops, 
+  onMapClick, 
+  onMarkerClick, 
+  selectedStopId 
+}: { 
+  stops: TourStop[];
+  onMapClick: (event: MapClickEvent) => void;
+  onMarkerClick: (stop: TourStop) => void;
+  selectedStopId: number | null;
+}) {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
+  const routeSourceId = 'route';
+
+  useEffect(() => {
+    if (!mapContainer.current) return;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [79.8612, 6.9271], // Colombo, Sri Lanka
+      zoom: 12
+    });
+
+    // Add click handler
+    map.current.on('click', (e) => {
+      onMapClick({
+        lngLat: {
+          lat: e.lngLat.lat,
+          lng: e.lngLat.lng
+        }
+      });
     });
 
     return () => {
-      if (directionsRenderer) {
-        directionsRenderer.setMap(null);
+      if (map.current) {
+        map.current.remove();
       }
     };
-  }, [directionsService, directionsRenderer, stops, map]);
+  }, [onMapClick]);
 
-  const drawStraightLines = (stops: TourStop[], map: google.maps.Map) => {
-    polylinesRef.current.forEach(polyline => polyline.setMap(null));
-    polylinesRef.current = [];
+  // Update markers when stops change
+  useEffect(() => {
+    if (!map.current) return;
 
-    if (stops.length < 2) return;
+    // Remove existing markers
+    Object.values(markersRef.current).forEach(marker => marker.remove());
+    markersRef.current = {};
 
-    for (let i = 0; i < stops.length - 1; i++) {
-      const path = [
-        { lat: stops[i].location.latitude, lng: stops[i].location.longitude },
-        { lat: stops[i+1].location.latitude, lng: stops[i+1].location.longitude }
-      ];
-
-      const polyline = new google.maps.Polyline({
-        path,
-        geodesic: true,
-        strokeColor: '#3B82F6',
-        strokeOpacity: 0.7,
-        strokeWeight: 3,
-        map
+    // Add new markers
+    stops.forEach((stop) => {
+      const el = document.createElement('div');
+      el.className = 'custom-marker';
+      el.style.cssText = `
+        width: 32px;
+        height: 32px;
+        background-color: #3B82F6;
+        border: 2px solid #1E40AF;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        ${selectedStopId === stop.id ? 'transform: scale(1.2); box-shadow: 0 4px 8px rgba(0,0,0,0.3);' : ''}
+      `;
+      el.textContent = stop.sequence_no.toString();
+      
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onMarkerClick(stop);
       });
 
-      polylinesRef.current.push(polyline);
-    }
-  };
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([stop.location.longitude, stop.location.latitude])
+        .addTo(map.current!);
 
-  return null;
+      if (stop.id) {
+        markersRef.current[stop.id.toString()] = marker;
+      }
+    });
+  }, [stops, onMarkerClick, selectedStopId]);
+
+  // Update route when stops change
+  useEffect(() => {
+    if (!map.current) return;
+
+    const drawRoute = async () => {
+      if (stops.length < 2) {
+        // Remove existing route
+        if (map.current!.getSource(routeSourceId)) {
+          map.current!.removeLayer(routeSourceId);
+          map.current!.removeSource(routeSourceId);
+        }
+        return;
+      }
+
+      try {
+        // Sort stops by sequence_no
+        const sortedStops = [...stops].sort((a, b) => a.sequence_no - b.sequence_no);
+        
+        // Build coordinates string for Mapbox Directions API
+        const coordinates = sortedStops
+          .map(stop => `${stop.location.longitude},${stop.location.latitude}`)
+          .join(';');
+
+        const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates}?` +
+          new URLSearchParams({
+            access_token: MAPBOX_ACCESS_TOKEN,
+            geometries: 'geojson',
+            overview: 'full'
+          });
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          
+          // Remove existing route
+          if (map.current!.getSource(routeSourceId)) {
+            map.current!.removeLayer(routeSourceId);
+            map.current!.removeSource(routeSourceId);
+          }
+
+          // Add new route
+          map.current!.addSource(routeSourceId, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: route.geometry
+            }
+          });
+
+          map.current!.addLayer({
+            id: routeSourceId,
+            type: 'line',
+            source: routeSourceId,
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#3B82F6',
+              'line-width': 4,
+              'line-opacity': 0.8
+            }
+          });
+        } else {
+          // Fallback to straight lines
+          drawStraightLines(sortedStops);
+        }
+      } catch (error) {
+        console.error('Directions request failed:', error);
+        // Fallback to straight lines
+        const sortedStops = [...stops].sort((a, b) => a.sequence_no - b.sequence_no);
+        drawStraightLines(sortedStops);
+      }
+    };
+
+    const drawStraightLines = (sortedStops: TourStop[]) => {
+      if (sortedStops.length < 2) return;
+
+      const coordinates: number[][] = [];
+      for (let i = 0; i < sortedStops.length - 1; i++) {
+        coordinates.push([
+          sortedStops[i].location.longitude,
+          sortedStops[i].location.latitude
+        ]);
+        coordinates.push([
+          sortedStops[i + 1].location.longitude,
+          sortedStops[i + 1].location.latitude
+        ]);
+      }
+
+      // Remove existing route
+      if (map.current!.getSource(routeSourceId)) {
+        map.current!.removeLayer(routeSourceId);
+        map.current!.removeSource(routeSourceId);
+      }
+
+      // Add straight line route
+      map.current!.addSource(routeSourceId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: coordinates
+          }
+        }
+      });
+
+      map.current!.addLayer({
+        id: routeSourceId,
+        type: 'line',
+        source: routeSourceId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#3B82F6',
+          'line-width': 3,
+          'line-opacity': 0.7
+        }
+      });
+    };
+
+    drawRoute();
+  }, [stops]);
+
+  // Fit bounds when stops change
+  useEffect(() => {
+    if (!map.current || stops.length === 0) return;
+
+    if (stops.length === 1) {
+      map.current.flyTo({
+        center: [stops[0].location.longitude, stops[0].location.latitude],
+        zoom: 15
+      });
+    } else {
+      const bounds = new mapboxgl.LngLatBounds();
+      stops.forEach(stop => {
+        bounds.extend([stop.location.longitude, stop.location.latitude]);
+      });
+      map.current.fitBounds(bounds, { padding: 50 });
+    }
+  }, [stops]);
+
+  return <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />;
 }
 
 function StopDetailsForm({ 
@@ -261,39 +416,47 @@ function StopDetailsForm({
         <div>
           <label className="block text-sm font-medium text-gray-700">Address</label>
           <div className="mt-1 text-sm text-gray-600">
-            {formData.location.address || 'Not available'}
+            {formData.location.address || 'Address not available'}
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">City</label>
-            <div className="mt-1 text-sm text-gray-600">
-              {formData.location.city || 'Not available'}
+        {formData.location.city && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">City</label>
+              <div className="mt-1 text-sm text-gray-600">
+                {formData.location.city}
+              </div>
             </div>
+            
+            {formData.location.district && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">District</label>
+                <div className="mt-1 text-sm text-gray-600">
+                  {formData.location.district}
+                </div>
+              </div>
+            )}
+            
+            {formData.location.province && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Province</label>
+                <div className="mt-1 text-sm text-gray-600">
+                  {formData.location.province}
+                </div>
+              </div>
+            )}
+            
+            {formData.location.postal_code && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Postal Code</label>
+                <div className="mt-1 text-sm text-gray-600">
+                  {formData.location.postal_code}
+                </div>
+              </div>
+            )}
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">District</label>
-            <div className="mt-1 text-sm text-gray-600">
-              {formData.location.district || 'Not available'}
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Province</label>
-            <div className="mt-1 text-sm text-gray-600">
-              {formData.location.province || 'Not available'}
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Postal Code</label>
-            <div className="mt-1 text-sm text-gray-600">
-              {formData.location.postal_code || 'Not available'}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="flex justify-between pt-4">
@@ -433,13 +596,13 @@ export function RouteMapStep({
   };
 
   const handleMapClick = async (event: MapClickEvent) => {
-    if (!event.detail?.latLng) return;
+    if (!event.lngLat) return;
     
     setIsGeocoding(true);
     try {
       const clickedPos = {
-        lat: event.detail.latLng.lat,
-        lng: event.detail.latLng.lng
+        lat: event.lngLat.lat,
+        lng: event.lngLat.lng
       };
 
       const location = await reverseGeocode(clickedPos.lat, clickedPos.lng);
@@ -469,8 +632,9 @@ export function RouteMapStep({
         stop_name: `Stop ${internalStops.length + 1}`,
         description: '',
         location: {
-          longitude: event.detail.latLng.lng,
-          latitude: event.detail.latLng.lat
+          longitude: event.lngLat.lng,
+          latitude: event.lngLat.lat,
+          address: `Location at ${event.lngLat.lat.toFixed(6)}, ${event.lngLat.lng.toFixed(6)}`
         }
       };
       setNextId(nextId + 1);
@@ -534,43 +698,15 @@ export function RouteMapStep({
       />
 
       <div className="relative flex-1 overflow-hidden border rounded-lg">
-        <APIProvider 
-          apiKey="AIzaSyD6PZc-Ep4OwjDJwdXEE9xh0ch2GdTK1ec"
-          libraries={['routes', 'geocoding']}
-        >
-          <Map
-            mapId="349683cf35b68ceb30607edb"
-            defaultCenter={{ lat: 6.9271, lng: 79.8612 }}
-            defaultZoom={12}
-            onClick={handleMapClick}
-            gestureHandling="greedy"
-            style={{ width: '100%', height: '100%' }}
-          >
-            <DirectionsRenderer stops={sortedStops} />
-            
-            {sortedStops.map((stop, index) => (
-              <AdvancedMarker
-                key={stop.id || index}
-                position={{
-                  lat: stop.location.latitude,
-                  lng: stop.location.longitude
-                }}
-                onClick={() => handleMarkerClick(stop)}
-              >
-                <Pin
-                  background={'#3B82F6'}
-                  borderColor={'#1E40AF'}
-                  glyphColor={'#FFFFFF'}
-                >
-                  {stop.sequence_no}
-                </Pin>
-              </AdvancedMarker>
-            ))}
-          </Map>
-        </APIProvider>
+        <MapboxMap
+          stops={sortedStops}
+          onMapClick={handleMapClick}
+          onMarkerClick={handleMarkerClick}
+          selectedStopId={selectedStop?.id || null}
+        />
         
         {isGeocoding && (
-          <div className="absolute inset-0 flex items-center justify-center bg-opacity-50 bg-">
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="flex flex-col items-center p-4 space-y-2 bg-white rounded-lg shadow-lg">
               <LoadingSpinner size={32} className="text-blue-500" />
               <p className="text-sm font-medium text-gray-700">Loading address details...</p>
