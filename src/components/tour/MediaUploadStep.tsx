@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { TourStop, Media, ValidationWarning } from '../../types/tour';
 import { MediaUpload } from '../ui/MediaUpload';
 import { AlertTriangle, CheckCircle, Clock, Volume2, Image as ImageIcon } from 'lucide-react';
-import { useGoogleMaps } from '../../hooks/useGoogleMaps';
+import { useMapbox } from '../../hooks/useMaps';
 
 interface MediaUploadStepProps {
   stops: TourStop[];
@@ -15,7 +15,7 @@ export const MediaUploadStep: React.FC<MediaUploadStepProps> = ({
 }) => {
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
   const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
-  const { getDistanceBetweenPoints, getWalkingTime } = useGoogleMaps();
+  const { getDistanceBetweenPoints, getWalkingTime } = useMapbox();
 
   useEffect(() => {
     validateAudioDurations();
@@ -46,7 +46,7 @@ export const MediaUploadStep: React.FC<MediaUploadStepProps> = ({
       if (totalAudioDuration < maxRecommendedAudioTime) {
         warnings.push({
           stopIndex: index,
-          message: `Audio duration (${formatTime(totalAudioDuration)}) have to exceeds 80% of walking time (${formatTime(maxRecommendedAudioTime)})`,
+          message: `Audio duration (${formatTime(totalAudioDuration)}) have not exceeds 80% of walking time (${formatTime(maxRecommendedAudioTime)})`,
           severity: 'warning'
         });
       }

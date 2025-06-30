@@ -15,8 +15,6 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   const [previewImage, setPreviewImage] = useState<string | null>(tourData.cover_image_url || null);
 
   const handleImageUpload = useCallback((file: File) => {
-    // In a real app, you would upload to a server here
-    // For now, we'll just create a preview URL
     const imageUrl = URL.createObjectURL(file);
     setPreviewImage(imageUrl);
     onUpdate({ cover_image: file, cover_image_url: imageUrl });
@@ -42,6 +40,24 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   const removeImage = () => {
     setPreviewImage(null);
     onUpdate({ cover_image: undefined, cover_image_url: undefined });
+  };
+
+  const handleCoverImageUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'cover-image');
+
+      const response = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+      onUpdate({ cover_image_url: result.url });
+    } catch (error) {
+      console.error('Upload failed:', error);
+    }
   };
 
   return (
@@ -114,7 +130,6 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
           )}
         </div>
 
-        {/* Title Input */}
         <div>
           <label htmlFor="title" className="block mb-2 text-sm font-medium text-gray-700">
             Tour Title *
@@ -130,7 +145,6 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
           />
         </div>
 
-        {/* Description Input */}
         <div>
           <label htmlFor="description" className="block mb-2 text-sm font-medium text-gray-700">
             Description
@@ -145,7 +159,6 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
           />
         </div>
 
-        {/* Tips Box */}
         <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
           <h4 className="mb-2 font-medium text-blue-900">💡 Tips for Success</h4>
           <ul className="space-y-1 text-sm text-blue-800">

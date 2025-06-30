@@ -2,6 +2,10 @@ import React from 'react';
 import type { TourPackage, ValidationWarning } from '../../types/tour';
 import { MapPin, Clock, DollarSign, Volume2, Image as ImageIcon, AlertTriangle, CheckCircle } from 'lucide-react';
 
+// Pricing constants
+const PRICE_PER_MINUTE = 500; // 500 LKR per minute of audio
+const MINIMUM_PRICE = 1000; // Minimum price of 1000 LKR
+
 interface ReviewStepProps {
   tourData: TourPackage;
   validationWarnings: ValidationWarning[];
@@ -21,12 +25,28 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
     return `${minutes}m ${remainingSeconds}s`;
   };
 
+  // Calculate total audio duration in seconds
   const getTotalAudioDuration = () => {
     return tourData.tour_stops.reduce((total, stop) => {
       const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
       return total + audioFiles.reduce((stopTotal, audio) => stopTotal + (audio.duration_seconds || 0), 0);
     }, 0);
   };
+
+  // Calculate price based on exact audio duration
+  const calculatePrice = () => {
+    const totalSeconds = getTotalAudioDuration();
+    const totalMinutes = totalSeconds / 60; // Exact minute value with decimals
+    const basePrice = totalMinutes * PRICE_PER_MINUTE;
+    return Math.max(basePrice, MINIMUM_PRICE); // Apply minimum price
+  };
+
+  // Format price with LKR currency
+  const formattedPrice = new Intl.NumberFormat('en-LK', {
+    style: 'currency',
+    currency: 'LKR',
+    minimumFractionDigits: 2
+  }).format(calculatePrice());
 
   const getTotalImages = () => {
     return tourData.tour_stops.reduce((total, stop) => {
@@ -42,6 +62,12 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
 
   const hasErrors = validationWarnings.some(w => w.severity === 'error');
   const hasWarnings = validationWarnings.some(w => w.severity === 'warning');
+
+  // Calculate derived values
+  const totalAudioDuration = getTotalAudioDuration();
+  const totalPrice = calculatePrice();
+  const totalMinutes = totalAudioDuration / 60;
+  const preciseMinutes = Math.round(totalMinutes * 100) / 100; // Round to 2 decimal places
 
   return (
     <div className="space-y-6">
@@ -61,7 +87,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <h4 className="mb-2 font-medium text-gray-900">{tourData.title}</h4>
+              <h4 className="mb-2 font-medium text-gray-900">{tourData.title || 'Untitled Tour'}</h4>
               <p className="mb-4 text-sm text-gray-600">
                 {tourData.description || 'No description provided'}
               </p>
@@ -69,11 +95,16 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
               <div className="space-y-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <DollarSign className="text-green-500" size={16} />
-                  <span>LKR {tourData.price.toLocaleString()}</span>
+                  <div>
+                    <span>{totalPrice}</span>
+                    <span className="ml-2 text-xs text-gray-500">
+                      ({preciseMinutes.toFixed(2)} mins × LKR {PRICE_PER_MINUTE}/min)
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="text-blue-500" size={16} />
-                  <span>{tourData.duration_minutes} minutes estimated duration</span>
+                  <span>{formatTime(totalAudioDuration)} total audio</span>
                 </div>
               </div>
             </div>
@@ -92,7 +123,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
                 <div className="text-sm text-purple-800">Images</div>
               </div>
               <div className="p-4 text-center rounded-lg bg-amber-50">
-                <div className="text-2xl font-bold text-amber-600">{formatTime(getTotalAudioDuration())}</div>
+                <div className="text-2xl font-bold text-amber-600">{formatTime(totalAudioDuration)}</div>
                 <div className="text-sm text-amber-800">Total Audio</div>
               </div>
             </div>
@@ -105,10 +136,12 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           
           <div className="space-y-4">
             {tourData.tour_stops.map((stop, index) => {
-              // Find warnings for this specific stop
               const stopWarnings = validationWarnings.filter(w => w.stopIndex === index);
               const hasStopErrors = stopWarnings.some(w => w.severity === 'error');
               const hasStopWarnings = stopWarnings.some(w => w.severity === 'warning');
+              const stopAudioDuration = stop.media?.filter(m => m.media_type === 'audio')
+                .reduce((total, audio) => total + (audio.duration_seconds || 0), 0) || 0;
+              const stopMinutes = stopAudioDuration / 60;
 
               return (
                 <div 
@@ -152,11 +185,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
                       <Volume2 className="text-green-500" size={16} />
                       <span>
                         {stop.media?.filter(m => m.media_type === 'audio').length || 0} audio files
-                        {(() => {
-                          const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
-                          const totalDuration = audioFiles.reduce((total, audio) => total + (audio.duration_seconds || 0), 0);
-                          return totalDuration > 0 ? ` (${formatTime(totalDuration)})` : '';
-                        })()}
+                        {stopAudioDuration > 0 && ` (${(stopMinutes).toFixed(2)} mins)`}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -165,7 +194,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
                     </div>
                   </div>
 
-                  {/* Show warnings specific to this stop */}
                   {stopWarnings.length > 0 && (
                     <div className="mt-3 space-y-1">
                       {stopWarnings.map((warning, i) => (
@@ -219,13 +247,13 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
 
         {/* Submission Guidelines */}
         <div className="p-6 border border-blue-200 rounded-lg bg-blue-50">
-          <h3 className="mb-3 font-medium text-blue-900">Before You Submit</h3>
+          <h3 className="mb-3 font-medium text-blue-900">Pricing Information</h3>
           <ul className="space-y-1 text-sm text-blue-800">
+            <li>• Price calculated at LKR {PRICE_PER_MINUTE} per exact minute of audio</li>
+            <li>• Minimum tour price: LKR {MINIMUM_PRICE.toLocaleString()}</li>
+            <li>• Current calculation: {preciseMinutes.toFixed(2)} mins × LKR 500 = {formattedPrice}</li>
             <li>• Ensure all stops have locations and meaningful descriptions</li>
-            <li>• Audio content should cover 60-80% of walking time between stops</li>
             <li>• Verify that images are high quality and relevant to each stop</li>
-            <li>• Check that pricing reflects the tour's value and duration</li>
-            <li>• Your tour will be reviewed by our team within 48 hours</li>
           </ul>
         </div>
 

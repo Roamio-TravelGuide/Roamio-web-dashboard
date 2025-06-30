@@ -235,7 +235,7 @@ const ModeratorDashboard = () => {
 
   const handleView = (tourId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    navigate(`/tours/${tourId}`);
+    navigate(`/tour/${tourId}`);
   };
 
   // Toggle city filter
