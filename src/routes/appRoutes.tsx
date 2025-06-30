@@ -43,7 +43,7 @@ const AppRoutes = () => {
         <Route path="/signup" element={<SignupPage />} />
 
         {/* Protected Routes - Now protecting the layout too */}
-        {/* <Route element={<PrivateRoutes />}> */}
+        <Route element={<PrivateRoutes />}>
           <Route element={<TourGuideLayout />}>
             <Route path="/guide" element={<Navigate to="dashboard" replace />} />
             <Route path="/guide/dashboard" element={<GuideDashboard />} />

@@ -1,3 +1,15 @@
+// src/types/tour.ts
+export interface Media {
+  id?: number;
+  url: string;
+  duration_seconds?: number;
+  media_type: 'image' | 'audio';
+  file_size?: number;
+  format?: string;
+  file?: File;
+  uploaded_by_id?: number;
+}
+
 export interface Location {
   id?: number;
   longitude: number;
@@ -18,18 +30,7 @@ export interface TourStop {
   location?: Location;
   location_id?: number;
   media?: Media[];
-  tempId?: string; // For client-side only
-}
-
-export interface Media {
-  id?: number;
-  url: string;
-  duration_seconds?: number;
-  media_type: 'image' | 'audio';
-  file_size?: number;
-  format?: string;
-  file?: File; // For client-side uploads
-  uploaded_by_id?: number;
+  tempId?: string;
 }
 
 export interface TourPackage {
@@ -49,8 +50,8 @@ export interface TourPackage {
 }
 
 export interface RouteInfo {
-  distance: number; // in meters
-  duration: number; // in seconds
+  distance: number;
+  duration: number;
   path: google.maps.LatLng[];
 }
 
