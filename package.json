@@ -11,28 +11,40 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.8",
+    "@react-google-maps/api": "^2.20.7",
     "@tailwindcss/vite": "^4.1.8",
     "@types/google.maps": "^3.58.1",
+    "@types/mapbox-gl": "^3.4.1",
     "@types/react-router-dom": "^5.3.3",
+    "@vis.gl/react-google-maps": "^1.5.3",
     "axios": "^1.10.0",
     "dotenv": "^16.5.0",
     "framer-motion": "^12.17.0",
+    "google-map-react": "^2.2.5",
     "lodash": "^4.17.21",
     "lucide-react": "^0.514.0",
+    "mapbox-gl": "^3.13.0",
+    "multer": "^2.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-dropzone": "^14.3.8",
+    "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.6.2",
+<<<<<<< HEAD
     "recharts": "^3.0.2"
+=======
+    "uuid": "^11.1.0"
+>>>>>>> 1722f5b91641d38ca8d187f32ae2eba636f3326a
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
     "@tailwindcss/postcss7-compat": "^2.2.17",
     "@types/lodash": "^4.17.17",
+    "@types/node": "^24.0.7",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react": "^4.4.1",
+    "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
