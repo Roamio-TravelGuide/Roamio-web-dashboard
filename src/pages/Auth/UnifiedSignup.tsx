@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styles from './animations.module.css';
 import { 
-  Compass, 
   MapPin, 
   Users, 
   ChefHat, 
@@ -14,13 +12,13 @@ import {
   EyeOff, 
   Phone, 
   Building,
-  CreditCard,
-  
+  CreditCard
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // TypeScript Types and Interfaces
 type UserType = 'traveler' | 'guide' | 'restaurant';
+type FormLevel = 1 | 2;
 
 interface UserTypeConfig {
   id: UserType;
@@ -29,7 +27,7 @@ interface UserTypeConfig {
   icon: LucideIcon;
   gradient: string;
   subtitle: string;
-  backgroundImage: string;
+  levels: FormLevel[];
 }
 
 interface FormData {
@@ -63,6 +61,7 @@ interface FieldConfig {
   icon: LucideIcon;
   required: boolean;
   showFor: UserType[];
+  level: FormLevel;
 }
 
 // Configuration Data
@@ -74,7 +73,7 @@ const userTypes: UserTypeConfig[] = [
     icon: MapPin,
     gradient: 'from-blue-500 to-teal-500',
     subtitle: 'Start your journey of discovery',
-    backgroundImage: '/uploads/traveller2.jpg'
+    levels: [1]
   },
   {
     id: 'guide',
@@ -83,7 +82,7 @@ const userTypes: UserTypeConfig[] = [
     icon: Users,
     gradient: 'from-emerald-500 to-teal-500',
     subtitle: 'Share your local expertise',
-    backgroundImage: '/uploads/guide2.jpg'
+    levels: [1]
   },
   {
     id: 'restaurant',
@@ -92,7 +91,7 @@ const userTypes: UserTypeConfig[] = [
     icon: ChefHat,
     gradient: 'from-blue-500 to-teal-500',
     subtitle: 'Showcase your culinary excellence',
-    backgroundImage: '/uploads/restaurant.jpg'
+    levels: [1, 2]
   }
 ];
 
@@ -104,7 +103,8 @@ const fieldConfigs: FieldConfig[] = [
     placeholder: 'Enter your full name',
     icon: User,
     required: true,
-    showFor: ['traveler', 'guide', 'restaurant']
+    showFor: ['traveler', 'guide', 'restaurant'],
+    level: 1
   },
   {
     key: 'email',
@@ -113,7 +113,8 @@ const fieldConfigs: FieldConfig[] = [
     placeholder: 'Enter your email',
     icon: Mail,
     required: true,
-    showFor: ['traveler', 'guide', 'restaurant']
+    showFor: ['traveler', 'guide', 'restaurant'],
+    level: 1
   },
   {
     key: 'contactNumber',
@@ -122,7 +123,8 @@ const fieldConfigs: FieldConfig[] = [
     placeholder: 'Enter your contact number',
     icon: Phone,
     required: true,
-    showFor: ['traveler', 'guide', 'restaurant']
+    showFor: ['traveler', 'guide', 'restaurant'],
+    level: 1
   },
   {
     key: 'guideId',
@@ -131,25 +133,8 @@ const fieldConfigs: FieldConfig[] = [
     placeholder: 'Enter your guide license ID',
     icon: CreditCard,
     required: true,
-    showFor: ['guide']
-  },
-  {
-    key: 'restaurantType',
-    label: 'Restaurant Type',
-    type: 'text',
-    placeholder: 'e.g., Italian, Asian, Casual Dining',
-    icon: ChefHat,
-    required: true,
-    showFor: ['restaurant']
-  },
-  {
-    key: 'address',
-    label: 'Business Address',
-    type: 'text',
-    placeholder: 'Enter your business address',
-    icon: Building,
-    required: true,
-    showFor: ['restaurant']
+    showFor: ['guide'],
+    level: 1
   },
   {
     key: 'password',
@@ -158,7 +143,8 @@ const fieldConfigs: FieldConfig[] = [
     placeholder: 'Create a strong password',
     icon: Lock,
     required: true,
-    showFor: ['traveler', 'guide', 'restaurant']
+    showFor: ['traveler', 'guide'],
+    level: 1
   },
   {
     key: 'confirmPassword',
@@ -167,12 +153,56 @@ const fieldConfigs: FieldConfig[] = [
     placeholder: 'Confirm your password',
     icon: Lock,
     required: true,
-    showFor: ['traveler', 'guide', 'restaurant']
+    showFor: ['traveler', 'guide'],
+    level: 1
+  },
+  // Restaurant Level 1
+  {
+    key: 'restaurantType',
+    label: 'Restaurant Type',
+    type: 'text',
+    placeholder: 'e.g., Italian, Asian, Casual Dining',
+    icon: ChefHat,
+    required: true,
+    showFor: ['restaurant'],
+    level: 1
+  },
+  {
+    key: 'address',
+    label: 'Business Address',
+    type: 'text',
+    placeholder: 'Enter your business address',
+    icon: Building,
+    required: true,
+    showFor: ['restaurant'],
+    level: 1
+  },
+  // Restaurant Level 2
+  {
+    key: 'password',
+    label: 'Password',
+    type: 'password',
+    placeholder: 'Create a strong password',
+    icon: Lock,
+    required: true,
+    showFor: ['restaurant'],
+    level: 2
+  },
+  {
+    key: 'confirmPassword',
+    label: 'Confirm Password',
+    type: 'password',
+    placeholder: 'Confirm your password',
+    icon: Lock,
+    required: true,
+    showFor: ['restaurant'],
+    level: 2
   }
 ];
 
 const UnifiedSignup: React.FC = () => {
   const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
+  const [currentLevel, setCurrentLevel] = useState<FormLevel>(1);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -194,11 +224,34 @@ const UnifiedSignup: React.FC = () => {
   // Get configuration for selected user type
   const config = selectedUserType ? userTypes.find(type => type.id === selectedUserType) : null;
 
+  // Animated Background Component
+  const AnimatedBackground = () => (
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-blue-400/10 blur-[60px] animate-pulse"></div>
+      <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-emerald-400/10 blur-[60px] animate-bounce"></div>
+      <div className="absolute top-2/3 left-1/3 w-72 h-72 rounded-full bg-purple-400/10 blur-[60px] animate-pulse"></div>
+      
+      {[...Array(20)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-2 h-2 rounded-full bg-white/20 animate-ping"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 2}s`,
+            animationDuration: `${2 + Math.random() * 2}s`
+          }}
+        />
+      ))}
+    </div>
+  );
+
   // Enhanced animation handler with smoother transitions
   const handleUserTypeSelect = (userType: UserType): void => {
     setIsAnimating(true);
     setTimeout(() => {
       setSelectedUserType(userType);
+      setCurrentLevel(1);
       setFormData({
         name: '',
         email: '',
@@ -218,6 +271,7 @@ const UnifiedSignup: React.FC = () => {
     setIsAnimating(true);
     setTimeout(() => {
       setSelectedUserType(null);
+      setCurrentLevel(1);
       setFormData({
         name: '',
         email: '',
@@ -228,6 +282,26 @@ const UnifiedSignup: React.FC = () => {
         password: '',
         confirmPassword: ''
       });
+      setErrors({});
+      setIsAnimating(false);
+    }, 300);
+  };
+
+  const handleNextLevel = (): void => {
+    if (validateCurrentLevel()) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentLevel(2);
+        setErrors({});
+        setIsAnimating(false);
+      }, 300);
+    }
+  };
+
+  const handlePreviousLevel = (): void => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentLevel(1);
       setErrors({});
       setIsAnimating(false);
     }, 300);
@@ -249,13 +323,15 @@ const UnifiedSignup: React.FC = () => {
     }
   };
 
-  const validateForm = (): boolean => {
+  const validateCurrentLevel = (): boolean => {
     const newErrors: FormErrors = {};
     
     if (!selectedUserType) return false;
     
     const relevantFields = fieldConfigs.filter(field => 
-      field.showFor.includes(selectedUserType) && field.required
+      field.showFor.includes(selectedUserType) && 
+      field.required && 
+      field.level === currentLevel
     );
     
     relevantFields.forEach(field => {
@@ -266,17 +342,29 @@ const UnifiedSignup: React.FC = () => {
     });
     
     // Email validation
-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+    if (currentLevel === 1 && formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
     
-    // Password validation
-    if (formData.password && formData.password.length < 8) {
+    // Password validation (only on the level where password is shown)
+    const passwordField = fieldConfigs.find(field => 
+      field.key === 'password' && 
+      field.showFor.includes(selectedUserType) && 
+      field.level === currentLevel
+    );
+    
+    if (passwordField && formData.password && formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters long';
     }
     
     // Confirm password validation
-    if (formData.password !== formData.confirmPassword) {
+    const confirmPasswordField = fieldConfigs.find(field => 
+      field.key === 'confirmPassword' && 
+      field.showFor.includes(selectedUserType) && 
+      field.level === currentLevel
+    );
+    
+    if (confirmPasswordField && formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
     
@@ -287,7 +375,7 @@ const UnifiedSignup: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!validateCurrentLevel()) return;
     
     setIsLoading(true);
     setErrors({});
@@ -311,21 +399,10 @@ const UnifiedSignup: React.FC = () => {
     }
   };
 
-  // Animation effect for cards
-  useEffect(() => {
-    if (!selectedUserType) {
-      const cards = document.querySelectorAll(`.${styles.fadeInUp}`);
-      cards.forEach((card, index) => {
-        setTimeout(() => {
-          (card as HTMLElement).style.opacity = '1';
-          (card as HTMLElement).style.transform = 'translateY(0)';
-        }, index * 150);
-      });
-    }
-  }, [selectedUserType]);
-
   const renderFormField = (fieldConfig: FieldConfig, index: number): React.ReactElement | null => {
-    if (!selectedUserType || !fieldConfig.showFor.includes(selectedUserType)) {
+    if (!selectedUserType || 
+        !fieldConfig.showFor.includes(selectedUserType) || 
+        fieldConfig.level !== currentLevel) {
       return null;
     }
 
@@ -340,7 +417,7 @@ const UnifiedSignup: React.FC = () => {
 
     return (
       <div 
-        key={key}
+        key={`${key}-${currentLevel}`}
         className={`transition-all duration-500 ease-out ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}
         style={{ transitionDelay: `${300 + index * 50}ms` }}
       >
@@ -392,32 +469,11 @@ const UnifiedSignup: React.FC = () => {
   if (!selectedUserType) {
     return (
       <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-950 via-teal-800 to-teal-900">
-        {/* Animated Background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-blue-400/10 blur-[60px] animate-pulse"></div>
-          <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-emerald-400/10 blur-[60px] animate-bounce"></div>
-          <div className="absolute top-2/3 left-1/3 w-72 h-72 rounded-full bg-purple-400/10 blur-[60px] animate-pulse"></div>
-          
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 rounded-full bg-white/20 animate-ping"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2 + Math.random() * 2}s`
-              }}
-            />
-          ))}
-        </div>
-
+        <AnimatedBackground />
+        
         {/* Main Content */}
         <div className={`relative z-10 px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8 transition-all duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
           <div className="p-8 mb-16 text-center">
-            <div className="flex justify-center mb-6">
-              
-            </div>
             <h1 className="text-4xl font-bold text-white drop-shadow-lg">Begin Your Roamio Journey</h1>
             <p className="mt-4 text-xl text-white/80">Choose your role to get started</p>
             <p className="text-gray-400">
@@ -435,11 +491,9 @@ const UnifiedSignup: React.FC = () => {
                 <div
                   key={type.id}
                   onClick={() => handleUserTypeSelect(type.id)}
-                  className={`group cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 ${styles.fadeInUp}`}
+                  className={`group cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 opacity-0 translate-y-5`}
                   style={{
-                    animationDelay: `${index * 0.15}s`,
-                    opacity: 0,
-                    transform: 'translateY(20px)'
+                    animation: `fadeInUp 0.6s ease-out forwards ${index * 0.15}s`
                   }}
                 >
                   <div className="flex flex-col h-full p-8 transition-all duration-500 ease-out border shadow-xl border-white/30 bg-white/10 backdrop-blur-lg rounded-2xl hover:shadow-2xl hover:-translate-y-3 hover:bg-white/20 hover:backdrop-blur-xl hover:border-white/50">
@@ -465,6 +519,19 @@ const UnifiedSignup: React.FC = () => {
             })}
           </div>
         </div>
+        
+        <style jsx>{`
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
       </div>
     );
   }
@@ -473,71 +540,80 @@ const UnifiedSignup: React.FC = () => {
   if (!config) return null;
 
   const IconComponent = config.icon;
+  const isRestaurant = selectedUserType === 'restaurant';
+  const maxLevel = Math.max(...config.levels);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white">
-      {/* Left Visual Panel */}
-      <div className={`fixed inset-y-0 left-0 w-[70%]  transition-all duration-500 `}>
-        <div className="absolute inset-0">
-          <img 
-            src={config.backgroundImage}
-            alt={`${config.title} Background`}
-            className="absolute inset-0 object-cover w-full h-full"
-            onError={(e) => {
-              console.error('Image failed to load:', config.backgroundImage);
-              // Fallback to gradient background
-              e.currentTarget.style.display = 'none';
-              const fallbackDiv = document.createElement('div');
-              fallbackDiv.className = `absolute inset-0 bg-gradient-to-br ${config.gradient}`;
-              e.currentTarget.parentNode?.appendChild(fallbackDiv);
-            }}
-          />
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-        
-        
-      </div>
-
-      {/* Right Form Panel */}
-      <div className={`fixed inset-y-0 right-0 w-[30%]  overflow-y-auto transition-all duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] ${isAnimating ? 'opacity-0 translate-x-full' : 'opacity-100 translate-x-0'}`}>
-        <div className="flex items-center justify-center min-h-full p-8">
-          <div className={`w-full max-w-md transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-            <div >
-              <div className="p-8 sm:p-10">
-                <button 
-                  onClick={handleBack}
-                  className="inline-flex items-center mb-6 text-sm font-medium text-gray-600 transition-all duration-200 hover:text-teal-600 hover:translate-x-1 "
-                >
-                  Back to selection
-                </button>
-
-                <div className={`mb-8 text-center transition-all duration-500 delay-200 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-                  <div className="flex justify-center mb-4">
-                    <div className={`p-3 bg-gradient-to-r ${config.gradient} rounded-full transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'scale-0' : 'scale-100'}`}>
-                      <IconComponent className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                  <h1 className="mb-2 text-2xl font-bold text-gray-800">
-                    {config.title}
-                  </h1>
-                  <p className="text-gray-600">
-                    {config.subtitle}
-                  </p>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-950 via-teal-800 to-teal-900">
+      <AnimatedBackground />
+      
+      {/* Form Container */}
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-8 ">
+        <div className={`w-full max-w-lg transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+          <div className="p-8 border shadow-2xl sm:p-10 border-white/30 bg-white/10 backdrop-blur-xl rounded-2xl">
+            <button 
+              onClick={handleBack}
+              className="inline-flex items-center mb-6 text-sm font-medium transition-all duration-200 text-white/80 hover:text-white hover:translate-x-1"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to selection
+            </button>
+            
+            <div className={`mb-8 text-center transition-all duration-500 delay-200 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+              <div className="flex justify-center mb-4">
+                <div className={`p-3 bg-gradient-to-r ${config.gradient} rounded-full transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'scale-0' : 'scale-100'}`}>
+                  <IconComponent className="w-8 h-8 text-white" />
                 </div>
-
-                <form onSubmit={handleSubmit} className={`space-y-5 transition-all duration-500 delay-300 ${isAnimating ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'}`}>
-                  {errors.general && (
-                    <div className="p-4 text-sm text-red-700 bg-red-100 border border-red-300 rounded-lg">
-                      {errors.general}
-                    </div>
-                  )}
-                  
-                  {fieldConfigs.map((field, index) => renderFormField(field, index))}
-
+              </div>
+              <h1 className="mb-2 text-2xl font-bold text-white">
+                {config.title}
+              </h1>
+              <p className="text-white/80">
+                {config.subtitle}
+              </p>
+              {isRestaurant && (
+                <p className="mt-2 text-sm text-white/60">
+                  Step {currentLevel} of {maxLevel}
+                </p>
+              )}
+            </div>
+            
+            <div className={`space-y-5 transition-all duration-500 delay-300 ${isAnimating ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'}`}>
+              {errors.general && (
+                <div className="p-4 text-sm text-red-100 border border-red-300 rounded-lg bg-red-500/20">
+                  {errors.general}
+                </div>
+              )}
+              
+              {fieldConfigs.map((field, index) => renderFormField(field, index))}
+              
+              <div className="flex space-x-4">
+                {isRestaurant && currentLevel === 2 && (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handlePreviousLevel}
+                    className="flex items-center justify-center flex-1 px-4 py-3 text-sm font-medium text-white transition-all duration-200 border rounded-lg border-white/30 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Previous
+                  </button>
+                )}
+                
+                {isRestaurant && currentLevel < maxLevel ? (
+                  <button
+                    type="button"
+                    onClick={handleNextLevel}
+                    className={`flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r ${config.gradient} hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-95`}
+                  >
+                    Next Step
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
                     disabled={isLoading}
-                    className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r ${config.gradient} hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-95 ${isLoading ? 'opacity-80 cursor-not-allowed' : ''}`}
+                    className={`flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r ${config.gradient} hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-95 ${isLoading ? 'opacity-80 cursor-not-allowed' : ''}`}
                   >
                     {isLoading ? (
                       <>
@@ -546,19 +622,20 @@ const UnifiedSignup: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        Create Account <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-200 group-hover:translate-x-1" />
+                        Create Account 
+                        <ArrowRight className="w-4 h-4 ml-2" />
                       </>
                     )}
                   </button>
-                </form>
-
-                <div className={`mt-6 text-sm text-center text-gray-600 transition-all duration-500 delay-700 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-                  Already have an account?{' '}
-                  <a href="/signin" className="font-medium text-teal-600 transition-colors hover:text-teal-500">
-                    Sign in
-                  </a>
-                </div>
+                )}
               </div>
+            </div>
+            
+            <div className={`mt-6 text-sm text-center text-white/60 transition-all duration-500 delay-700 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+              Already have an account?{' '}
+              <a href="/signin" className="font-medium text-teal-400 transition-colors hover:text-teal-300">
+                Sign in
+              </a>
             </div>
           </div>
         </div>
@@ -567,4 +644,4 @@ const UnifiedSignup: React.FC = () => {
   );
 };
 
-export default UnifiedSignup; 
+export default UnifiedSignup;
