@@ -1,531 +1,905 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Pause, MapPin, Clock, Volume2, X, ExternalLink } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { 
+  ArrowLeft, Play, Pause, MapPin, Clock, Volume2, X, 
+  Check, AlertCircle, Headphones, Image as ImageIcon, Video, User,
+  CheckCircle, XCircle, Eye, Loader2, ChevronDown, ChevronRight
+} from 'lucide-react';
+import axios from 'axios';
 
-interface AudioClip {
+// Types
+interface MediaItem {
   id: number;
-  locationId: number;
-  title: string;
-  duration: string;
-  status: 'pending' | 'approved' | 'rejected';
-  audioUrl: string;
-  isPlaying?: boolean;
-  rejectionReason?: string;
+  url: string;
+  duration_seconds?: number;
+  media_type: 'image' | 'video' | 'audio';
+  uploaded_by_id: number;
+  file_size?: number;
+  format?: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  rejection_reason?: string | null;
 }
 
-interface TourLocation {
+interface TourStopResponse {
   id: number;
+  sequence_no: number;
+  stop_name: string;
+  description?: string | null;
+  location_id?: number | null;
+  media: MediaItem[];
+}
+
+interface TourPackageResponse {
+  id: number;
+  title: string;
+  description: string | null;
+  price: number;
+  duration_minutes: number;
+  status: 'pending_approval' | 'published' | 'rejected';
+  rejection_reason?: string;
+  guide?: {
+    user: {
+      name: string;
+      avatar_url: string;
+    };
+    years_of_experience: number;
+    languages_spoken: string[];
+  };
+  tour_stops?: TourStopResponse[];
+}
+
+interface ProcessedTourStop {
+  id: number;
+  sequence_no: number;
   name: string;
   description: string;
-  image: string;
-  coordinates: [number, number];
-  audioClips: AudioClip[];
+  audioClips: MediaItem[];
+  images: MediaItem[];
+  videos: MediaItem[];
+  allMedia: MediaItem[];
 }
 
-interface TourDetail {
-  id: number;
-  title: string;
-  description: string;
-  duration: string;
-  guide: string;
-  guideAvatar: string;
-  price: string;
-  locations: TourLocation[];
-  mapCenter: [number, number];
-}
+// Constants
+const API_BASE_URL = 'http://localhost:3001/api/v1';
 
+// Components
+const StatusBadge = ({ status }: { status: string }) => {
+  const config = {
+    pending_approval: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending Approval' },
+    published: { bg: 'bg-green-100', text: 'text-green-800', label: 'Published' },
+    rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
+    pending: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending' },
+    approved: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' }
+  }[status] || { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Unknown' };
+
+  return (
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+      {config.label}
+    </span>
+  );
+};
+
+const MediaCard = ({ 
+  media, 
+  onPlay,
+  onPreview,
+  isPlaying = false 
+}: {
+  media: MediaItem;
+  onPlay?: () => void;
+  onPreview?: () => void;
+  isPlaying?: boolean;
+}) => {
+  const getMediaIcon = () => {
+    switch (media.media_type) {
+      case 'audio': return <Volume2 className="w-5 h-5 text-blue-500" />;
+      case 'image': return <ImageIcon className="w-5 h-5 text-blue-500" />;
+      case 'video': return <Video className="w-5 h-5 text-blue-500" />;
+      default: return <Volume2 className="w-5 h-5 text-blue-500" />;
+    }
+  };
+
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  return (
+    <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-xs">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start space-x-3">
+          <div className="p-2 rounded-lg bg-blue-50">
+            {getMediaIcon()}
+          </div>
+          <div>
+            <h4 className="font-medium text-gray-900">
+              {media.media_type === 'audio' ? 'Audio' : media.media_type === 'image' ? 'Image' : 'Video'} #{media.id}
+            </h4>
+            {media.duration_seconds && (
+              <p className="text-sm text-gray-500">Duration: {formatDuration(media.duration_seconds)}</p>
+            )}
+            {media.format && <p className="text-sm text-gray-500">Format: {media.format}</p>}
+          </div>
+        </div>
+        <StatusBadge status={media.status || 'pending'} />
+      </div>
+
+      {/* Media Preview */}
+      {media.media_type === 'audio' && onPlay && (
+        <button 
+          onClick={onPlay}
+          className="flex items-center justify-center w-full px-4 py-2 mb-3 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          <span>{isPlaying ? 'Pause' : 'Play'}</span>
+        </button>
+      )}
+
+      {media.media_type === 'image' && onPreview && (
+        <div className="mb-3">
+          <img 
+            src={media.url} 
+            alt={`Image ${media.id}`}
+            className="object-cover w-full h-40 rounded-lg cursor-pointer hover:opacity-90"
+            onClick={onPreview}
+          />
+          <button 
+            onClick={onPreview}
+            className="flex items-center justify-center w-full px-4 py-2 mt-2 space-x-2 text-blue-600 rounded-lg bg-blue-50 hover:bg-blue-100"
+          >
+            <Eye className="w-4 h-4" />
+            <span>View Full Size</span>
+          </button>
+        </div>
+      )}
+
+      {media.media_type === 'video' && (
+        <div className="w-full h-40 mb-3 overflow-hidden bg-black rounded-lg">
+          <video 
+            src={media.url} 
+            className="object-cover w-full h-full"
+            controls
+            preload="metadata"
+          />
+        </div>
+      )}
+
+      {/* Rejection Reason */}
+      {media.status === 'rejected' && media.rejection_reason && (
+        <div className="p-3 mb-3 border border-red-200 rounded-lg bg-red-50">
+          <p className="mb-1 text-sm font-medium text-red-800">Rejection Reason:</p>
+          <p className="text-sm text-red-700">{media.rejection_reason}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const TourStopCard = ({ 
+  stop, 
+  isActive, 
+  onClick 
+}: { 
+  stop: ProcessedTourStop; 
+  isActive: boolean; 
+  onClick: () => void 
+}) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left p-3 rounded-lg border transition-all ${
+        isActive
+          ? 'bg-blue-50 border-blue-200 text-blue-900'
+          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <span className="flex items-center justify-center w-6 h-6 text-sm font-medium text-blue-600 bg-blue-100 rounded-full">
+            {stop.sequence_no}
+          </span>
+          <span className="font-medium truncate">{stop.name}</span>
+        </div>
+        <span className="text-xs text-gray-500">{stop.allMedia.length} media</span>
+      </div>
+    </button>
+  );
+};
+
+const TourRejectModal = ({ 
+  isOpen, 
+  onClose, 
+  reason, 
+  onReasonChange, 
+  onConfirm,
+  isSubmitting
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  reason: string; 
+  onReasonChange: (reason: string) => void; 
+  onConfirm: () => void;
+  isSubmitting: boolean;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-xl">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Reject Tour Package</h3>
+            <button 
+              onClick={onClose} 
+              className="text-gray-400 hover:text-gray-600"
+              disabled={isSubmitting}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="mb-4 text-gray-600">
+            You're about to reject this entire tour package. Please provide a reason.
+          </p>
+          <textarea
+            value={reason}
+            onChange={(e) => onReasonChange(e.target.value)}
+            placeholder="Please provide a detailed reason for rejection..."
+            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            rows={4}
+            required
+            autoFocus
+            disabled={isSubmitting}
+          />
+          <div className="flex justify-end mt-6 space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={!reason.trim() || isSubmitting}
+              className={`px-4 py-2 text-white rounded-lg flex items-center space-x-2 ${
+                reason.trim() && !isSubmitting
+                  ? 'bg-red-600 hover:bg-red-700' 
+                  : 'bg-red-300 cursor-not-allowed'
+              }`}
+            >
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>{isSubmitting ? 'Rejecting...' : 'Confirm Rejection'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ImagePreviewModal = ({ imageUrl, onClose }: { imageUrl: string; onClose: () => void }) => {
+  if (!imageUrl) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75">
+      <div className="relative max-w-4xl max-h-full">
+        <button
+          onClick={onClose}
+          className="absolute right-0 text-white -top-10 hover:text-gray-300"
+        >
+          <XCircle className="w-8 h-8" />
+        </button>
+        <img 
+          src={imageUrl} 
+          alt="Full size view"
+          className="object-contain max-w-full max-h-full rounded-lg"
+        />
+      </div>
+    </div>
+  );
+};
+
+// Main Component
 const TourDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const [tour, setTour] = useState<TourDetail | null>(null);
+  // State
+  const [tour, setTour] = useState<TourPackageResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [playingAudio, setPlayingAudio] = useState<number | null>(null);
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [selectedAudioClip, setSelectedAudioClip] = useState<AudioClip | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
+  const [selectedStopId, setSelectedStopId] = useState<number | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string>('');
+  const [expandedSections, setExpandedSections] = useState({
+    audio: true,
+    images: true,
+    videos: true
+  });
+  const [showTourRejectModal, setShowTourRejectModal] = useState(false);
+  const [tourRejectReason, setTourRejectReason] = useState('');
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Mock tour data
-  const mockTourData: TourDetail = {
-    id: 1,
-    title: 'A Promenade through Pondicherry: The French Jewel of India',
-    description: 'Discover the charming French colonial heritage of Pondicherry through its historic streets, beautiful architecture, and cultural landmarks.',
-    duration: '3 hours',
-    guide: 'Fabienne Laurent',
-    guideAvatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b550?w=60&h=60&fit=crop&crop=face',
-    price: '$45.00',
-    mapCenter: [11.9416, 79.8083],
-    locations: [
-      {
-        id: 1,
-        name: 'Departure of the tour : Dupleix Statue',
-        description: 'Hello, I\'m Fabienne, an Art Historian and a licenced tour Guide in my home country France. After spending the last 20 years abroad, I\'m currently based in Chennai, in south India. I love to underst...',
-        image: 'https://images.unsplash.com/photo-1566133264076-7c74b1e3b6f5?w=300&h=200&fit=crop',
-        coordinates: [11.9416, 79.8083],
-        audioClips: [
-          {
-            id: 1,
-            locationId: 1,
-            title: 'Introduction to Dupleix Statue',
-            duration: '2:30',
-            status: 'pending',
-            audioUrl: '/audio/dupleix-intro.mp3'
-          },
-          {
-            id: 2,
-            locationId: 1,
-            title: 'Historical Context',
-            duration: '3:15',
-            status: 'approved',
-            audioUrl: '/audio/dupleix-history.mp3'
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: 'Schoelcher Monument',
-        description: 'Keep going straight. Coming up on your right is another sculpture. You can see the Schoelcher bust, an iconic character in French colonies\' history. The bust sits on a simple white pedestal and...',
-        image: 'https://images.unsplash.com/photo-1571935716260-fc369c67ad36?w=300&h=200&fit=crop',
-        coordinates: [11.9426, 79.8093],
-        audioClips: [
-          {
-            id: 3,
-            locationId: 2,
-            title: 'Schoelcher Monument Overview',
-            duration: '1:45',
-            status: 'rejected',
-            audioUrl: '/audio/schoelcher-overview.mp3',
-            rejectionReason: 'Audio quality is poor and contains background noise'
-          },
-          {
-            id: 4,
-            locationId: 2,
-            title: 'Historical Significance',
-            duration: '2:20',
-            status: 'pending',
-            audioUrl: '/audio/schoelcher-history.mp3'
-          }
-        ]
-      },
-      {
-        id: 3,
-        name: 'Former French Law Court',
-        description: 'On your left you\'ll see the former French Law Court. This impressive colonial building showcases the architectural heritage of French Pondicherry with its distinctive red roof and white walls.',
-        image: 'https://images.unsplash.com/photo-1593436878396-9c2d3b8b4e4d?w=300&h=200&fit=crop',
-        coordinates: [11.9436, 79.8103],
-        audioClips: [
-          {
-            id: 5,
-            locationId: 3,
-            title: 'Law Court Architecture',
-            duration: '2:50',
-            status: 'approved',
-            audioUrl: '/audio/law-court-architecture.mp3'
-          },
-          {
-            id: 6,
-            locationId: 3,
-            title: 'Colonial Justice System',
-            duration: '3:30',
-            status: 'pending',
-            audioUrl: '/audio/colonial-justice.mp3'
-          }
-        ]
-      }
-    ]
-  };
-
+  // Data fetching
   useEffect(() => {
     const fetchTour = async () => {
       try {
-        // Simulate API call
-        setTimeout(() => {
-          if (id === '1') {
-            setTour(mockTourData);
-          }
-          setIsLoading(false);
-        }, 500);
-      } catch (error) {
+        setIsLoading(true);
+        setError(null);
+        
+        console.log(`Fetching tour with ID: ${id}`);
+        const response = await axios.get(`${API_BASE_URL}/tour-packages/${id}`, {
+          timeout: 10000
+        });
+        
+        console.log('API Response:', response.data);
+        
+        if (!response.data?.success || !response.data?.data) {
+          throw new Error('Invalid tour data received');
+        }
+
+        const data: TourPackageResponse = response.data.data;
+        setTour(data);
+        
+        // Only set selectedStopId if it's not already set (preserve current selection)
+        if (!selectedStopId && data.tour_stops?.[0]) {
+          setSelectedStopId(data.tour_stops[0].id);
+        }
+      } catch (error: any) {
         console.error('Error fetching tour:', error);
+        let errorMessage = 'Failed to load tour details. Please try again.';
+        
+        if (axios.isAxiosError(error)) {
+          if (error.code === 'ECONNABORTED') {
+            errorMessage = 'Request timeout. Please check your connection.';
+          } else if (error.response?.status === 404) {
+            errorMessage = 'Tour not found.';
+          } else if (error.response?.status >= 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          }
+        }
+        
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTour();
-  }, [id]);
+    if (id) fetchTour();
+  }, [id]); // Removed selectedStopId from dependencies to prevent unnecessary refetches
 
-  const handlePlayAudio = (audioId: number) => {
-    if (playingAudio === audioId) {
+  // Handlers
+  const handlePlayAudio = (mediaId: number, audioUrl: string) => {
+    if (playingAudio === mediaId) {
       setPlayingAudio(null);
+      if (audioRef.current) audioRef.current.pause();
     } else {
-      setPlayingAudio(audioId);
+      setPlayingAudio(mediaId);
+      if (audioRef.current) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.play().catch((error) => {
+          console.error('Audio play failed:', error);
+          toast.error('Failed to play audio');
+          setPlayingAudio(null);
+        });
+      }
     }
   };
 
-  const handleApproveAudio = (audioId: number) => {
-    if (!tour) return;
+  const handleApproveTour = async () => {
+    if (!tour || !id || isApproving) return;
     
-    const updatedTour = {
-      ...tour,
-      locations: tour.locations.map(location => ({
-        ...location,
-        audioClips: location.audioClips.map(clip =>
-          clip.id === audioId ? { ...clip, status: 'approved' as const } : clip
-        )
-      }))
-    };
+    setIsApproving(true);
+    const toastId = toast.loading('Approving tour...');
     
-    setTour(updatedTour);
-    console.log('Approved audio clip:', audioId);
-  };
+    try {
+      console.log(`Attempting to approve tour ${id}...`);
 
-  const handleRejectAudio = (audioClip: AudioClip) => {
-    setSelectedAudioClip(audioClip);
-    setShowRejectModal(true);
-  };
+      const response = await axios.patch(
+        `${API_BASE_URL}/tour-packages/${id}/status`,
+        { status: 'published' },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 15000 // 15 second timeout
+        }
+      );
 
-  const confirmRejectAudio = () => {
-    if (!selectedAudioClip || !tour || !rejectReason.trim()) return;
-    
-    const updatedTour = {
-      ...tour,
-      locations: tour.locations.map(location => ({
-        ...location,
-        audioClips: location.audioClips.map(clip =>
-          clip.id === selectedAudioClip.id 
-            ? { ...clip, status: 'rejected' as const, rejectionReason: rejectReason }
-            : clip
-        )
-      }))
-    };
-    
-    setTour(updatedTour);
-    setShowRejectModal(false);
-    setSelectedAudioClip(null);
-    setRejectReason('');
-    
-    console.log('Rejected audio clip:', selectedAudioClip.id, 'Reason:', rejectReason);
-  };
+      console.log('Approval response received:', response.data);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      if (response.status === 200 && response.data?.success) {
+        // Update only the status and related fields, preserve tour_stops and other data
+        setTour(prevTour => {
+          if (!prevTour) return null;
+          
+          return {
+            ...prevTour,
+            status: 'published',
+            rejection_reason: undefined,
+            // Preserve all existing data including tour_stops
+            tour_stops: prevTour.tour_stops
+          };
+        });
+        
+        setError(null);
+        
+        // Show success toast
+        toast.success('🎉 Tour approved successfully! The tour is now published and available to users.', { 
+          id: toastId,
+          duration: 5000
+        });
+      } else {
+        throw new Error(response.data?.message || 'Unexpected response format');
+      }
+    } catch (error: any) {
+      console.error('Approval failed:', error);
+      
+      let errorMessage = 'Failed to approve tour. Please try again.';
+      
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          errorMessage = 'Request timeout. Please check your connection.';
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Tour not found. It may have been deleted.';
+        } else if (error.response?.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+
+      setError(errorMessage);
+      toast.error(errorMessage, { id: toastId });
+    } finally {
+      setIsApproving(false);
     }
   };
 
-  const hasRejectedAudio = tour?.locations.some(location => 
-    location.audioClips.some(clip => clip.status === 'rejected')
-  );
+  const handleRejectTour = () => {
+    setShowTourRejectModal(true);
+    setTourRejectReason('');
+  };
 
+  const confirmRejectTour = async () => {
+    if (!tour || !id || !tourRejectReason.trim() || isRejecting) return;
+
+    setIsRejecting(true);
+    const toastId = toast.loading('Rejecting tour...');
+
+    try {
+      console.log(`Attempting to reject tour ${id}...`);
+      console.log('Rejection reason:', tourRejectReason);
+
+      const response = await axios.patch(
+        `${API_BASE_URL}/tour-packages/${id}/status`,
+        {
+          status: 'rejected',
+          rejection_reason: tourRejectReason
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 15000 // 15 second timeout
+        }
+      );
+
+      console.log('Rejection response:', response.data);
+
+      if (response.status === 200 && response.data?.success) {
+        // Update only the status and related fields, preserve tour_stops and other data
+        setTour(prevTour => {
+          if (!prevTour) return null;
+          
+          return {
+            ...prevTour,
+            status: 'rejected',
+            rejection_reason: tourRejectReason,
+            // Preserve all existing data including tour_stops
+            tour_stops: prevTour.tour_stops
+          };
+        });
+        
+        // Reset modal and reason
+        setShowTourRejectModal(false);
+        setTourRejectReason('');
+        setError(null);
+        
+        // Show success toast
+        toast.success('✅ Tour rejected successfully. The guide has been notified with your feedback.', { 
+          id: toastId,
+          duration: 5000
+        });
+      } else {
+        throw new Error(response.data?.message || 'Unexpected response format');
+      }
+    } catch (error: any) {
+      console.error('Rejection failed:', error);
+      
+      let errorMessage = 'Failed to reject tour. Please try again.';
+      
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          errorMessage = 'Request timeout. Please check your connection.';
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Tour not found. It may have been deleted.';
+        } else if (error.response?.status === 400) {
+          errorMessage = 'Invalid request data. Please check the rejection reason.';
+        } else if (error.response?.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+
+      setError(errorMessage);
+      toast.error(errorMessage, { id: toastId });
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  const toggleSection = (section: 'audio' | 'images' | 'videos') => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const getMediaByType = (stopId: number, type: 'audio' | 'image' | 'video') => {
+    const stop = tour?.tour_stops?.find(s => s.id === stopId);
+    return stop?.media.filter(m => m.media_type === type) || [];
+  };
+
+  // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-teal-500 rounded-full border-t-transparent animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!tour) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Tour not found</h2>
-          <button
-            onClick={() => navigate('/moderator/dashboard')}
-            className="px-4 py-2 mt-4 text-white bg-teal-500 rounded-lg hover:bg-teal-600"
-          >
-            Back to Dashboard
-          </button>
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-8 h-8 mb-4 text-blue-500 animate-spin" />
+          <div className="text-lg text-gray-600">Loading tour details...</div>
         </div>
       </div>
     );
   }
+
+  // Error state
+  if (error || !tour) {
+    return (
+      <div className="p-6 bg-gray-50">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center px-4 py-2 mb-4 text-sm font-medium text-gray-700 bg-white rounded-lg shadow hover:bg-gray-100"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back
+        </button>
+        <div className="p-4 text-red-600 bg-red-100 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error || 'Tour not found'}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const selectedStop = tour.tour_stops?.find(stop => stop.id === selectedStopId);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="px-4 mx-auto sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/moderator/dashboard')}
-                className="flex items-center space-x-2 text-gray-600 transition-colors hover:text-gray-900"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="font-medium">Back to Dashboard</span>
-              </button>
-            </div>
-            <div className="text-sm text-gray-500">
-              Tour Locations | {tour.title}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <button 
+              onClick={() => navigate(-1)}
+              className="flex items-center text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              <span>Back</span>
+            </button>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-500">Status:</span>
+              <StatusBadge status={tour.status} />
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content with Fixed Layout */}
-      <div className="flex h-[calc(100vh-4rem)]">
-        {/* Left Panel - Scrollable Tour Locations */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide">
-          <div className="p-8 space-y-6">
-            {/* Tour Header */}
-            <div className="p-6 bg-white rounded-lg shadow-sm">
-              <div className="flex items-start space-x-4">
-                <img
-                  src={tour.guideAvatar}
-                  alt={tour.guide}
-                  className="w-16 h-16 rounded-full"
-                />
-                <div className="flex-1">
-                  <h1 className="mb-2 text-2xl font-bold text-gray-900">{tour.title}</h1>
-                  <div className="flex items-center mb-3 space-x-4 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-1" />
-                      <span>{tour.duration}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span>Guide: {tour.guide}</span>
-                    </div>
-                    <div className="text-lg font-bold text-teal-600">{tour.price}</div>
-                  </div>
-                  <p className="text-sm text-gray-600">{tour.description}</p>
-                  {hasRejectedAudio && (
-                    <div className="p-2 mt-3 border border-red-200 rounded-md bg-red-50">
-                      <p className="text-sm font-medium text-red-800">
-                        ⚠️ This tour has rejected audio clips that need attention
-                      </p>
-                    </div>
+      {/* Tour Header */}
+      <section className="bg-white border-b border-gray-200">
+        <div className="px-6 py-6">
+          <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-6">
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-gray-900">{tour.title}</h1>
+              <p className="mt-2 text-gray-600">{tour.description}</p>
+              
+              <div className="flex flex-wrap items-center gap-4 mt-4">
+                <div className="flex items-center space-x-2">
+                  <User className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">{tour.guide?.user?.name || 'Unknown Guide'}</span>
+                  {tour.guide?.years_of_experience && (
+                    <span className="text-sm text-gray-500">({tour.guide.years_of_experience} yrs exp)</span>
                   )}
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-700">
+                    {Math.floor(tour.duration_minutes / 60)}h {tour.duration_minutes % 60}m
+                  </span>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-semibold text-gray-900">${tour.price.toFixed(2)}</span>
                 </div>
               </div>
             </div>
+            
+            {tour.guide?.user?.avatar_url && (
+              <img 
+                src={tour.guide.user.avatar_url} 
+                alt={tour.guide.user.name}
+                className="w-16 h-16 border-2 border-gray-200 rounded-full"
+              />
+            )}
+          </div>
 
-            {/* Location Cards */}
-            {tour.locations.map((location) => (
-              <div key={location.id} className="overflow-hidden bg-white rounded-lg shadow-sm">
-                <div className="p-6">
-                  <div className="flex items-start mb-4 space-x-4">
-                    <div className="flex-shrink-0 w-2 h-6 bg-teal-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                        LOCATION {location.id}
-                      </h3>
-                      <h4 className="mb-3 text-xl font-bold text-gray-800">
-                        {location.name}
-                      </h4>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-4 mb-6 md:flex-row">
-                    <div className="md:w-1/3">
-                      <img
-                        src={location.image}
-                        alt={location.name}
-                        className="object-cover w-full h-48 rounded-lg"
-                      />
-                    </div>
-                    <div className="md:w-2/3">
-                      <p className="text-sm leading-relaxed text-gray-600">
-                        {location.description}
-                      </p>
-                      <button className="mt-3 text-sm font-medium text-teal-600 hover:text-teal-700">
-                        Read More
-                      </button>
-                    </div>
-                  </div>
-                  {/* Audio Clips */}
-                  <div className="space-y-4">
-                    <h5 className="font-semibold text-gray-900">Audio Clips</h5>
-                    {location.audioClips.map((clip) => (
-                      <div
-                        key={clip.id}
-                        className="p-4 border border-gray-200 rounded-lg bg-gray-50"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <button
-                              onClick={() => handlePlayAudio(clip.id)}
-                              className="flex items-center space-x-2 text-teal-600 hover:text-teal-700"
-                            >
-                              {playingAudio === clip.id ? (
-                                <Pause className="w-5 h-5" />
-                              ) : (
-                                <Play className="w-5 h-5" />
-                              )}
-                              <span className="font-medium">Play Audio</span>
-                            </button>
-                            <div className="flex items-center text-sm text-gray-600">
-                              <ExternalLink className="w-4 h-4 mr-1" />
-                              <span>Show Directions</span>
-                            </div>
-                          </div>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(clip.status)}`}>
-                            {clip.status.toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="mb-3">
-                          <h6 className="font-medium text-gray-900">{clip.title}</h6>
-                          <p className="text-sm text-gray-600">Duration: {clip.duration}</p>
-                        </div>
-                        {clip.status === 'rejected' && clip.rejectionReason && (
-                          <div className="p-2 mb-3 border border-red-200 rounded bg-red-50">
-                            <p className="text-sm text-red-800">
-                              <strong>Rejection Reason:</strong> {clip.rejectionReason}
-                            </p>
-                          </div>
-                        )}
-                        {clip.status === 'pending' && (
-                          <div className="flex space-x-3">
-                            <button
-                              onClick={() => handleApproveAudio(clip.id)}
-                              className="px-4 py-2 text-sm text-white transition-colors bg-green-500 rounded-lg hover:bg-green-600"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleRejectAudio(clip)}
-                              className="px-4 py-2 text-sm text-white transition-colors bg-red-500 rounded-lg hover:bg-red-600"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {/* Rejection Reason Display */}
+          {tour.status === 'rejected' && tour.rejection_reason && (
+            <div className="p-4 mt-6 border border-red-200 rounded-lg bg-red-50">
+              <h3 className="mb-2 text-sm font-medium text-red-800">Rejection Reason:</h3>
+              <p className="text-sm text-red-700">{tour.rejection_reason}</p>
+            </div>
+          )}
+
+          {/* Admin actions */}
+          {tour.status === 'pending_approval' && (
+            <div className="flex mt-6 space-x-3">
+              <button
+                onClick={handleApproveTour}
+                disabled={isApproving || isRejecting}
+                className="flex items-center px-4 py-2 space-x-2 text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isApproving ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <CheckCircle className="w-5 h-5" />
+                )}
+                <span>{isApproving ? 'Approving...' : 'Approve Tour'}</span>
+              </button>
+              <button
+                onClick={handleRejectTour}
+                disabled={isApproving || isRejecting}
+                className="flex items-center px-4 py-2 space-x-2 text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <XCircle className="w-5 h-5" />
+                <span>Reject Tour</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-220px)]">
+        {/* Left Panel - Tour Stops */}
+        <div className="overflow-y-auto bg-white border-r border-gray-200 lg:w-1/3 xl:w-1/4">
+          <div className="sticky top-0 z-10 p-4 bg-white border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Tour Stops ({tour.tour_stops?.length || 0})</h2>
+          </div>
+          <div className="p-4 space-y-2">
+            {tour.tour_stops?.map((stop) => (
+              <TourStopCard
+                key={stop.id}
+                stop={{
+                  id: stop.id,
+                  sequence_no: stop.sequence_no,
+                  name: stop.stop_name,
+                  description: stop.description || '',
+                  audioClips: stop.media.filter(m => m.media_type === 'audio'),
+                  images: stop.media.filter(m => m.media_type === 'image'),
+                  videos: stop.media.filter(m => m.media_type === 'video'),
+                  allMedia: stop.media
+                }}
+                isActive={selectedStopId === stop.id}
+                onClick={() => setSelectedStopId(stop.id)}
+              />
             ))}
           </div>
         </div>
 
-        {/* Right Panel - Fixed Map */}
-        <div className="flex-shrink-0 w-1/2">
-          <div className="h-full p-8">
-            <div className="h-full overflow-hidden bg-white rounded-lg shadow-sm">
-              <div className="p-4 border-b">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Tour Route</h3>
-                  <div className="flex space-x-2">
-                    <button className="px-3 py-1 text-sm text-gray-700 bg-gray-100 rounded">
-                      Map
-                    </button>
-                    <button className="px-3 py-1 text-sm text-gray-500 rounded hover:bg-gray-100">
-                      Satellite
-                    </button>
-                  </div>
+        {/* Middle Panel - Stop Details */}
+        {selectedStop && (
+          <div className="flex-1 overflow-y-auto bg-white">
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="flex items-center mb-3 space-x-3">
+                  <MapPin className="w-5 h-5 text-blue-500" />
+                  <h2 className="text-xl font-semibold text-gray-900">{selectedStop.stop_name}</h2>
+                  <span className="text-sm text-gray-500">Stop #{selectedStop.sequence_no}</span>
                 </div>
+                <p className="text-gray-600">{selectedStop.description}</p>
               </div>
-              
-              {/* Map Content */}
-              <div className="relative flex items-center justify-center h-[calc(100%-4rem)] bg-gradient-to-br from-blue-50 to-green-50">
-                <div className="text-center">
-                  <MapPin className="w-16 h-16 mx-auto mb-4 text-teal-500" />
-                  <h4 className="mb-2 text-lg font-semibold text-gray-800">Interactive Map</h4>
-                  <p className="max-w-sm text-sm text-gray-600">
-                    Tour route with {tour.locations.length} stops would be displayed here using Google Maps or similar mapping service
-                  </p>
-                </div>
+
+              {/* Audio Section */}
+              <div className="mb-8">
+                <button 
+                  onClick={() => toggleSection('audio')}
+                  className="flex items-center w-full mb-4 text-lg font-semibold text-gray-900"
+                >
+                  <Headphones className="w-5 h-5 mr-2 text-blue-500" />
+                  <span>Audio Narration ({getMediaByType(selectedStop.id, 'audio').length})</span>
+                  {expandedSections.audio ? (
+                    <ChevronDown className="w-5 h-5 ml-2" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  )}
+                </button>
                 
-                {/* Mock map markers */}
-                <div className="absolute inset-0">
-                  {tour.locations.map((location, index) => (
-                    <div
-                      key={location.id}
-                      className="absolute flex items-center justify-center w-8 h-8 text-sm font-bold text-white bg-red-500 rounded-full shadow-lg"
-                      style={{
-                        left: `${20 + index * 25}%`,
-                        top: `${30 + index * 15}%`,
-                      }}
-                    >
-                      {location.id}
+                {expandedSections.audio && (
+                  getMediaByType(selectedStop.id, 'audio').length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4">
+                      {getMediaByType(selectedStop.id, 'audio').map((audio) => (
+                        <MediaCard
+                          key={audio.id}
+                          media={audio}
+                          onPlay={() => handlePlayAudio(audio.id, audio.url)}
+                          isPlaying={playingAudio === audio.id}
+                        />
+                      ))}
                     </div>
-                  ))}
-                  
-                  {/* Mock route line */}
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                    <path
-                      d="M 20% 30% Q 35% 45% 45% 45% T 70% 60%"
-                      stroke="#ef4444"
-                      strokeWidth="3"
-                      fill="none"
-                      strokeDasharray="5,5"
-                    />
-                  </svg>
-                </div>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 rounded-lg bg-gray-50">
+                      No audio clips available
+                    </div>
+                  )
+                )}
+              </div>
+
+              {/* Images Section */}
+              <div className="mb-8">
+                <button 
+                  onClick={() => toggleSection('images')}
+                  className="flex items-center w-full mb-4 text-lg font-semibold text-gray-900"
+                >
+                  <ImageIcon className="w-5 h-5 mr-2 text-blue-500" />
+                  <span>Images ({getMediaByType(selectedStop.id, 'image').length})</span>
+                  {expandedSections.images ? (
+                    <ChevronDown className="w-5 h-5 ml-2" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  )}
+                </button>
+                
+                {expandedSections.images && (
+                  getMediaByType(selectedStop.id, 'image').length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {getMediaByType(selectedStop.id, 'image').map((image) => (
+                        <MediaCard
+                          key={image.id}
+                          media={image}
+                          onPreview={() => {
+                            setSelectedImage(image.url);
+                            setShowImageModal(true);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 rounded-lg bg-gray-50">
+                      No images available
+                    </div>
+                  )
+                )}
+              </div>
+
+              {/* Videos Section */}
+              <div>
+                <button 
+                  onClick={() => toggleSection('videos')}
+                  className="flex items-center w-full mb-4 text-lg font-semibold text-gray-900"
+                >
+                  <Video className="w-5 h-5 mr-2 text-blue-500" />
+                  <span>Videos ({getMediaByType(selectedStop.id, 'video').length})</span>
+                  {expandedSections.videos ? (
+                    <ChevronDown className="w-5 h-5 ml-2" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  )}
+                </button>
+                
+                {expandedSections.videos && (
+                  getMediaByType(selectedStop.id, 'video').length > 0 ? (
+                    <div className="grid grid-cols-1 gap-4">
+                      {getMediaByType(selectedStop.id, 'video').map((video) => (
+                        <MediaCard
+                          key={video.id}
+                          media={video}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 rounded-lg bg-gray-50">
+                      No videos available
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Right Panel - Map */}
+        <div className="hidden bg-gray-100 border-l border-gray-200 lg:w-1/3 xl:w-2/5 lg:block">
+          <div className="sticky top-0 z-10 p-4 bg-white border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Tour Route Map</h2>
+            {selectedStop && (
+              <p className="mt-1 text-sm text-gray-600">
+                {selectedStop.stop_name} - Stop #{selectedStop.sequence_no}
+              </p>
+            )}
+          </div>
+          <div className="relative h-full">
+            {/* Map Placeholder */}
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+              <div className="p-6 text-center">
+                <MapPin className="w-16 h-16 mx-auto mb-4 text-blue-400" />
+                <h3 className="mb-2 text-xl font-medium text-gray-700">Map View</h3>
+                <p className="max-w-sm mb-4 text-gray-500">
+                  Interactive map showing the selected tour stop and route will be displayed here.
+                </p>
+                {selectedStop && (
+                  <div className="text-sm text-gray-400">
+                    <p>Stop: {selectedStop.stop_name}</p>
+                    <p>Sequence: #{selectedStop.sequence_no}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Reject Audio Modal */}
-      {showRejectModal && selectedAudioClip && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Reject Audio Clip</h3>
-              <button
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setSelectedAudioClip(null);
-                  setRejectReason('');
-                }}
-                className="text-gray-400 rounded-md hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <p className="mb-4 text-gray-600">
-              Please provide a reason for rejecting the audio clip <span className="font-medium">"{selectedAudioClip.title}"</span>
-            </p>
-            
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Enter rejection reason (required)..."
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              rows={4}
-              autoFocus
-            />
-            
-            <div className="flex justify-end mt-6 space-x-3">
-              <button
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setSelectedAudioClip(null);
-                  setRejectReason('');
-                }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmRejectAudio}
-                disabled={!rejectReason.trim()}
-                className={`px-6 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                  rejectReason.trim() ? 'bg-red-500 hover:bg-red-600' : 'bg-red-300 cursor-not-allowed'
-                }`}
-              >
-                Confirm Reject
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Audio Element */}
+      <audio 
+        ref={audioRef} 
+        onEnded={() => setPlayingAudio(null)}
+        onError={() => {
+          console.error('Audio playback error');
+          setPlayingAudio(null);
+          toast.error('Failed to play audio');
+        }}
+      />
 
-      <style jsx>{`
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+      {/* Tour Reject Modal */}
+      <TourRejectModal
+        isOpen={showTourRejectModal}
+        onClose={() => {
+          if (!isRejecting) {
+            setShowTourRejectModal(false);
+            setTourRejectReason('');
+          }
+        }}
+        reason={tourRejectReason}
+        onReasonChange={setTourRejectReason}
+        onConfirm={confirmRejectTour}
+        isSubmitting={isRejecting}
+      />
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        imageUrl={selectedImage}
+        onClose={() => setShowImageModal(false)}
+      />
     </div>
   );
 };

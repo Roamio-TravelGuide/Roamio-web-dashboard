@@ -6,9 +6,9 @@ import { useAuth } from '../contexts/authContext';
 const TourGuideLayout = () => {
   const { authState } = useAuth();
 
-  // if (!authState.isAuthenticated) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  if (!authState.isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

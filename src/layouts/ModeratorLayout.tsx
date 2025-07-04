@@ -6,14 +6,14 @@ const ModeratorLayout = () => {
     const { authState } = useAuth();
     const location = useLocation();
 
-    // if (!authState.isAuthenticated) {
-    //     return <Navigate to="/login" replace />;
-    // }
+    if (!authState.isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
 
-    // // Check if user has moderator role
-    // if (authState.user?.role !== 'moderator') {
-    //     return <Navigate to="/unauthorized" replace />;
-    // }
+    // Check if user has moderator role
+    if (authState.user?.role !== 'moderator') {
+        return <Navigate to="/unauthorized" replace />;
+    }
 
     // Check if current path matches '/tour/:id'
     const isTourDetailPage = location.pathname.startsWith('/tour/');

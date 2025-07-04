@@ -39,7 +39,7 @@ const AppRoutes = () => {
         <Route path="/signup" element={<SignupPage />} />
 
         {/* Protected Routes - Now protecting the layout too */}
-        {/* <Route element={<PrivateRoutes />}> */}
+        <Route element={<PrivateRoutes />}>
           <Route element={<TourGuideLayout />}>
             <Route path="/guide" element={<Navigate to="dashboard" replace />} />
             <Route path="/guide/dashboard" element={<GuideDashboard />} />
@@ -57,7 +57,7 @@ const AppRoutes = () => {
               <Route path="/admin/users" element={<Users/>} />
               <Route path="/admin/complaints" element={<Complaints/>} />
           </Route>
-        {/* </Route> */}
+        </Route>
 
         {/* Optional: 404 catch-all route */}
         <Route path="*" element={<Navigate to="/" replace />} />

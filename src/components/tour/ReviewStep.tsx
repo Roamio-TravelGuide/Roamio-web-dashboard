@@ -2,6 +2,10 @@ import React from 'react';
 import type { TourPackage, ValidationWarning } from '../../types/tour';
 import { MapPin, Clock, DollarSign, Volume2, Image as ImageIcon, AlertTriangle, CheckCircle } from 'lucide-react';
 
+// Pricing constants
+const PRICE_PER_MINUTE = 500; // 500 LKR per minute of audio
+const MINIMUM_PRICE = 1000; // Minimum price of 1000 LKR
+
 interface ReviewStepProps {
   tourData: TourPackage;
   validationWarnings: ValidationWarning[];
@@ -21,12 +25,28 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
     return `${minutes}m ${remainingSeconds}s`;
   };
 
+  // Calculate total audio duration in seconds
   const getTotalAudioDuration = () => {
     return tourData.tour_stops.reduce((total, stop) => {
       const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
       return total + audioFiles.reduce((stopTotal, audio) => stopTotal + (audio.duration_seconds || 0), 0);
     }, 0);
   };
+
+  // Calculate price based on exact audio duration
+  const calculatePrice = () => {
+    const totalSeconds = getTotalAudioDuration();
+    const totalMinutes = totalSeconds / 60; // Exact minute value with decimals
+    const basePrice = totalMinutes * PRICE_PER_MINUTE;
+    return Math.max(basePrice, MINIMUM_PRICE); // Apply minimum price
+  };
+
+  // Format price with LKR currency
+  const formattedPrice = new Intl.NumberFormat('en-LK', {
+    style: 'currency',
+    currency: 'LKR',
+    minimumFractionDigits: 2
+  }).format(calculatePrice());
 
   const getTotalImages = () => {
     return tourData.tour_stops.reduce((total, stop) => {
@@ -42,6 +62,12 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
 
   const hasErrors = validationWarnings.some(w => w.severity === 'error');
   const hasWarnings = validationWarnings.some(w => w.severity === 'warning');
+
+  // Calculate derived values
+  const totalAudioDuration = getTotalAudioDuration();
+  const totalPrice = calculatePrice();
+  const totalMinutes = totalAudioDuration / 60;
+  const preciseMinutes = Math.round(totalMinutes * 100) / 100; // Round to 2 decimal places
 
   return (
     <div className="space-y-6">
@@ -61,7 +87,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <h4 className="mb-2 font-medium text-gray-900">{tourData.title}</h4>
+              <h4 className="mb-2 font-medium text-gray-900">{tourData.title || 'Untitled Tour'}</h4>
               <p className="mb-4 text-sm text-gray-600">
                 {tourData.description || 'No description provided'}
               </p>
@@ -69,11 +95,16 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
               <div className="space-y-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <DollarSign className="text-green-500" size={16} />
-                  <span>LKR {tourData.price.toLocaleString()}</span>
+                  <div>
+                    <span>{totalPrice}</span>
+                    <span className="ml-2 text-xs text-gray-500">
+                      ({preciseMinutes.toFixed(2)} mins × LKR {PRICE_PER_MINUTE}/min)
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="text-blue-500" size={16} />
-                  <span>{tourData.duration_minutes} minutes estimated duration</span>
+                  <span>{formatTime(totalAudioDuration)} total audio</span>
                 </div>
               </div>
             </div>
@@ -92,7 +123,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
                 <div className="text-sm text-purple-800">Images</div>
               </div>
               <div className="p-4 text-center rounded-lg bg-amber-50">
-                <div className="text-2xl font-bold text-amber-600">{formatTime(getTotalAudioDuration())}</div>
+                <div className="text-2xl font-bold text-amber-600">{formatTime(totalAudioDuration)}</div>
                 <div className="text-sm text-amber-800">Total Audio</div>
               </div>
             </div>
@@ -104,61 +135,89 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           <h3 className="mb-4 text-lg font-semibold text-gray-900">Tour Stops</h3>
           
           <div className="space-y-4">
-            {tourData.tour_stops.map((stop, index) => (
-              <div key={stop.tempId || stop.id} className="p-4 border border-gray-200 rounded-lg">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-3">
-                    <span className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-sm font-bold text-white bg-blue-500 rounded-full">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <h4 className="font-medium text-gray-900">{stop.stop_name}</h4>
-                      {stop.description && (
-                        <p className="mt-1 text-sm text-gray-600">{stop.description}</p>
+            {tourData.tour_stops.map((stop, index) => {
+              const stopWarnings = validationWarnings.filter(w => w.stopIndex === index);
+              const hasStopErrors = stopWarnings.some(w => w.severity === 'error');
+              const hasStopWarnings = stopWarnings.some(w => w.severity === 'warning');
+              const stopAudioDuration = stop.media?.filter(m => m.media_type === 'audio')
+                .reduce((total, audio) => total + (audio.duration_seconds || 0), 0) || 0;
+              const stopMinutes = stopAudioDuration / 60;
+
+              return (
+                <div 
+                  key={stop.tempId || stop.id} 
+                  className={`p-4 border rounded-lg ${
+                    hasStopErrors ? 'border-red-200 bg-red-50' : 
+                    hasStopWarnings ? 'border-amber-200 bg-amber-50' : 
+                    'border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <span className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-sm font-bold text-white bg-blue-500 rounded-full">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <h4 className="font-medium text-gray-900">{stop.stop_name}</h4>
+                        {stop.description && (
+                          <p className="mt-1 text-sm text-gray-600">{stop.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      {stop.location ? (
+                        <div className="flex items-center space-x-1 text-xs text-green-600">
+                          <MapPin size={12} />
+                          <span>Located</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-1 text-xs text-red-600">
+                          <AlertTriangle size={12} />
+                          <span>No location</span>
+                        </div>
                       )}
                     </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {stop.location ? (
-                      <div className="flex items-center space-x-1 text-xs text-green-600">
-                        <MapPin size={12} />
-                        <span>Located</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-1 text-xs text-red-600">
-                        <AlertTriangle size={12} />
-                        <span>No location</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <Volume2 className="text-green-500" size={16} />
-                    <span>
-                      {stop.media?.filter(m => m.media_type === 'audio').length || 0} audio files
-                      {(() => {
-                        const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
-                        const totalDuration = audioFiles.reduce((total, audio) => total + (audio.duration_seconds || 0), 0);
-                        return totalDuration > 0 ? ` (${formatTime(totalDuration)})` : '';
-                      })()}
-                    </span>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Volume2 className="text-green-500" size={16} />
+                      <span>
+                        {stop.media?.filter(m => m.media_type === 'audio').length || 0} audio files
+                        {stopAudioDuration > 0 && ` (${(stopMinutes).toFixed(2)} mins)`}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <ImageIcon className="text-blue-500" size={16} />
+                      <span>{stop.media?.filter(m => m.media_type === 'image').length || 0} images</span>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <ImageIcon className="text-blue-500" size={16} />
-                    <span>{stop.media?.filter(m => m.media_type === 'image').length || 0} images</span>
-                  </div>
+
+                  {stopWarnings.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      {stopWarnings.map((warning, i) => (
+                        <div 
+                          key={i} 
+                          className={`flex items-start space-x-2 p-2 text-xs rounded ${
+                            warning.severity === 'error' ? 'text-red-700' : 'text-amber-700'
+                          }`}
+                        >
+                          <AlertTriangle size={14} />
+                          <span>{warning.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Validation Status */}
+        {/* Validation Summary */}
         <div className="p-6 bg-white border border-gray-200 rounded-lg">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">Validation Status</h3>
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">Validation Summary</h3>
           
           {validationWarnings.length === 0 ? (
             <div className="flex items-center space-x-2 text-green-600">
@@ -167,45 +226,34 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
             </div>
           ) : (
             <div className="space-y-3">
-              {validationWarnings.map((warning, index) => {
-                const stop = tourData.tour_stops[warning.stopIndex];
-                return (
-                  <div
-                    key={index}
-                    className={`flex items-start space-x-2 p-3 rounded-lg ${
-                      warning.severity === 'error'
-                        ? 'bg-red-50 border border-red-200'
-                        : 'bg-amber-50 border border-amber-200'
-                    }`}
-                  >
-                    <AlertTriangle
-                      className={warning.severity === 'error' ? 'text-red-500' : 'text-amber-500'}
-                      size={16}
-                    />
-                    <div>
-                      <div className="text-sm font-medium">
-                        {stop.stop_name} (Stop {warning.stopIndex + 1})
-                      </div>
-                      <div className={`text-sm ${warning.severity === 'error' ? 'text-red-700' : 'text-amber-700'}`}>
-                        {warning.message}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              <div className={`p-3 rounded-lg ${
+                hasErrors ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'
+              }`}>
+                <div className="flex items-center space-x-2 font-medium">
+                  <AlertTriangle size={18} className={hasErrors ? 'text-red-500' : 'text-amber-500'} />
+                  <span>{hasErrors ? 'Critical Issues Found' : 'Recommendations for Improvement'}</span>
+                </div>
+                <div className="mt-2 text-sm">
+                  {hasErrors ? (
+                    <p>Please fix the critical issues marked in red before submitting.</p>
+                  ) : (
+                    <p>Your tour can be submitted, but consider addressing these recommendations for better quality.</p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
 
         {/* Submission Guidelines */}
         <div className="p-6 border border-blue-200 rounded-lg bg-blue-50">
-          <h3 className="mb-3 font-medium text-blue-900">Before You Submit</h3>
+          <h3 className="mb-3 font-medium text-blue-900">Pricing Information</h3>
           <ul className="space-y-1 text-sm text-blue-800">
-            <li>• Ensure all stops have meaningful names and descriptions</li>
-            <li>• Verify that audio content is appropriate and high quality</li>
-            <li>• Check that image content is relevant to the tour stops</li>
-            <li>• Review pricing to ensure it's competitive and fair</li>
-            <li>• Your tour will be reviewed by moderators before approval</li>
+            <li>• Price calculated at LKR {PRICE_PER_MINUTE} per exact minute of audio</li>
+            <li>• Minimum tour price: LKR {MINIMUM_PRICE.toLocaleString()}</li>
+            <li>• Current calculation: {preciseMinutes.toFixed(2)} mins × LKR 500 = {formattedPrice}</li>
+            <li>• Ensure all stops have locations and meaningful descriptions</li>
+            <li>• Verify that images are high quality and relevant to each stop</li>
           </ul>
         </div>
 
@@ -227,7 +275,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           
           {hasWarnings && !hasErrors && (
             <p className="mt-2 text-sm text-amber-600">
-              Your tour has warnings but can still be submitted. Consider addressing them for better approval chances.
+              Your tour has recommendations for improvement but can still be submitted.
             </p>
           )}
         </div>
