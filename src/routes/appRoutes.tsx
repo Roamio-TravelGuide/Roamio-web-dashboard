@@ -13,7 +13,7 @@ import SignupPage from '../pages/Auth/UnifiedSignup';
 import GuideDashboard from '../pages/Guide/Dashboard';
 import TourCreate from '../pages/Guide/TourCreate'
 import ModeratorLayout from '../layouts/ModeratorLayout';
-import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
+import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard';
 import TourDetail from '../pages/Moderator/TourDetail';
 
 
