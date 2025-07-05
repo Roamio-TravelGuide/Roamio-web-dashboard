@@ -28,6 +28,7 @@ import {
   User,
   Building,
   Coffee,
+  EyeOff,
 } from "lucide-react";
 
 interface TourPackage {
@@ -62,6 +63,16 @@ interface ReviewedPackage {
   rating: number;
 }
 
+interface HiddenPlace {
+  id: string;
+  name: string;
+  location: string;
+  type: string;
+  rating: number;
+  image: string;
+  discoveredDate: string;
+}
+
 interface User {
   id: number;
   name: string;
@@ -75,11 +86,11 @@ interface User {
   contact?: { email: string; phone: string };
   certification?: "Certified" | "Pending";
   experience?: string;
-  languagesSpoken?: string[];
   tourPackages?: TourPackage[];
   totalEarnings?: string;
   // Traveller specific fields
   downloadedPackages?: TourPackage[];
+  hiddenPlaces?: HiddenPlace[];
   // Moderator specific fields
   region?: string;
   reviewedPackages?: ReviewedPackage[];
@@ -137,6 +148,26 @@ const UserManagement: React.FC = () => {
           image:
             "https://images.pexels.com/photos/161401/fushimi-inari-taisha-shrine-kyoto-japan-temple-161401.jpeg?auto=compress&cs=tinysrgb&w=400",
           status: "Downloaded",
+        },
+      ],
+      hiddenPlaces: [
+        {
+          id: "H1",
+          name: "Secret Garden Café",
+          location: "Shibuya, Tokyo",
+          type: "Café",
+          rating: 4.9,
+          image: "https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=400",
+          discoveredDate: "2024-01-15",
+        },
+        {
+          id: "H2",
+          name: "Hidden Ramen Alley",
+          location: "Shinjuku, Tokyo",
+          type: "Restaurant",
+          rating: 4.7,
+          image: "https://images.pexels.com/photos/884600/pexels-photo-884600.jpeg?auto=compress&cs=tinysrgb&w=400",
+          discoveredDate: "2024-02-10",
         },
       ],
     },
@@ -227,7 +258,6 @@ const UserManagement: React.FC = () => {
       contact: { email: "lisa.park@email.com", phone: "+82 10 1234 5678" },
       certification: "Pending",
       experience: "3 years",
-      languagesSpoken: ["English", "Korean", "Japanese"],
       totalEarnings: "$8,230",
       tourPackages: [
         {
@@ -266,6 +296,17 @@ const UserManagement: React.FC = () => {
           image:
             "https://images.pexels.com/photos/378570/pexels-photo-378570.jpeg?auto=compress&cs=tinysrgb&w=400",
           status: "Downloaded",
+        },
+      ],
+      hiddenPlaces: [
+        {
+          id: "H3",
+          name: "Underground Jazz Club",
+          location: "Greenwich Village, NYC",
+          type: "Entertainment",
+          rating: 4.8,
+          image: "https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=400",
+          discoveredDate: "2024-01-20",
         },
       ],
     },
@@ -780,404 +821,375 @@ const UserManagement: React.FC = () => {
       {/* User Profile Modal */}
       {showGuideProfile && selectedGuide && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-3 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Profile</h2>
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[80vh] "
+           style={{
+              maxHeight: "90vh",
+              overflowY: "auto",
+              scrollbarWidth: "none", // Firefox
+              msOverflowStyle: "none", // IE/Edge
+            }}
+          >
+          
+            {/* Header */}
+            <div className="relative bg-gradient-to-r from-blue-50 to-purple-50 p-8 border-b border-gray-100">
               <button
                 onClick={() => setShowGuideProfile(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="absolute top-4 right-4 p-2 hover:bg-white hover:bg-opacity-50 rounded-full transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6 text-gray-600" />
               </button>
-            </div>
-
-            <div className="p-6">
-              {/* User Details Section */}
-              <div className="space-y-4 mb-8">
-                {/* User Info */}
-                <div className="flex items-start space-x-5">
+              
+              <div className="flex items-start space-x-6">
+                {/* Profile Image */}
+                <div className="relative">
                   <img
                     src={selectedGuide.avatar}
                     alt={selectedGuide.name}
-                    className="w-28 h-28 rounded-full object-cover"
+                    className="w-24 h-24 rounded-2xl object-cover shadow-lg border-4 border-white"
                   />
-                  <div className="flex-1">
-                    <div className="flex items-center flex-wrap gap-6 mb-4">
-                      {/* Name and Email stacked vertically */}
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">
-                          {selectedGuide.name}
-                        </h3>
-                        <p className="text-base text-gray-500">
-                          {selectedGuide.email}
-                        </p>
-                      </div>
+                  <div className={`absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-3 border-white ${
+                    selectedGuide.status === 'Active' ? 'bg-green-400' : 'bg-gray-400'
+                  }`}></div>
+                </div>
 
-                      {/* Certification and Status badges, aligned next to name/email */}
-                      <div className="flex items-center space-x-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                            selectedGuide.status
-                          )}`}
-                        >
-                          {selectedGuide.status}
-                        </span>
+                {/* User Info */}
+                <div className="flex-1">
+                  <div className="flex items-center space-x-4 mb-3">
+                    <h2 className="text-3xl font-bold text-gray-900">{selectedGuide.name}</h2>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(selectedGuide.type)}`}>
+                      {selectedGuide.type}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedGuide.status)}`}>
+                      {selectedGuide.status}
+                    </span>
+                  </div>
+
+                  {/* Stats for Travel Guides */}
+                  {selectedGuide.type === "Travel Guide" && (
+                    <div className="grid grid-cols-3 gap-4 mt-6">
+                      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            <DollarSign className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-gray-900">{selectedGuide.totalEarnings}</p>
+                            <p className="text-sm text-gray-600">Total Earnings</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Package className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-gray-900">{selectedGuide.tourPackages?.length || 0}</p>
+                            <p className="text-sm text-gray-600">Tour Packages</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-purple-100 rounded-lg">
+                            <Briefcase className="w-5 h-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-gray-900">{selectedGuide.experience}</p>
+                            <p className="text-sm text-gray-600">Experience</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
-                    {/* Stats Cards for Travel Guides */}
-                    {selectedGuide.type === "Travel Guide" && (
-                      <div className="grid grid-cols-2 gap-12 mb-4 w-[200px] ]">
-                        <div className="bg-emerald-50 rounded-xl border relative flex flex-col items-start px-2   w-[100px] h-[90px]">
-                          {/* Top right icon */}
-                          <div className="absolute top-2 left-1">
-                            <DollarSign className="w-5 h-5 font-bold text-black" />
-                          </div>
-                          {/* Card content */}
-                          <div className="flex flex-col items-start mt-8">
-                            <p className="text-base font-bold text-black">
-                              {selectedGuide.totalEarnings}
-                            </p>
-                            <p className="text-sm text-black  mt-1 font-normal">
-                              Earnings
-                            </p>
-                          </div>
-                        </div>
-                        <div className="bg-blue-50 rounded-xl border relative flex flex-col items-start px-2   w-[100px] h-[90px]">
-                          {/* Top right icon */}
-                          <div className="absolute top-2 left-1">
-                            <Package className="w-5 h-5 font-bold text-black" />
-                          </div>
-                          {/* Card content */}
-                          <div className="flex flex-col items-start mt-8">
-                            <p className="text-base font-bold text-black">
-                              {selectedGuide.tourPackages?.length || 0}
-                            </p>
-                            <p className="text-sm text-black  mt-1 font-normal">
-                              Packages
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-3 gap-2 rounded-xl p-3 border text-sm bg-blue-50">
-                      {selectedGuide.experience && (
-                        <div className="flex items-center">
-                          <Briefcase className="w-5 h-5 text-black mr-1" />
-
-                          <span className="ml-2 font-medium">
-                            {selectedGuide.experience}
-                          </span>
-                        </div>
-                      )}
-                      {selectedGuide.documents && (
-                        <div>
-                          <div className="flex items-center  text-sm text-gray-600">
-                            <Paperclip className="w-5 h-5 text-black" />
-                            <a
-                              href="#"
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              {selectedGuide.documents}
-                            </a>
-                          </div>
-                        </div>
-                      )}
+            <div className="p-8 space-y-8">
+              {/* Contact Information */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <Phone className="w-5 h-5 mr-2 text-teal-600" />
+                  Contact Information
+                </h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center space-x-3">
+                      <Mail className="w-5 h-5 text-blue-500" />
                       <div>
-                        <span className="text-gray-500 flex items-center">
-                          <Phone className="w-4 h-4 mr-1 text-black" />
-                          <span className="ml-1 font-medium">
-                            {selectedGuide.contact?.phone}
-                          </span>
-                        </span>
+                        <p className="text-sm text-gray-600">Email Address</p>
+                        <p className="font-medium text-gray-900">{selectedGuide.contact?.email}</p>
                       </div>
-                      <div></div>
-                      {selectedGuide.type === "Traveller" && (
-                        <div>
-                          <span className="text-gray-500">Downloads:</span>
-                          <span className="ml-2 font-medium">
-                            {selectedGuide.downloadedPackages?.length || 0}{" "}
-                          </span>
-                        </div>
-                      )}
-                      {selectedGuide.type === "Vendor" && (
-                        <div>
-                          <span className="text-gray-500">Location:</span>
-                          <span className="ml-2 font-medium">
-                            {selectedGuide.location}
-                          </span>
-                        </div>
-                      )}
-                      {selectedGuide.type === "Moderator" && (
-                        <>
-                          <div>
-                            <span className="text-gray-500">Region:</span>
-                            <span className="ml-2 font-medium">
-                              {selectedGuide.region}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Reviewed:</span>
-                            <span className="ml-2 font-medium">
-                              {selectedGuide.reviewedPackages?.length || 0}{" "}
-                              packages
-                            </span>
-                          </div>
-                        </>
-                      )}
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center space-x-3">
+                      <Phone className="w-5 h-5 text-green-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">Phone Number</p>
+                        <p className="font-medium text-gray-900">{selectedGuide.contact?.phone}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Content based on user type */}
-              {selectedGuide.type === "Travel Guide" &&
-                selectedGuide.tourPackages && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-4">
-                      Tour Packages ({selectedGuide.tourPackages.length})
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {selectedGuide.tourPackages.map((tour) => (
-                        <div
-                          key={tour.id}
-                          className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
-                        >
-                          <div className="relative">
-                            <img
-                              src={tour.image}
-                              alt={tour.title}
-                              className="w-full h-32 object-cover"
-                            />
-                            <div className="absolute top-3 right-3">
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(
-                                  tour.status
-                                )}`}
-                              >
-                                {tour.status}
-                              </span>
-                            </div>
+              {/* Additional Info for Travel Guides */}
+              {selectedGuide.type === "Travel Guide" && (
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <Award className="w-5 h-5 mr-2 text-teal-600" />
+                    Professional Details
+                  </h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-center space-x-3">
+                        {getCertificationIcon(selectedGuide.certification!)}
+                        <div>
+                          <p className="text-sm text-gray-600">Certification Status</p>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCertificationColor(selectedGuide.certification!)}`}>
+                            {selectedGuide.certification}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {selectedGuide.documents && (
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center space-x-3">
+                          <Paperclip className="w-5 h-5 text-gray-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Documents</p>
+                            <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">
+                              {selectedGuide.documents}
+                            </a>
                           </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
-                          <div className="p-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <h5 className="font-semibold text-gray-900 text-sm">
-                                {tour.title}
-                              </h5>
-                              <span className="text-lg font-bold text-teal-600">
-                                ${tour.price}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center space-x-1 text-sm text-gray-600 mb-3">
-                              <MapPin className="w-3 h-3" />
-                              <span>{tour.location}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between text-sm mb-3">
-                              <div className="flex items-center space-x-3">
-                                <div className="flex items-center space-x-1">
-                                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                                  <span>{tour.rating}</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <Download className="w-3 h-3 text-gray-400" />
-                                  <span>{tour.downloads}</span>
-                                </div>
+              {/* Content based on user type */}
+              {selectedGuide.type === "Travel Guide" && selectedGuide.tourPackages && (
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <Package className="w-5 h-5 mr-2 text-teal-600" />
+                    Tour Packages ({selectedGuide.tourPackages.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {selectedGuide.tourPackages.map((tour) => (
+                      <div key={tour.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300">
+                        <div className="relative">
+                          <img src={tour.image} alt={tour.title} className="w-full h-48 object-cover" />
+                          <div className="absolute top-3 right-3">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(tour.status)}`}>
+                              {tour.status}
+                            </span>
+                          </div>
+                          <div className="absolute bottom-3 left-3 bg-white bg-opacity-90 rounded-lg px-2 py-1">
+                            <span className="text-lg font-bold text-teal-600">${tour.price}</span>
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <h4 className="font-semibold text-gray-900 mb-2">{tour.title}</h4>
+                          <div className="flex items-center space-x-1 text-sm text-gray-600 mb-3">
+                            <MapPin className="w-4 h-4" />
+                            <span>{tour.location}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center space-x-1">
+                                <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                <span>{tour.rating}</span>
                               </div>
                               <div className="flex items-center space-x-1">
-                                <Clock className="w-3 h-3 text-gray-400" />
-                                <span>{tour.duration}</span>
+                                <Download className="w-4 h-4 text-gray-400" />
+                                <span>{tour.downloads}</span>
                               </div>
                             </div>
-
-                            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                              <div className="flex space-x-2">
-                                <button
-                                  className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                  title="View"
-                                >
-                                  <Eye className="w-4 h-4 text-gray-600" />
-                                </button>
-                              </div>
-                              <button
-                                onClick={() => handleDeletePackage(tour.id)}
-                                className="px-3 py-1 bg-red-100 text-red-700 text-xs rounded hover:bg-red-200 transition-colors"
-                              >
-                                Delete
-                              </button>
+                            <div className="flex items-center space-x-1">
+                              <Clock className="w-4 h-4 text-gray-400" />
+                              <span>{tour.duration}</span>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
-              {/* Traveller Downloaded Packages */}
-              {selectedGuide.type === "Traveller" &&
-                selectedGuide.downloadedPackages && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-4">
-                      Downloaded Tour Packages (
-                      {selectedGuide.downloadedPackages.length})
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedGuide.downloadedPackages.map((tour) => (
-                        <div
-                          key={tour.id}
-                          className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
-                        >
-                          <div className="relative">
-                            <img
-                              src={tour.image}
-                              alt={tour.title}
-                              className="w-full h-32 object-cover"
-                            />
-                          </div>
-
-                          <div className="p-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <h5 className="font-semibold text-gray-900 text-sm">
-                                {tour.title}
-                              </h5>
-                              <span className="text-lg font-bold text-teal-600">
-                                ${tour.price}
-                              </span>
+              {/* Traveller Content */}
+              {selectedGuide.type === "Traveller" && (
+                <div className="space-y-8">
+                  {/* Downloaded Packages */}
+                  {selectedGuide.downloadedPackages && (
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                        <Download className="w-5 h-5 mr-2 text-teal-600" />
+                        Downloaded Packages ({selectedGuide.downloadedPackages.length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {selectedGuide.downloadedPackages.map((tour) => (
+                          <div key={tour.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300">
+                            <div className="relative">
+                              <img src={tour.image} alt={tour.title} className="w-full h-40 object-cover" />
+                              <div className="absolute bottom-3 left-3 bg-white bg-opacity-90 rounded-lg px-2 py-1">
+                                <span className="text-lg font-bold text-teal-600">${tour.price}</span>
+                              </div>
                             </div>
-
-                            <div className="flex items-center space-x-1 text-sm text-gray-600 mb-3">
-                              <MapPin className="w-3 h-3" />
-                              <span>{tour.location}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between text-sm">
-                              <div className="flex items-center space-x-3">
+                            <div className="p-4">
+                              <h4 className="font-semibold text-gray-900 mb-2">{tour.title}</h4>
+                              <div className="flex items-center space-x-1 text-sm text-gray-600 mb-3">
+                                <MapPin className="w-4 h-4" />
+                                <span>{tour.location}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
                                 <div className="flex items-center space-x-1">
-                                  <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
                                   <span>{tour.rating}</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
-                                  <Clock className="w-3 h-3 text-gray-400" />
+                                  <Clock className="w-4 h-4 text-gray-400" />
                                   <span>{tour.duration}</span>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {/* Hidden Places */}
+                  {selectedGuide.hiddenPlaces && (
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                        <EyeOff className="w-5 h-5 mr-2 text-teal-600" />
+                        Hidden Places ({selectedGuide.hiddenPlaces.length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {selectedGuide.hiddenPlaces.map((place) => (
+                          <div key={place.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300">
+                            <div className="relative">
+                              <img src={place.image} alt={place.name} className="w-full h-40 object-cover" />
+                              <div className="absolute top-3 right-3 bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+                                {place.type}
+                              </div>
+                            </div>
+                            <div className="p-4">
+                              <h4 className="font-semibold text-gray-900 mb-2">{place.name}</h4>
+                              <div className="flex items-center space-x-1 text-sm text-gray-600 mb-3">
+                                <MapPin className="w-4 h-4" />
+                                <span>{place.location}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <div className="flex items-center space-x-1">
+                                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                  <span>{place.rating}</span>
+                                </div>
+                                <div className="flex items-center space-x-1 text-gray-500">
+                                  <Calendar className="w-4 h-4" />
+                                  <span>{new Date(place.discoveredDate).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Vendor Sponsored Places */}
-              {selectedGuide.type === "Vendor" &&
-                selectedGuide.sponsoredPlaces && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-4">
-                      Sponsored Places ({selectedGuide.sponsoredPlaces.length})
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedGuide.sponsoredPlaces.map((place) => (
-                        <div
-                          key={place.id}
-                          className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
-                        >
-                          <div className="relative">
-                            <img
-                              src={place.image}
-                              alt={place.name}
-                              className="w-full h-32 object-cover"
-                            />
+              {selectedGuide.type === "Vendor" && selectedGuide.sponsoredPlaces && (
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <Building className="w-5 h-5 mr-2 text-teal-600" />
+                    Sponsored Places ({selectedGuide.sponsoredPlaces.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {selectedGuide.sponsoredPlaces.map((place) => (
+                      <div key={place.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300">
+                        <div className="relative">
+                          <img src={place.image} alt={place.name} className="w-full h-40 object-cover" />
+                          <div className="absolute top-3 right-3 bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs font-medium">
+                            {place.sponsorshipType}
                           </div>
-
-                          <div className="p-4">
-                            <div className="flex items-start justify-between mb-2">
-                              <h5 className="font-semibold text-gray-900 text-sm">
-                                {place.name}
-                              </h5>
-                              <span className="text-sm font-bold text-teal-600">
-                                ${place.monthlyFee}/mo
-                              </span>
-                            </div>
-
-                            <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
-                              <Building className="w-3 h-3" />
-                              <span>{place.type}</span>
-                            </div>
-
-                            <div className="flex items-center space-x-1 text-sm text-gray-600 mb-3">
-                              <MapPin className="w-3 h-3" />
-                              <span>{place.location}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between text-sm">
-                              <div className="flex items-center space-x-1">
-                                <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                                <span>{place.rating}</span>
-                              </div>
-                              <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                                {place.sponsorshipType}
-                              </span>
-                            </div>
+                          <div className="absolute bottom-3 left-3 bg-white bg-opacity-90 rounded-lg px-2 py-1">
+                            <span className="text-sm font-bold text-teal-600">${place.monthlyFee}/mo</span>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        <div className="p-4">
+                          <h4 className="font-semibold text-gray-900 mb-2">{place.name}</h4>
+                          <div className="flex items-center space-x-1 text-sm text-gray-600 mb-2">
+                            <Building className="w-4 h-4" />
+                            <span>{place.type}</span>
+                          </div>
+                          <div className="flex items-center space-x-1 text-sm text-gray-600 mb-3">
+                            <MapPin className="w-4 h-4" />
+                            <span>{place.location}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                            <span className="text-sm">{place.rating}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
               {/* Moderator Reviewed Packages */}
-              {selectedGuide.type === "Moderator" &&
-                selectedGuide.reviewedPackages && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-4">
-                      Reviewed Packages ({selectedGuide.reviewedPackages.length}
-                      )
-                    </h4>
-                    <div className="space-y-4">
-                      {selectedGuide.reviewedPackages.map((review) => (
-                        <div
-                          key={review.id}
-                          className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <h5 className="font-semibold text-gray-900">
-                              {review.title}
-                            </h5>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                review.status === "Approved"
-                                  ? "bg-emerald-100 text-emerald-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {review.status}
-                            </span>
+              {selectedGuide.type === "Moderator" && selectedGuide.reviewedPackages && (
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <Award className="w-5 h-5 mr-2 text-teal-600" />
+                    Reviewed Packages ({selectedGuide.reviewedPackages.length})
+                  </h3>
+                  <div className="space-y-4">
+                    {selectedGuide.reviewedPackages.map((review) => (
+                      <div key={review.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-start justify-between mb-4">
+                          <h4 className="font-semibold text-gray-900 text-lg">{review.title}</h4>
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            review.status === "Approved" ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
+                          }`}>
+                            {review.status}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-6 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <User className="w-4 h-4 text-gray-500" />
+                            <div>
+                              <p className="text-gray-600">Guide</p>
+                              <p className="font-medium text-gray-900">{review.guide}</p>
+                            </div>
                           </div>
-
-                          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4 text-gray-500" />
                             <div>
-                              <span className="font-medium">Guide:</span>{" "}
-                              {review.guide}
+                              <p className="text-gray-600">Review Date</p>
+                              <p className="font-medium text-gray-900">{new Date(review.reviewDate).toLocaleDateString()}</p>
                             </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
                             <div>
-                              <span className="font-medium">Review Date:</span>{" "}
-                              {new Date(review.reviewDate).toLocaleDateString()}
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <span className="font-medium">Rating:</span>
-                              <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                              <span>{review.rating}</span>
+                              <p className="text-gray-600">Rating</p>
+                              <p className="font-medium text-gray-900">{review.rating}</p>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1187,7 +1199,7 @@ const UserManagement: React.FC = () => {
       {showEditGuide && selectedGuide && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
           <div
-            className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh]"
+            className="bg-white rounded-xl max-w-xl w-full max-h-[80vh]"
             style={{
               maxHeight: "90vh",
               overflowY: "auto",
