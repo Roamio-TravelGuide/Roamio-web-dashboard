@@ -12,147 +12,12 @@ import {
   EyeOff, 
   Phone, 
   Building,
-  CreditCard,
+  CreditCard
 } from 'lucide-react';
-
-// Configuration Data
-const userTypes = [
-  {
-    id: 'traveler',
-    title: 'Traveler',
-    description: 'Discover amazing places and connect with local guides for unforgettable experiences.',
-    icon: MapPin,
-    gradient: 'from-blue-500 to-teal-500',
-    subtitle: 'Start your journey of discovery',
-    levels: [1]
-  },
-  {
-    id: 'guide',
-    title: 'Local Guide',
-    description: 'Share your local knowledge and help travelers discover the hidden gems of your area.',
-    icon: Users,
-    gradient: 'from-emerald-500 to-teal-500',
-    subtitle: 'Share your local expertise',
-    levels: [1]
-  },
-  {
-    id: 'restaurant',
-    title: 'Restaurant',
-    description: 'Showcase your culinary offerings and attract food lovers from around the world.',
-    icon: ChefHat,
-    gradient: 'from-blue-500 to-teal-500',
-    subtitle: 'Showcase your culinary excellence',
-    levels: [1, 2]
-  }
-];
-
-const fieldConfigs = [
-  {
-    key: 'name',
-    label: 'Full Name',
-    type: 'text',
-    placeholder: 'Enter your full name',
-    icon: User,
-    required: true,
-    showFor: ['traveler', 'guide', 'restaurant'],
-    level: 1
-  },
-  {
-    key: 'email',
-    label: 'Email Address',
-    type: 'email',
-    placeholder: 'Enter your email',
-    icon: Mail,
-    required: true,
-    showFor: ['traveler', 'guide', 'restaurant'],
-    level: 1
-  },
-  {
-    key: 'contactNumber',
-    label: 'Contact Number',
-    type: 'tel',
-    placeholder: 'Enter your contact number',
-    icon: Phone,
-    required: true,
-    showFor: ['traveler', 'guide', 'restaurant'],
-    level: 1
-  },
-  {
-    key: 'guideId',
-    label: 'Guide License ID',
-    type: 'text',
-    placeholder: 'Enter your guide license ID',
-    icon: CreditCard,
-    required: true,
-    showFor: ['guide'],
-    level: 1
-  },
-  {
-    key: 'password',
-    label: 'Password',
-    type: 'password',
-    placeholder: 'Create a strong password',
-    icon: Lock,
-    required: true,
-    showFor: ['traveler', 'guide'],
-    level: 1
-  },
-  {
-    key: 'confirmPassword',
-    label: 'Confirm Password',
-    type: 'password',
-    placeholder: 'Confirm your password',
-    icon: Lock,
-    required: true,
-    showFor: ['traveler', 'guide'],
-    level: 1
-  },
-  // Restaurant Level 1
-  {
-    key: 'restaurantType',
-    label: 'Restaurant Type',
-    type: 'text',
-    placeholder: 'e.g., Italian, Asian, Casual Dining',
-    icon: ChefHat,
-    required: true,
-    showFor: ['restaurant'],
-    level: 1
-  },
-  {
-    key: 'address',
-    label: 'Business Address',
-    type: 'text',
-    placeholder: 'Enter your business address',
-    icon: Building,
-    required: true,
-    showFor: ['restaurant'],
-    level: 1
-  },
-  // Restaurant Level 2
-  {
-    key: 'password',
-    label: 'Password',
-    type: 'password',
-    placeholder: 'Create a strong password',
-    icon: Lock,
-    required: true,
-    showFor: ['restaurant'],
-    level: 2
-  },
-  {
-    key: 'confirmPassword',
-    label: 'Confirm Password',
-    type: 'password',
-    placeholder: 'Confirm your password',
-    icon: Lock,
-    required: true,
-    showFor: ['restaurant'],
-    level: 2
-  }
-];
 
 const UnifiedSignup = () => {
   const [selectedUserType, setSelectedUserType] = useState(null);
+  const [currentLevel, setCurrentLevel] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -170,6 +35,142 @@ const UnifiedSignup = () => {
   });
   
   const [errors, setErrors] = useState({});
+
+  // Configuration Data
+  const userTypes = [
+    {
+      id: 'traveler',
+      title: 'Traveler',
+      description: 'Discover amazing places and connect with local guides for unforgettable experiences.',
+      icon: MapPin,
+      gradient: 'from-blue-500 to-teal-500',
+      subtitle: 'Start your journey of discovery',
+      levels: [1]
+    },
+    {
+      id: 'guide',
+      title: 'Local Guide',
+      description: 'Share your local knowledge and help travelers discover the hidden gems of your area.',
+      icon: Users,
+      gradient: 'from-emerald-500 to-teal-500',
+      subtitle: 'Share your local expertise',
+      levels: [1]
+    },
+    {
+      id: 'restaurant',
+      title: 'Restaurant',
+      description: 'Showcase your culinary offerings and attract food lovers from around the world.',
+      icon: ChefHat,
+      gradient: 'from-blue-500 to-teal-500',
+      subtitle: 'Showcase your culinary excellence',
+      levels: [1, 2]
+    }
+  ];
+
+  const fieldConfigs = [
+    {
+      key: 'name',
+      label: 'Full Name',
+      type: 'text',
+      placeholder: 'Enter your full name',
+      icon: User,
+      required: true,
+      showFor: ['traveler', 'guide', 'restaurant'],
+      level: 1
+    },
+    {
+      key: 'email',
+      label: 'Email Address',
+      type: 'email',
+      placeholder: 'Enter your email',
+      icon: Mail,
+      required: true,
+      showFor: ['traveler', 'guide', 'restaurant'],
+      level: 1
+    },
+    {
+      key: 'contactNumber',
+      label: 'Contact Number',
+      type: 'tel',
+      placeholder: 'Enter your contact number',
+      icon: Phone,
+      required: true,
+      showFor: ['traveler', 'guide', 'restaurant'],
+      level: 1
+    },
+    {
+      key: 'guideId',
+      label: 'Guide License ID',
+      type: 'text',
+      placeholder: 'Enter your guide license ID',
+      icon: CreditCard,
+      required: true,
+      showFor: ['guide'],
+      level: 1
+    },
+    {
+      key: 'password',
+      label: 'Password',
+      type: 'password',
+      placeholder: 'Create a strong password',
+      icon: Lock,
+      required: true,
+      showFor: ['traveler', 'guide'],
+      level: 1
+    },
+    {
+      key: 'confirmPassword',
+      label: 'Confirm Password',
+      type: 'password',
+      placeholder: 'Confirm your password',
+      icon: Lock,
+      required: true,
+      showFor: ['traveler', 'guide'],
+      level: 1
+    },
+    // Restaurant Level 1
+    {
+      key: 'restaurantType',
+      label: 'Restaurant Type',
+      type: 'text',
+      placeholder: 'e.g., Italian, Asian, Casual Dining',
+      icon: ChefHat,
+      required: true,
+      showFor: ['restaurant'],
+      level: 1
+    },
+    {
+      key: 'address',
+      label: 'Business Address',
+      type: 'text',
+      placeholder: 'Enter your business address',
+      icon: Building,
+      required: true,
+      showFor: ['restaurant'],
+      level: 1
+    },
+    // Restaurant Level 2
+    {
+      key: 'password',
+      label: 'Password',
+      type: 'password',
+      placeholder: 'Create a strong password',
+      icon: Lock,
+      required: true,
+      showFor: ['restaurant'],
+      level: 2
+    },
+    {
+      key: 'confirmPassword',
+      label: 'Confirm Password',
+      type: 'password',
+      placeholder: 'Confirm your password',
+      icon: Lock,
+      required: true,
+      showFor: ['restaurant'],
+      level: 2
+    }
+  ];
 
   // Get configuration for selected user type
   const config = selectedUserType ? userTypes.find(type => type.id === selectedUserType) : null;
@@ -237,6 +238,26 @@ const UnifiedSignup = () => {
     }, 300);
   };
 
+  const handleNextLevel = () => {
+    if (validateCurrentLevel()) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentLevel(2);
+        setErrors({});
+        setIsAnimating(false);
+      }, 300);
+    }
+  };
+
+  const handlePreviousLevel = () => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentLevel(1);
+      setErrors({});
+      setIsAnimating(false);
+    }, 300);
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -253,7 +274,7 @@ const UnifiedSignup = () => {
     }
   };
 
-  const validateForm = () => {
+  const validateCurrentLevel = () => {
     const newErrors = {};
     
     if (!selectedUserType) return false;
@@ -329,21 +350,10 @@ const UnifiedSignup = () => {
     }
   };
 
-  // Animation effect for cards
-  useEffect(() => {
-    if (!selectedUserType) {
-      const cards = document.querySelectorAll(`.${styles.fadeInUp}`);
-      cards.forEach((card, index) => {
-        setTimeout(() => {
-          card.style.opacity = '1';
-          card.style.transform = 'translateY(0)';
-        }, index * 150);
-      });
-    }
-  }, [selectedUserType]);
-
   const renderFormField = (fieldConfig, index) => {
-    if (!selectedUserType || !fieldConfig.showFor.includes(selectedUserType)) {
+    if (!selectedUserType || 
+        !fieldConfig.showFor.includes(selectedUserType) || 
+        fieldConfig.level !== currentLevel) {
       return null;
     }
 
@@ -419,7 +429,7 @@ const UnifiedSignup = () => {
             <p className="mt-4 text-xl text-white/80">Choose your role to get started</p>
             <p className="text-gray-400">
               Existing member? 
-              <a href="/login" className="ml-2 font-medium text-teal-400 transition-colors duration-200 hover:text-teal-300">
+              <a href="/signin" className="ml-2 font-medium text-teal-400 transition-colors duration-200 hover:text-teal-300">
                 Access your account
               </a>
             </p>
@@ -485,52 +495,25 @@ const UnifiedSignup = () => {
   const maxLevel = Math.max(...config.levels);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white">
-      {/* Left Visual Panel */}
-      <div className={`fixed inset-y-0 left-0 w-[70%]  transition-all duration-500 `}>
-        <div className="absolute inset-0">
-          <img 
-            src={config.backgroundImage}
-            alt={`${config.title} Background`}
-            className="absolute inset-0 object-cover w-full h-full"
-            onError={(e) => {
-              console.error('Image failed to load:', config.backgroundImage);
-              // Fallback to gradient background
-              e.currentTarget.style.display = 'none';
-              const fallbackDiv = document.createElement('div');
-              fallbackDiv.className = `absolute inset-0 bg-gradient-to-br ${config.gradient}`;
-              e.currentTarget.parentNode?.appendChild(fallbackDiv);
-            }}
-          />
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-      </div>
-
-      {/* Right Form Panel */}
-      <div className={`fixed inset-y-0 right-0 w-[30%]  overflow-y-auto transition-all duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] ${isAnimating ? 'opacity-0 translate-x-full' : 'opacity-100 translate-x-0'}`}>
-        <div className="flex items-center justify-center min-h-full p-8">
-          <div className={`w-full max-w-md transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-            <div >
-              <div className="p-8 sm:p-10">
-                <button 
-                  onClick={handleBack}
-                  className="inline-flex items-center mb-6 text-sm font-medium text-gray-600 transition-all duration-200 hover:text-teal-600 hover:translate-x-1 "
-                >
-                  Back to selection
-                </button>
-
-                <div className={`mb-8 text-center transition-all duration-500 delay-200 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-                  <div className="flex justify-center mb-4">
-                    <div className={`p-3 bg-gradient-to-r ${config.gradient} rounded-full transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'scale-0' : 'scale-100'}`}>
-                      <IconComponent className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
-                  <h1 className="mb-2 text-2xl font-bold text-gray-800">
-                    {config.title}
-                  </h1>
-                  <p className="text-gray-600">
-                    {config.subtitle}
-                  </p>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-950 via-teal-800 to-teal-900">
+      <AnimatedBackground />
+      
+      {/* Form Container */}
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-8 ">
+        <div className={`w-full max-w-lg transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+          <div className="p-8 border shadow-2xl sm:p-10 border-white/30 bg-white/10 backdrop-blur-xl rounded-2xl">
+            <button 
+              onClick={handleBack}
+              className="inline-flex items-center mb-6 text-sm font-medium transition-all duration-200 text-white/80 hover:text-white hover:translate-x-1"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to selection
+            </button>
+            
+            <div className={`mb-8 text-center transition-all duration-500 delay-200 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+              <div className="flex justify-center mb-4">
+                <div className={`p-3 bg-gradient-to-r ${config.gradient} rounded-full transition-all duration-700 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'scale-0' : 'scale-100'}`}>
+                  <IconComponent className="w-8 h-8 text-white" />
                 </div>
               </div>
               <h1 className="mb-2 text-2xl font-bold text-white">
