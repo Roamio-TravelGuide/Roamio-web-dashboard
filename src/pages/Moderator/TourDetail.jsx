@@ -6,6 +6,7 @@ import {
   Check, AlertCircle, Headphones, Image as ImageIcon, Video, User,
   CheckCircle, XCircle, Eye, Loader2, ChevronDown, ChevronRight
 } from 'lucide-react';
+import TourStopsMap from '../../components/tour/TourStopsMap';
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
@@ -735,22 +736,16 @@ const TourDetail = () => {
               </p>
             )}
           </div>
-          <div className="relative h-full">
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-              <div className="p-6 text-center">
-                <MapPin className="w-16 h-16 mx-auto mb-4 text-blue-400" />
-                <h3 className="mb-2 text-xl font-medium text-gray-700">Map View</h3>
-                <p className="max-w-sm mb-4 text-gray-500">
-                  Interactive map showing the selected tour stop and route will be displayed here.
-                </p>
-                {selectedStop && (
-                  <div className="text-sm text-gray-400">
-                    <p>Stop: {selectedStop.stop_name}</p>
-                    <p>Sequence: #{selectedStop.sequence_no}</p>
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="relative h-full" style={{ minHeight: 400 }}>
+            <TourStopsMap
+              stops={tour.tour_stops?.map(stop => ({
+                ...stop,
+                // Ensure location is present and valid
+                location: stop.location || { latitude: 0, longitude: 0 },
+              })) || []}
+              selectedStopId={selectedStopId}
+              onSelectStop={s => setSelectedStopId(s.id)}
+            />
           </div>
         </div>
       </div>
