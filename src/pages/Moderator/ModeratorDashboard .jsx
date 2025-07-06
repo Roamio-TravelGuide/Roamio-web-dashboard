@@ -18,7 +18,7 @@ const ModeratorDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage] = useState(5);
+  const [itemsPerPage] = useState(3);
 
   const [selectedCities, setSelectedCities] = useState({
     galle: false,
@@ -288,7 +288,7 @@ const ModeratorDashboard = () => {
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* Sidebar */}
           <aside className="w-full lg:w-72">
-            <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
+            <div className="p-6 border shadow-lg bg-white/60 backdrop-blur-md border-white/30 rounded-xl" style={{boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)'}}>
               <div className="mb-6">
                 <h2 className="text-xl font-semibold text-gray-800">Welcome Back!</h2>
                 <p className="mt-1 text-sm text-gray-500">
@@ -418,8 +418,7 @@ const ModeratorDashboard = () => {
                     tours.map((tour) => (
                       <div 
                         key={tour.id}
-                        className="overflow-hidden bg-white rounded-lg shadow-sm transition-transform hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-                      >
+                        className="overflow-hidden bg-white/60 backdrop-blur-md rounded-lg shadow-lg transition-transform hover:shadow-xl hover:-translate-y-0.5 cursor-pointer border border-white/30" style={{boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)'}}>
                         <div className="flex flex-col md:flex-row">
                           <div className="flex-shrink-0 w-full h-48 md:w-64 md:h-auto">
                             <img 
