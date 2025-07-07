@@ -1,0 +1,27 @@
+/* Hide scrollbars globally for .no-scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ModeratorDashboard z-index and card glass effects */
+.navbar-fixed, .navbar-sticky, .sticky.top-0 {
+  z-index: 50 !important;
+}
+.dashboard-main-area {
+  z-index: 1;
+  position: relative;
+}
+.tour-card-glass {
+  z-index: 1 !important;
+}
+.tour-card-glass:hover {
+  z-index: 2 !important;
+}
+/* Removed blur effect on card grid hover */
+/* .tour-card-glass:hover style retained for card pop effect, but no blur on siblings */
+.tour-card-glass:hover {
+  z-index: 30;
+  transform: scale(1.08) translateY(-8px);
+  box-shadow: 0 12px 48px 0 rgba(31,38,135,0.22), 0 2px 8px 0 rgba(0,0,0,0.08);
+  background: rgba(255,255,255,1);
+  border-color: #bae6fd;
+}
