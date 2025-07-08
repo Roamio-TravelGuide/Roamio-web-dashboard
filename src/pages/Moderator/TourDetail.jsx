@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { 
-  ArrowLeft, Play, Pause, MapPin, Clock, Volume2, X, 
+  ArrowLeft, Play, Pause, MapPin, Clock, Volume2, X,  
   Check, AlertCircle, Headphones, Image as ImageIcon, Video, User,
   CheckCircle, XCircle, Eye, Loader2, ChevronDown, ChevronRight
 } from 'lucide-react';
+import TourStopsMap from '../../components/tour/TourStopsMap';
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
@@ -44,20 +45,22 @@ const MediaCard = ({ media, onPlay, onPreview, isPlaying = false }) => {
   };
 
   return (
-    <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-xs">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-start space-x-3">
-          <div className="p-2 rounded-lg bg-blue-50">
+    <div className="p-3 bg-white border border-gray-200 rounded-lg shadow-xs">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start space-x-2">
+          <div className="p-1.5 rounded-lg bg-blue-50">
             {getMediaIcon()}
           </div>
-          <div>
-            <h4 className="font-medium text-gray-900">
+          <div className="overflow-hidden">
+            <h4 className="font-medium text-gray-900 truncate">
               {media.media_type === 'audio' ? 'Audio' : media.media_type === 'image' ? 'Image' : 'Video'} #{media.id}
             </h4>
-            {media.duration_seconds && (
-              <p className="text-sm text-gray-500">Duration: {formatDuration(media.duration_seconds)}</p>
-            )}
-            {media.format && <p className="text-sm text-gray-500">Format: {media.format}</p>}
+            <div className="flex flex-wrap gap-x-2">
+              {media.duration_seconds && (
+                <p className="text-xs text-gray-500">Duration: {formatDuration(media.duration_seconds)}</p>
+              )}
+              {media.format && <p className="text-xs text-gray-500">Format: {media.format}</p>}
+            </div>
           </div>
         </div>
         <StatusBadge status={media.status || 'pending'} />
@@ -66,33 +69,33 @@ const MediaCard = ({ media, onPlay, onPreview, isPlaying = false }) => {
       {media.media_type === 'audio' && onPlay && (
         <button 
           onClick={onPlay}
-          className="flex items-center justify-center w-full px-4 py-2 mb-3 space-x-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center w-full px-3 py-1.5 mb-2 space-x-1 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
           <span>{isPlaying ? 'Pause' : 'Play'}</span>
         </button>
       )}
 
       {media.media_type === 'image' && onPreview && (
-        <div className="mb-3">
+        <div className="mb-2">
           <img 
             src={media.url} 
             alt={`Image ${media.id}`}
-            className="object-cover w-full h-40 rounded-lg cursor-pointer hover:opacity-90"
+            className="object-cover w-full h-32 rounded-lg cursor-pointer hover:opacity-90"
             onClick={onPreview}
           />
           <button 
             onClick={onPreview}
-            className="flex items-center justify-center w-full px-4 py-2 mt-2 space-x-2 text-blue-600 rounded-lg bg-blue-50 hover:bg-blue-100"
+            className="flex items-center justify-center w-full px-3 py-1.5 mt-1.5 space-x-1 text-sm text-blue-600 rounded-lg bg-blue-50 hover:bg-blue-100"
           >
-            <Eye className="w-4 h-4" />
-            <span>View Full Size</span>
+            <Eye className="w-3 h-3" />
+            <span>View</span>
           </button>
         </div>
       )}
 
       {media.media_type === 'video' && (
-        <div className="w-full h-40 mb-3 overflow-hidden bg-black rounded-lg">
+        <div className="w-full h-32 mb-2 overflow-hidden bg-black rounded-lg">
           <video 
             src={media.url} 
             className="object-cover w-full h-full"
@@ -103,9 +106,9 @@ const MediaCard = ({ media, onPlay, onPreview, isPlaying = false }) => {
       )}
 
       {media.status === 'rejected' && media.rejection_reason && (
-        <div className="p-3 mb-3 border border-red-200 rounded-lg bg-red-50">
-          <p className="mb-1 text-sm font-medium text-red-800">Rejection Reason:</p>
-          <p className="text-sm text-red-700">{media.rejection_reason}</p>
+        <div className="p-2 text-xs border border-red-200 rounded-lg bg-red-50">
+          <p className="font-medium text-red-800">Rejection Reason:</p>
+          <p className="text-red-700">{media.rejection_reason}</p>
         </div>
       )}
     </div>
@@ -116,18 +119,18 @@ const TourStopCard = ({ stop, isActive, onClick }) => {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-3 rounded-lg border transition-all ${
+      className={`w-full text-left p-2 rounded-lg border transition-all ${
         isActive
           ? 'bg-blue-50 border-blue-200 text-blue-900'
           : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
       }`}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <span className="flex items-center justify-center w-6 h-6 text-sm font-medium text-blue-600 bg-blue-100 rounded-full">
+        <div className="flex items-center space-x-2">
+          <span className="flex items-center justify-center w-5 h-5 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">
             {stop.sequence_no}
           </span>
-          <span className="font-medium truncate">{stop.name}</span>
+          <span className="text-sm font-medium truncate">{stop.name}</span>
         </div>
         <span className="text-xs text-gray-500">{stop.allMedia.length} media</span>
       </div>
@@ -492,298 +495,317 @@ const TourDetail = () => {
   const selectedStop = tour.tour_stops?.find(stop => stop.id === selectedStopId);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <button 
-              onClick={() => navigate(-1)}
-              className="flex items-center text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              <span>Back</span>
-            </button>
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-500">Status:</span>
-              <StatusBadge status={tour.status} />
-            </div>
-          </div>
-        </div>
-      </header>
+    <>
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
 
-      <section className="bg-white border-b border-gray-200">
-        <div className="px-6 py-6">
-          <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-6">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">{tour.title}</h1>
-              <p className="mt-2 text-gray-600">{tour.description}</p>
-              
-              <div className="flex flex-wrap items-center gap-4 mt-4">
-                <div className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700">{tour.guide?.user?.name || 'Unknown Guide'}</span>
-                  {tour.guide?.years_of_experience && (
-                    <span className="text-sm text-gray-500">({tour.guide.years_of_experience} yrs exp)</span>
-                  )}
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm text-gray-700">
-                    {Math.floor(tour.duration_minutes / 60)}h {tour.duration_minutes % 60}m
-                  </span>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-semibold text-gray-900">${tour.price.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-            
-            {tour.guide?.user?.avatar_url && (
-              <img 
-                src={tour.guide.user.avatar_url} 
-                alt={tour.guide.user.name}
-                className="w-16 h-16 border-2 border-gray-200 rounded-full"
-              />
-            )}
-          </div>
-
-          {tour.status === 'rejected' && tour.rejection_reason && (
-            <div className="p-4 mt-6 border border-red-200 rounded-lg bg-red-50">
-              <h3 className="mb-2 text-sm font-medium text-red-800">Rejection Reason:</h3>
-              <p className="text-sm text-red-700">{tour.rejection_reason}</p>
-            </div>
-          )}
-
-          {tour.status === 'pending_approval' && (
-            <div className="flex mt-6 space-x-3">
-              <button
-                onClick={handleApproveTour}
-                disabled={isApproving || isRejecting}
-                className="flex items-center px-4 py-2 space-x-2 text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isApproving ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <CheckCircle className="w-5 h-5" />
-                )}
-                <span>{isApproving ? 'Approving...' : 'Approve Tour'}</span>
-              </button>
-              <button
-                onClick={handleRejectTour}
-                disabled={isApproving || isRejecting}
-                className="flex items-center px-4 py-2 space-x-2 text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <XCircle className="w-5 h-5" />
-                <span>Reject Tour</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-220px)]">
-        <div className="overflow-y-auto bg-white border-r border-gray-200 lg:w-1/3 xl:w-1/4">
-          <div className="sticky top-0 z-10 p-4 bg-white border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Tour Stops ({tour.tour_stops?.length || 0})</h2>
-          </div>
-          <div className="p-4 space-y-2">
-            {tour.tour_stops?.map((stop) => (
-              <TourStopCard
-                key={stop.id}
-                stop={{
-                  id: stop.id,
-                  sequence_no: stop.sequence_no,
-                  name: stop.stop_name,
-                  description: stop.description || '',
-                  audioClips: stop.media.filter(m => m.media_type === 'audio'),
-                  images: stop.media.filter(m => m.media_type === 'image'),
-                  videos: stop.media.filter(m => m.media_type === 'video'),
-                  allMedia: stop.media
-                }}
-                isActive={selectedStopId === stop.id}
-                onClick={() => setSelectedStopId(stop.id)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {selectedStop && (
-          <div className="flex-1 overflow-y-auto bg-white">
-            <div className="p-6">
-              <div className="mb-6">
-                <div className="flex items-center mb-3 space-x-3">
-                  <MapPin className="w-5 h-5 text-blue-500" />
-                  <h2 className="text-xl font-semibold text-gray-900">{selectedStop.stop_name}</h2>
-                  <span className="text-sm text-gray-500">Stop #{selectedStop.sequence_no}</span>
-                </div>
-                <p className="text-gray-600">{selectedStop.description}</p>
-              </div>
-
-              <div className="mb-8">
-                <button 
-                  onClick={() => toggleSection('audio')}
-                  className="flex items-center w-full mb-4 text-lg font-semibold text-gray-900"
+      <div className="min-h-screen bg-gray-50">
+        {/* Top details section - NEW HEADER LAYOUT */}
+        <div className="w-full bg-white border-b border-gray-200 shadow-sm">
+          <div className="px-4 pt-4 pb-4">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              {/* Left: Back button + Guide avatar/info + status */}
+              <div className="flex flex-col items-start gap-2 min-w-[220px]">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="flex items-center px-2 py-1 mb-1 text-xs text-gray-600 bg-gray-100 rounded hover:bg-gray-200 focus:outline-none"
+                  style={{ minHeight: 0, minWidth: 0 }}
+                  aria-label="Back"
                 >
-                  <Headphones className="w-5 h-5 mr-2 text-blue-500" />
-                  <span>Audio Narration ({getMediaByType(selectedStop.id, 'audio').length})</span>
-                  {expandedSections.audio ? (
-                    <ChevronDown className="w-5 h-5 ml-2" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  )}
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Back
                 </button>
-                
-                {expandedSections.audio && (
-                  getMediaByType(selectedStop.id, 'audio').length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4">
-                      {getMediaByType(selectedStop.id, 'audio').map((audio) => (
-                        <MediaCard
-                          key={audio.id}
-                          media={audio}
-                          onPlay={() => handlePlayAudio(audio.id, audio.url)}
-                          isPlaying={playingAudio === audio.id}
-                        />
-                      ))}
-                    </div>
+                <div className="flex items-center gap-4">
+                  {tour.guide?.user?.avatar_url ? (
+                    <img
+                      src={tour.guide.user.avatar_url}
+                      alt={tour.guide.user.name}
+                      className="object-cover w-16 h-16 border-2 border-gray-200 rounded-full"
+                    />
                   ) : (
-                    <div className="p-4 text-center text-gray-500 rounded-lg bg-gray-50">
-                      No audio clips available
+                    <div className="flex items-center justify-center w-16 h-16 bg-gray-100 border-2 border-gray-200 rounded-full">
+                      <User className="w-8 h-8 text-gray-400" />
                     </div>
-                  )
-                )}
+                  )}
+                  <div className="flex flex-col">
+                    <span className="text-base font-semibold text-gray-900">{tour.guide?.user?.name || 'Unknown Guide'}</span>
+                    {tour.guide?.years_of_experience && (
+                      <span className="text-sm text-gray-500">{tour.guide.years_of_experience} yrs experience</span>
+                    )}
+                    {tour.guide?.user?.email && (
+                      <span className="text-xs text-gray-400">{tour.guide.user.email}</span>
+                    )}
+                    <span className="mt-2"><StatusBadge status={tour.status} /></span>
+                  </div>
+                </div>
               </div>
 
-              <div className="mb-8">
-                <button 
-                  onClick={() => toggleSection('images')}
-                  className="flex items-center w-full mb-4 text-lg font-semibold text-gray-900"
-                >
-                  <ImageIcon className="w-5 h-5 mr-2 text-blue-500" />
-                  <span>Images ({getMediaByType(selectedStop.id, 'image').length})</span>
-                  {expandedSections.images ? (
-                    <ChevronDown className="w-5 h-5 ml-2" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 ml-2" />
+              {/* Center: Title, description, meta */}
+              <div className="flex flex-col flex-1 min-w-0 gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h1 className="flex-1 text-2xl font-bold text-gray-900 break-words">{tour.title}</h1>
+                  {tour.status === 'pending_approval' && (
+                    <div className="flex gap-2 mt-1 sm:mt-0">
+                      <button
+                        onClick={handleApproveTour}
+                        disabled={isApproving || isRejecting}
+                        className="flex items-center px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isApproving ? (
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        ) : (
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                        )}
+                        {isApproving ? 'Approving...' : 'Approve'}
+                      </button>
+                      <button
+                        onClick={handleRejectTour}
+                        disabled={isApproving || isRejecting}
+                        className="flex items-center px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <XCircle className="w-3 h-3 mr-1" />
+                        Reject
+                      </button>
+                    </div>
                   )}
-                </button>
-                
-                {expandedSections.images && (
-                  getMediaByType(selectedStop.id, 'image').length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      {getMediaByType(selectedStop.id, 'image').map((image) => (
-                        <MediaCard
-                          key={image.id}
-                          media={image}
-                          onPreview={() => {
-                            setSelectedImage(image.url);
-                            setShowImageModal(true);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-4 text-center text-gray-500 rounded-lg bg-gray-50">
-                      No images available
-                    </div>
-                  )
-                )}
+                </div>
+                <p className="max-w-2xl text-base text-gray-600 break-words">{tour.description}</p>
+                <div className="flex flex-wrap items-center gap-4 mt-1">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-700">
+                      {Math.floor(tour.duration_minutes / 60)}h {tour.duration_minutes % 60}m
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-semibold text-gray-900">${tour.price.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <button 
-                  onClick={() => toggleSection('videos')}
-                  className="flex items-center w-full mb-4 text-lg font-semibold text-gray-900"
-                >
-                  <Video className="w-5 h-5 mr-2 text-blue-500" />
-                  <span>Videos ({getMediaByType(selectedStop.id, 'video').length})</span>
-                  {expandedSections.videos ? (
-                    <ChevronDown className="w-5 h-5 ml-2" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  )}
-                </button>
-                
-                {expandedSections.videos && (
-                  getMediaByType(selectedStop.id, 'video').length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4">
-                      {getMediaByType(selectedStop.id, 'video').map((video) => (
-                        <MediaCard
-                          key={video.id}
-                          media={video}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-4 text-center text-gray-500 rounded-lg bg-gray-50">
-                      No videos available
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="hidden bg-gray-100 border-l border-gray-200 lg:w-1/3 xl:w-2/5 lg:block">
-          <div className="sticky top-0 z-10 p-4 bg-white border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Tour Route Map</h2>
-            {selectedStop && (
-              <p className="mt-1 text-sm text-gray-600">
-                {selectedStop.stop_name} - Stop #{selectedStop.sequence_no}
-              </p>
-            )}
-          </div>
-          <div className="relative h-full">
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-              <div className="p-6 text-center">
-                <MapPin className="w-16 h-16 mx-auto mb-4 text-blue-400" />
-                <h3 className="mb-2 text-xl font-medium text-gray-700">Map View</h3>
-                <p className="max-w-sm mb-4 text-gray-500">
-                  Interactive map showing the selected tour stop and route will be displayed here.
-                </p>
-                {selectedStop && (
-                  <div className="text-sm text-gray-400">
-                    <p>Stop: {selectedStop.stop_name}</p>
-                    <p>Sequence: #{selectedStop.sequence_no}</p>
+              {/* Right: Tour image */}
+              <div className="flex flex-col items-end min-w-[160px]">
+                {tour.cover_image_url && (
+                  <div className="relative w-40 overflow-hidden shadow-lg h-28 rounded-xl">
+                    <img
+                      src={tour.cover_image_url}
+                      alt="Tour Cover"
+                      className="object-cover w-full h-full"
+                    />
                   </div>
                 )}
               </div>
             </div>
+            {/* Rejection reason if rejected */}
+            {tour.status === 'rejected' && tour.rejection_reason && (
+              <div className="p-3 my-2 border border-red-200 rounded bg-red-50">
+                <h3 className="mb-1 text-sm font-medium text-red-800">Rejection Reason:</h3>
+                <p className="text-sm text-red-700">{tour.rejection_reason}</p>
+              </div>
+            )}
           </div>
         </div>
+
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-180px)]">
+          {/* Left sidebar - Tour stops (narrower) */}
+          <div className="overflow-y-auto bg-white border-r border-gray-200 lg:w-64 no-scrollbar">
+            <div className="sticky top-0 z-10 p-3 bg-white border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Tour Stops ({tour.tour_stops?.length || 0})</h2>
+            </div>
+            <div className="p-3 space-y-2">
+              {tour.tour_stops?.map((stop) => (
+                <TourStopCard
+                  key={stop.id}
+                  stop={{
+                    id: stop.id,
+                    sequence_no: stop.sequence_no,
+                    name: stop.stop_name,
+                    description: stop.description || '',
+                    audioClips: stop.media.filter(m => m.media_type === 'audio'),
+                    images: stop.media.filter(m => m.media_type === 'image'),
+                    videos: stop.media.filter(m => m.media_type === 'video'),
+                    allMedia: stop.media
+                  }}
+                  isActive={selectedStopId === stop.id}
+                  onClick={() => setSelectedStopId(stop.id)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Middle content - Media cards (compact) */}
+          {selectedStop && (
+            <div className="flex-1 overflow-y-auto bg-white border-r border-gray-200 no-scrollbar">
+              <div className="p-4">
+                <div className="mb-4">
+                  <div className="flex items-center mb-2 space-x-2">
+                    <MapPin className="w-5 h-5 text-blue-500" />
+                    <h2 className="text-lg font-semibold text-gray-900">{selectedStop.stop_name}</h2>
+                    <span className="text-xs text-gray-500">Stop #{selectedStop.sequence_no}</span>
+                  </div>
+                  <p className="text-sm text-gray-600">{selectedStop.description}</p>
+                </div>
+
+                <div className="mb-6">
+                  <button 
+                    onClick={() => toggleSection('audio')}
+                    className="flex items-center w-full mb-2 text-base font-semibold text-gray-900"
+                  >
+                    <Headphones className="w-4 h-4 mr-2 text-blue-500" />
+                    <span>Audio Narration ({getMediaByType(selectedStop.id, 'audio').length})</span>
+                    {expandedSections.audio ? (
+                      <ChevronDown className="w-4 h-4 ml-2" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    )}
+                  </button>
+                  
+                  {expandedSections.audio && (
+                    getMediaByType(selectedStop.id, 'audio').length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {getMediaByType(selectedStop.id, 'audio').map((audio) => (
+                          <MediaCard
+                            key={audio.id}
+                            media={audio}
+                            onPlay={() => handlePlayAudio(audio.id, audio.url)}
+                            isPlaying={playingAudio === audio.id}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 text-sm text-center text-gray-500 rounded-lg bg-gray-50">
+                        No audio clips available
+                      </div>
+                    )
+                  )}
+                </div>
+
+                <div className="mb-6">
+                  <button 
+                    onClick={() => toggleSection('images')}
+                    className="flex items-center w-full mb-2 text-base font-semibold text-gray-900"
+                  >
+                    <ImageIcon className="w-4 h-4 mr-2 text-blue-500" />
+                    <span>Images ({getMediaByType(selectedStop.id, 'image').length})</span>
+                    {expandedSections.images ? (
+                      <ChevronDown className="w-4 h-4 ml-2" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    )}
+                  </button>
+                  
+                  {expandedSections.images && (
+                    getMediaByType(selectedStop.id, 'image').length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                        {getMediaByType(selectedStop.id, 'image').map((image) => (
+                          <MediaCard
+                            key={image.id}
+                            media={image}
+                            onPreview={() => {
+                              setSelectedImage(image.url);
+                              setShowImageModal(true);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 text-sm text-center text-gray-500 rounded-lg bg-gray-50">
+                        No images available
+                      </div>
+                    )
+                  )}
+                </div>
+
+                <div>
+                  <button 
+                    onClick={() => toggleSection('videos')}
+                    className="flex items-center w-full mb-2 text-base font-semibold text-gray-900"
+                  >
+                    <Video className="w-4 h-4 mr-2 text-blue-500" />
+                    <span>Videos ({getMediaByType(selectedStop.id, 'video').length})</span>
+                    {expandedSections.videos ? (
+                      <ChevronDown className="w-4 h-4 ml-2" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    )}
+                  </button>
+                  
+                  {expandedSections.videos && (
+                    getMediaByType(selectedStop.id, 'video').length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {getMediaByType(selectedStop.id, 'video').map((video) => (
+                          <MediaCard
+                            key={video.id}
+                            media={video}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 text-sm text-center text-gray-500 rounded-lg bg-gray-50">
+                        No videos available
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Right sidebar - Map (larger) */}
+          <div className="hidden bg-gray-100 border-l border-gray-200 lg:w-1/2 xl:w-2/5 lg:block no-scrollbar">
+            <div className="sticky top-0 z-10 p-3 bg-white border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Tour Route Map</h2>
+              {selectedStop && (
+                <p className="mt-1 text-sm text-gray-600">
+                  {selectedStop.stop_name} - Stop #{selectedStop.sequence_no}
+                </p>
+              )}
+            </div>
+            <div className="relative h-full" style={{ minHeight: 'calc(100vh - 230px)' }}>
+              <TourStopsMap
+                stops={tour.tour_stops?.map(stop => ({
+                  ...stop,
+                  location: stop.location || { latitude: 0, longitude: 0 },
+                })) || []}
+                selectedStopId={selectedStopId}
+                onSelectStop={s => setSelectedStopId(s.id)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <audio 
+          ref={audioRef} 
+          onEnded={() => setPlayingAudio(null)}
+          onError={() => {
+            console.error('Audio playback error');
+            setPlayingAudio(null);
+            toast.error('Failed to play audio');
+          }}
+        />
+
+        <TourRejectModal
+          isOpen={showTourRejectModal}
+          onClose={() => {
+            if (!isRejecting) {
+              setShowTourRejectModal(false);
+              setTourRejectReason('');
+            }
+          }}
+          reason={tourRejectReason}
+          onReasonChange={setTourRejectReason}
+          onConfirm={confirmRejectTour}
+          isSubmitting={isRejecting}
+        />
+
+        <ImagePreviewModal
+          imageUrl={selectedImage}
+          onClose={() => setShowImageModal(false)}
+        />
       </div>
-
-      <audio 
-        ref={audioRef} 
-        onEnded={() => setPlayingAudio(null)}
-        onError={() => {
-          console.error('Audio playback error');
-          setPlayingAudio(null);
-          toast.error('Failed to play audio');
-        }}
-      />
-
-      <TourRejectModal
-        isOpen={showTourRejectModal}
-        onClose={() => {
-          if (!isRejecting) {
-            setShowTourRejectModal(false);
-            setTourRejectReason('');
-          }
-        }}
-        reason={tourRejectReason}
-        onReasonChange={setTourRejectReason}
-        onConfirm={confirmRejectTour}
-        isSubmitting={isRejecting}
-      />
-
-      <ImagePreviewModal
-        imageUrl={selectedImage}
-        onClose={() => setShowImageModal(false)}
-      />
-    </div>
+    </>
   );
 };
 

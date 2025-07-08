@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -100,15 +100,17 @@ function MapboxMap({
       zoom: 12
     });
 
-    // Add click handler
-    map.current.on('click', (e) => {
-      onMapClick({
-        lngLat: {
-          lat: e.lngLat.lat,
-          lng: e.lngLat.lng
-        }
+    // Add click handler if onMapClick is provided
+    if (onMapClick) {
+      map.current.on('click', (e) => {
+        onMapClick({
+          lngLat: {
+            lat: e.lngLat.lat,
+            lng: e.lngLat.lng
+          }
+        });
       });
-    });
+    }
 
     return () => {
       if (map.current) {
@@ -127,13 +129,15 @@ function MapboxMap({
 
     // Add new markers
     stops.forEach((stop) => {
+      if (!stop.location || typeof stop.location.longitude !== 'number' || typeof stop.location.latitude !== 'number') return;
       const el = document.createElement('div');
       el.className = 'custom-marker';
+      const isSelected = selectedStopId === stop.id;
       el.style.cssText = `
         width: 32px;
         height: 32px;
-        background-color: #3B82F6;
-        border: 2px solid #1E40AF;
+        background-color: ${isSelected ? '#F59E42' : '#3B82F6'};
+        border: 2px solid ${isSelected ? '#EA580C' : '#1E40AF'};
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -143,10 +147,11 @@ function MapboxMap({
         font-size: 14px;
         cursor: pointer;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        ${selectedStopId === stop.id ? 'transform: scale(1.2); box-shadow: 0 4px 8px rgba(0,0,0,0.3);' : ''}
+        ${isSelected ? 'transform: scale(1.3); box-shadow: 0 4px 12px 2px #EA580C55;' : ''}
+        z-index: ${isSelected ? 10 : 1};
       `;
-      el.textContent = stop.sequence_no.toString();
-      
+      el.textContent = stop.sequence_no?.toString() || '';
+
       el.addEventListener('click', (e) => {
         e.stopPropagation();
         onMarkerClick(stop);
@@ -160,6 +165,20 @@ function MapboxMap({
         markersRef.current[stop.id.toString()] = marker;
       }
     });
+
+    // Zoom to selected stop when it changes
+    if (selectedStopId) {
+      const stop = stops.find(s => s.id === selectedStopId);
+      if (stop && stop.location && typeof stop.location.longitude === 'number' && typeof stop.location.latitude === 'number') {
+        map.current.flyTo({
+          center: [stop.location.longitude, stop.location.latitude],
+          zoom: 16,
+          speed: 1.2,
+          curve: 1.4,
+          essential: true
+        });
+      }
+    }
   }, [stops, onMarkerClick, selectedStopId]);
 
   // Update route when stops change
@@ -520,163 +539,21 @@ function StopList({
   );
 }
 
-export function RouteMapStep({ 
-  packageId = 1,
-  stops = [], 
-  onStopsUpdate 
-}) {
-  const [internalStops, setInternalStops] = useState(stops);
-  const [selectedStop, setSelectedStop] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isGeocoding, setIsGeocoding] = useState(false);
-  const [nextId, setNextId] = useState(1);
-
-  // Update internal stops when props change
-  useEffect(() => {
-    setInternalStops(stops);
-    if (stops.length > 0) {
-      const maxId = Math.max(...stops.map(s => s.id || 0));
-      setNextId(maxId + 1);
-    }
-  }, [stops]);
-
-  const updateStops = (newStops) => {
-    setInternalStops(newStops);
-    if (onStopsUpdate) {
-      onStopsUpdate(newStops);
-    }
-  };
-
-  const handleMapClick = async (event) => {
-    if (!event.lngLat) return;
-    
-    setIsGeocoding(true);
-    try {
-      const clickedPos = {
-        lat: event.lngLat.lat,
-        lng: event.lngLat.lng
-      };
-
-      const location = await reverseGeocode(clickedPos.lat, clickedPos.lng);
-
-      const newStop = {
-        id: nextId,
-        package_id: packageId,
-        sequence_no: internalStops.length + 1,
-        stop_name: `Stop ${internalStops.length + 1}`,
-        description: '',
-        location: location
-      };
-      
-      setNextId(nextId + 1);
-      updateStops([...internalStops, newStop]);
-      setSelectedStop(newStop);
-      setIsEditing(true);
-    } catch (error) {
-      console.error('Geocoding error:', error);
-      toast.error('Could not fetch address details for this location');
-      
-      // Fallback with just coordinates
-      const newStop = {
-        id: nextId,
-        package_id: packageId,
-        sequence_no: internalStops.length + 1,
-        stop_name: `Stop ${internalStops.length + 1}`,
-        description: '',
-        location: {
-          longitude: event.lngLat.lng,
-          latitude: event.lngLat.lat,
-          address: `Location at ${event.lngLat.lat.toFixed(6)}, ${event.lngLat.lng.toFixed(6)}`
-        }
-      };
-      setNextId(nextId + 1);
-      updateStops([...internalStops, newStop]);
-      setSelectedStop(newStop);
-      setIsEditing(true);
-    } finally {
-      setIsGeocoding(false);
-    }
-  };
-
+// ...existing code...
+export function RouteMapStep({ stops = [], selectedStopId, onSelectStop }) {
+  // This is a function component, so hooks are valid here
+  const sortedStops = [...stops].sort((a, b) => a.sequence_no - b.sequence_no);
+  // Handler for marker click
   const handleMarkerClick = (stop) => {
-    setSelectedStop(stop);
-    setIsEditing(true);
+    if (onSelectStop) onSelectStop(stop);
   };
-
-  const handleSaveStop = (updatedStop) => {
-    const updatedStops = internalStops.map(stop => 
-      stop.id === updatedStop.id ? updatedStop : stop
-    );
-    updateStops(updatedStops);
-    setIsEditing(false);
-    setSelectedStop(updatedStop);
-  };
-
-  const handleDeleteStop = (stopId) => {
-    const updatedStops = internalStops
-      .filter(stop => stop.id !== stopId)
-      .map((stop, index) => ({
-        ...stop,
-        sequence_no: index + 1
-      }));
-    updateStops(updatedStops);
-    setIsEditing(false);
-    setSelectedStop(null);
-  };
-
-  const handleReorderStops = (newOrder) => {
-    const updatedStops = newOrder.map((stop, index) => ({
-      ...stop,
-      sequence_no: index + 1
-    }));
-    updateStops(updatedStops);
-  };
-
-  const handleStopSelect = (stop) => {
-    setSelectedStop(stop);
-    setIsEditing(true);
-  };
-
-  // Sort stops by sequence for display
-  const sortedStops = [...internalStops].sort((a, b) => a.sequence_no - b.sequence_no);
-
   return (
-    <div className="flex h-[500px] w-full gap-4">
-      <StopList
-        stops={internalStops}
-        selectedStopId={selectedStop?.id || null}
-        onStopSelect={handleStopSelect}
-        onReorder={handleReorderStops}
+    <div className="w-full h-full min-h-[400px]">
+      <MapboxMap
+        stops={sortedStops}
+        selectedStopId={selectedStopId}
+        onMarkerClick={handleMarkerClick}
       />
-
-      <div className="relative flex-1 overflow-hidden border rounded-lg">
-        <MapboxMap
-          stops={sortedStops}
-          onMapClick={handleMapClick}
-          onMarkerClick={handleMarkerClick}
-          selectedStopId={selectedStop?.id || null}
-        />
-        
-        {isGeocoding && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="flex flex-col items-center p-4 space-y-2 bg-white rounded-lg shadow-lg">
-              <LoadingSpinner size={32} className="text-blue-500" />
-              <p className="text-sm font-medium text-gray-700">Loading address details...</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {isEditing && selectedStop && (
-        <div className="p-4 bg-white border rounded-lg shadow-lg w-80">
-          <StopDetailsForm
-            stop={selectedStop}
-            onSave={handleSaveStop}
-            onDelete={handleDeleteStop}
-            onCancel={() => setIsEditing(false)}
-          />
-        </div>
-      )}
     </div>
   );
 }
