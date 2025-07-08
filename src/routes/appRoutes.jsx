@@ -18,6 +18,14 @@ import ModeratorLayout from '../layouts/ModeratorLayout';
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
 import TourDetail from '../pages/Moderator/TourDetail';
 
+import AdminLayout from '../layouts/AdminLayout'
+import Dashboard from '../pages/Admin/Dashboard'
+import Users from '../pages/Admin/Users'
+import Complaints from '../pages/Admin/Complaint';
+
+
+
+
 const AppRoutes = () => {
   return (
     <Router>
@@ -42,8 +50,14 @@ const AppRoutes = () => {
           </Route>
 
           <Route element={<ModeratorLayout/>}>
-            <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
-            <Route path="/tour/:id" element={<TourDetail/>} />
+              <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
+              <Route path = "/tour/:id" element={<TourDetail/>}> </Route>
+          </Route>
+
+          <Route element={<AdminLayout/>}>
+              <Route path="/admin/dashboard" element={<Dashboard/>} />
+              <Route path="/admin/users" element={<Users/>} />
+              <Route path="/admin/complaints" element={<Complaints/>} />
           </Route>
         </Route>
       </Routes>
