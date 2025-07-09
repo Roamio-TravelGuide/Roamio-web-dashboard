@@ -43,6 +43,7 @@ export const signup = async (userData) => {
       signupPayload.address = userData.address;
       signupPayload.city = userData.city || 'Unknown';
       signupPayload.province = userData.province || 'Unknown';
+      signupPayload.location = userData.location
       signupPayload.latitude = userData.latitude || 0;
       signupPayload.longitude = userData.longitude || 0;
       signupPayload.restaurantType = userData.restaurantType;// Ensure this is passed

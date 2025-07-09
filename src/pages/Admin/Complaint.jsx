@@ -2,38 +2,17 @@ import React, { useState } from 'react';
 import { FaSearch, FaExclamationTriangle, FaCheck, FaEye, FaTimes } from 'react-icons/fa';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
-interface Complaint {
-  id: string;
-  title: string;
-  description: string;
-  status: 'pending' | 'resolved' | 'rejected';
-  reportedUser: {
-    id: string;
-    name: string;
-    role: string;
-  };
-  reporter?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  createdAt: string;
-  updatedAt?: string;
-  evidence?: string[];
-  additionalNotes?: string;
-}
-
 const ITEMS_PER_PAGE = 6;
 
 const Complaints = () => {
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  const [complaints, setComplaints] = useState<Complaint[]>([
+  const [complaints, setComplaints] = useState([
     {
       id: '1',
       title: 'Inappropriate behavior',
@@ -104,13 +83,13 @@ const Complaints = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleStatusSelect = (status: string) => {
+  const handleStatusSelect = (status) => {
     setSelectedStatus(status);
     setCurrentPage(1);
     setStatusDropdownOpen(false);
   };
 
-  const resolveComplaint = (id: string) => {
+  const resolveComplaint = (id) => {
     setComplaints(complaints.map(complaint => 
       complaint.id === id 
         ? { ...complaint, status: 'resolved', updatedAt: new Date().toISOString() }
@@ -119,7 +98,7 @@ const Complaints = () => {
     setIsModalOpen(false);
   };
 
-  const openComplaintModal = (complaint: Complaint) => {
+  const openComplaintModal = (complaint) => {
     setSelectedComplaint(complaint);
     setIsModalOpen(true);
   };
@@ -129,20 +108,20 @@ const Complaints = () => {
     setSelectedComplaint(null);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status) => {
     const colorClasses = {
       pending: 'bg-yellow-100 text-yellow-800',
       resolved: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800'
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs ${colorClasses[status as keyof typeof colorClasses]}`}>
+      <span className={`px-2 py-1 rounded-full text-xs ${colorClasses[status]}`}>
         {status}
       </span>
     );
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status) => {
     switch (status) {
       case 'pending':
         return <FaExclamationTriangle className="text-yellow-500" />;

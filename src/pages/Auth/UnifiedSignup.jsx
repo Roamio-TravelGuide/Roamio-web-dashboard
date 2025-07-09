@@ -12,8 +12,11 @@ import {
   EyeOff, 
   Phone, 
   Building,
-  CreditCard
+  CreditCard,
+  CheckCircle
 } from 'lucide-react';
+import { signup } from '../../api/auth/authApi';
+import { useNavigate } from 'react-router-dom';
 
 const UnifiedSignup = () => {
   const [selectedUserType, setSelectedUserType] = useState(null);
@@ -22,6 +25,8 @@ const UnifiedSignup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -31,12 +36,22 @@ const UnifiedSignup = () => {
     restaurantType: '',
     address: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
   
   const [errors, setErrors] = useState({});
 
-  // Configuration Data
+  useEffect(() => {
+    let timer;
+    if (showSuccessPopup) {
+      timer = setTimeout(() => {
+        setShowSuccessPopup(false);
+        navigate('/login');
+      }, 3000);
+    }
+    return () => clearTimeout(timer);
+  }, [showSuccessPopup, navigate]);
+
   const userTypes = [
     {
       id: 'traveler',
@@ -128,7 +143,6 @@ const UnifiedSignup = () => {
       showFor: ['traveler', 'guide'],
       level: 1
     },
-    // Restaurant Level 1
     {
       key: 'restaurantType',
       label: 'Restaurant Type',
@@ -149,7 +163,6 @@ const UnifiedSignup = () => {
       showFor: ['restaurant'],
       level: 1
     },
-    // Restaurant Level 2
     {
       key: 'password',
       label: 'Password',
@@ -172,10 +185,6 @@ const UnifiedSignup = () => {
     }
   ];
 
-  // Get configuration for selected user type
-  const config = selectedUserType ? userTypes.find(type => type.id === selectedUserType) : null;
-
-  // Animated Background Component
   const AnimatedBackground = () => (
     <div className="absolute inset-0 overflow-hidden">
       <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-blue-400/10 blur-[60px] animate-pulse"></div>
@@ -197,7 +206,6 @@ const UnifiedSignup = () => {
     </div>
   );
 
-  // Enhanced animation handler with smoother transitions
   const handleUserTypeSelect = (userType) => {
     setIsAnimating(true);
     setTimeout(() => {
@@ -265,7 +273,6 @@ const UnifiedSignup = () => {
       [name]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -287,36 +294,46 @@ const UnifiedSignup = () => {
     
     relevantFields.forEach(field => {
       const value = formData[field.key];
-      if (!value.trim()) {
+      if (!value?.trim()) {
         newErrors[field.key] = `${field.label} is required`;
       }
     });
     
-    // Email validation
-    if (currentLevel === 1 && formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
     
-    // Password validation (only on the level where password is shown)
-    const passwordField = fieldConfigs.find(field => 
-      field.key === 'password' && 
-      field.showFor.includes(selectedUserType) && 
-      field.level === currentLevel
-    );
-    
-    if (passwordField && formData.password && formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters long';
+    if (formData.contactNumber && !/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(formData.contactNumber)) {
+      newErrors.contactNumber = 'Please enter a valid phone number';
     }
     
-    // Confirm password validation
-    const confirmPasswordField = fieldConfigs.find(field => 
-      field.key === 'confirmPassword' && 
-      field.showFor.includes(selectedUserType) && 
-      field.level === currentLevel
-    );
+    if (formData.password) {
+      if (formData.password.length < 8) {
+        newErrors.password = 'Password must be at least 8 characters';
+      } else if (!/[A-Z]/.test(formData.password)) {
+        newErrors.password = 'Password needs at least one uppercase letter';
+      } else if (!/[0-9]/.test(formData.password)) {
+        newErrors.password = 'Password needs at least one number';
+      } else if (!/[^A-Za-z0-9]/.test(formData.password)) {
+        newErrors.password = 'Password needs at least one special character';
+      }
+    }
     
-    if (confirmPasswordField && formData.password !== formData.confirmPassword) {
+    if (formData.confirmPassword && formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    if (selectedUserType === 'guide' && !formData.guideId.trim()) {
+      newErrors.guideId = 'Guide license ID is required';
+    }
+    
+    if (selectedUserType === 'restaurant') {
+      if (currentLevel === 1 && !formData.restaurantType.trim()) {
+        newErrors.restaurantType = 'Restaurant type is required';
+      }
+      if (currentLevel === 1 && !formData.address.trim()) {
+        newErrors.address = 'Business address is required';
+      }
     }
     
     setErrors(newErrors);
@@ -332,18 +349,44 @@ const UnifiedSignup = () => {
     setErrors({});
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const roleMap = {
+        'guide': 'travel_guide',
+        'restaurant': 'vendor',
+        'traveler': 'traveler'
+      };
       
-      // Handle successful signup
-      console.log('Signup successful:', { userType: selectedUserType, ...formData });
-      
-      // You would typically redirect or show success message here
-      alert('Account created successfully!');
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        phone_no: formData.contactNumber,
+        password: formData.password,
+        role: roleMap[selectedUserType],
+        profile_picture_url: '',
+        bio: ''
+      };
+
+      if (selectedUserType === 'guide') {
+        payload.license = formData.guideId;
+        payload.years_of_experience = 0;
+        payload.languages_spoken = ['English'];
+      } else if (selectedUserType === 'restaurant') {
+        payload.business_name = formData.name;
+        payload.business_type = formData.restaurantType;
+        payload.restaurantType = formData.restaurantType;
+        payload.address = formData.address;
+        payload.city = 'Unknown';
+        payload.province = 'Unknown';
+        payload.latitude = 0;
+        payload.longitude = 0;
+      }
+
+      await signup(payload);
+      setShowSuccessPopup(true);
       
     } catch (error) {
+      console.error('Signup error:', error);
       setErrors({
-        general: 'An error occurred while creating your account. Please try again.'
+        general: error.message || 'Failed to create account. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -422,14 +465,13 @@ const UnifiedSignup = () => {
       <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-950 via-teal-800 to-teal-900">
         <AnimatedBackground />
         
-        {/* Main Content */}
         <div className={`relative z-10 px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:px-8 transition-all duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
           <div className="p-8 mb-16 text-center">
             <h1 className="text-4xl font-bold text-white drop-shadow-lg">Begin Your Roamio Journey</h1>
             <p className="mt-4 text-xl text-white/80">Choose your role to get started</p>
             <p className="text-gray-400">
               Existing member? 
-              <a href="/signin" className="ml-2 font-medium text-teal-400 transition-colors duration-200 hover:text-teal-300">
+              <a href="/login" className="ml-2 font-medium text-teal-400 transition-colors duration-200 hover:text-teal-300">
                 Access your account
               </a>
             </p>
@@ -487,7 +529,7 @@ const UnifiedSignup = () => {
     );
   }
 
-  // Signup Form View
+  const config = userTypes.find(type => type.id === selectedUserType);
   if (!config) return null;
 
   const IconComponent = config.icon;
@@ -498,8 +540,30 @@ const UnifiedSignup = () => {
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-950 via-teal-800 to-teal-900">
       <AnimatedBackground />
       
-      {/* Form Container */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-8 ">
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-md p-8 bg-gradient-to-br from-teal-800 to-teal-900 rounded-2xl shadow-2xl border border-teal-400/30 animate-spring">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-3 mb-4 bg-teal-500/20 rounded-full">
+                <CheckCircle className="w-12 h-12 text-teal-300" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-2xl font-bold text-white">Account Created Successfully!</h3>
+              <p className="mt-2 text-teal-100">
+                Welcome to Roamio, {formData.name}! You'll be redirected to login shortly.
+              </p>
+              <div className="w-full mt-6 bg-teal-900/50 rounded-full h-1.5">
+                <div 
+                  className="bg-teal-400 h-1.5 rounded-full animate-progress" 
+                  style={{ animationDuration: '3s' }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-8">
         <div className={`w-full max-w-lg transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
           <div className="p-8 border shadow-2xl sm:p-10 border-white/30 bg-white/10 backdrop-blur-xl rounded-2xl">
             <button 
@@ -584,13 +648,41 @@ const UnifiedSignup = () => {
             
             <div className={`mt-6 text-sm text-center text-white/60 transition-all duration-500 delay-700 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
               Already have an account?{' '}
-              <a href="/signin" className="font-medium text-teal-400 transition-colors hover:text-teal-300">
+              <a href="/login" className="font-medium text-teal-400 transition-colors hover:text-teal-300">
                 Sign in
               </a>
             </div>
           </div>
         </div>
       </div>
+      
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes spring {
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes progress {
+          0% { width: 0%; }
+          100% { width: 100%; }
+        }
+        .animate-spring {
+          animation: spring 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+        }
+        .animate-progress {
+          animation: progress 3s linear forwards;
+        }
+      `}</style>
     </div>
   );
 };

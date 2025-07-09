@@ -1,14 +1,14 @@
-// src/api/admin/adminApi.ts
+// src/api/admin/adminApi.js
 import apiClient from '../apiClient';
 import axios from 'axios';
 
 export const getAllUsers = async () => {
   try {
-    const response = await apiClient.get('/v1/users/getAllUsers');
+    const response = await apiClient.get('/users/getAllUsers');
     
     // Transform the data to match frontend expectations
     return {
-      data: response.data.users.map((user: any) => ({
+      data: response.data.users.map(user => ({
         id: user.id.toString(),
         name: user.name,
         email: user.email,

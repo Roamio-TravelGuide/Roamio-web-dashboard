@@ -3,94 +3,78 @@ import { FaUser, FaUserTie, FaUserShield, FaStore, FaSearch, FaTimes } from 'rea
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  status: 'active' | 'banned' | 'blocked' | 'pending';
-  role: string;
-  avatar: string;
-  registeredDate: string;
-  lastLogin?: string;
-  bio?: string;
-  address?: string;
-  totalBookings?: number;
-  totalReviews?: number;
-  averageRating?: number;
-}
 const ITEMS_PER_PAGE = 6;
-const API_BASE_URL = 'http://localhost:3001/api/v1'; // Default for Expressconst ITEMS_PER_PAGE = 6;
+const API_BASE_URL = 'http://localhost:3001/api/v1';
 
 const Users = () => {
   const [usersDropdownOpen, setUsersDropdownOpen] = useState(false);
-  const [selectedUserType, setSelectedUserType] = useState<string>('all');
+  const [selectedUserType, setSelectedUserType] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Inside your fetchUsers function:
-const fetchUsers = async () => {
-  try {
-    setIsLoading(true);
-    setError(null);
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-    const response = await axios.get(`${API_BASE_URL}/users`, { // 👈 Updated endpoint
-      params: {
-        role: selectedUserType === 'all' ? undefined : selectedUserType,
-        search: searchTerm,
-        page: currentPage,
-        limit: ITEMS_PER_PAGE,
-      },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+        const response = await axios.get(`${API_BASE_URL}/users`, {
+          params: {
+            role: selectedUserType === 'all' ? undefined : selectedUserType,
+            search: searchTerm,
+            page: currentPage,
+            limit: ITEMS_PER_PAGE,
+          },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-    if (!response.data.data) {
-      throw new Error('Invalid response structure');
-    }
+        if (!response.data.data) {
+          throw new Error('Invalid response structure');
+        }
 
-    const transformedUsers = response.data.data.map((user: any) => ({
-      id: user.id.toString(),
-      name: user.name,
-      email: user.email,
-      phone: user.phone_no,
-      status: user.status.toLowerCase(),
-      role: user.role,
-      avatar: user.profile_picture_url || '/default-avatar.png',
-      registeredDate: user.registered_date,
-      lastLogin: user.last_login,
-      bio: user.bio,
-      totalBookings: user.traveler_count || 0,
-      totalReviews: user.report_count || 0,
-      averageRating: 0,
-    }));
+        const transformedUsers = response.data.data.map((user) => ({
+          id: user.id.toString(),
+          name: user.name,
+          email: user.email,
+          phone: user.phone_no,
+          status: user.status.toLowerCase(),
+          role: user.role,
+          avatar: user.profile_picture_url || '/default-avatar.png',
+          registeredDate: user.registered_date,
+          lastLogin: user.last_login,
+          bio: user.bio,
+          totalBookings: user.traveler_count || 0,
+          totalReviews: user.report_count || 0,
+          averageRating: 0,
+        }));
 
-    setUsers(transformedUsers);
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to load users';
-    setError(errorMessage);
-    console.error('Error fetching users:', err);
-  } finally {
-    setIsLoading(false);
-  }
-};
+        setUsers(transformedUsers);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load users';
+        setError(errorMessage);
+        console.error('Error fetching users:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
     fetchUsers();
   }, [selectedUserType, searchTerm, currentPage]);
 
-  const handleUserTypeSelect = (type: string) => {
+  const handleUserTypeSelect = (type) => {
     setSelectedUserType(type);
     setCurrentPage(1);
     setUsersDropdownOpen(false);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status) => {
     const colorClasses = {
       active: 'bg-green-100 text-green-800',
       banned: 'bg-red-100 text-red-800',
@@ -98,13 +82,13 @@ const fetchUsers = async () => {
       pending: 'bg-yellow-100 text-yellow-800'
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs ${colorClasses[status as keyof typeof colorClasses] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`px-2 py-1 rounded-full text-xs ${colorClasses[status] || 'bg-gray-100 text-gray-800'}`}>
         {status}
       </span>
     );
   };
 
-  const openUserModal = (user: User) => {
+  const openUserModal = (user) => {
     setSelectedUser(user);
     setIsModalOpen(true);
   };
@@ -114,17 +98,14 @@ const fetchUsers = async () => {
     setSelectedUser(null);
   };
 
-  const toggleBlockUser = async () => {
+  const updateUserStatus = async (newStatus) => {
     if (!selectedUser) return;
 
     try {
-      const newStatus = selectedUser.status === 'active' ? 'blocked' : 'active';
-      
       await axios.patch(`${API_BASE_URL}/users/${selectedUser.id}/status`, {
         status: newStatus
       });
 
-      // Update the user in the local state
       const updatedUsers = users.map(u => 
         u.id === selectedUser.id 
           ? { ...u, status: newStatus } 
@@ -269,7 +250,7 @@ const fetchUsers = async () => {
                         alt={user.name}
                         className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/default-avatar.png';
+                          e.target.src = '/default-avatar.png';
                         }}
                       />
                       <div>
@@ -327,82 +308,133 @@ const fetchUsers = async () => {
 
       {/* User Details Modal */}
       {isModalOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={closeUserModal}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-2xl font-bold">{selectedUser.name}'s Profile</h3>
                 <button 
                   onClick={closeUserModal}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  <FaTimes className="w-5 h-5" />
+                  <FaTimes className="w-6 h-6" />
                 </button>
               </div>
               
               <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-shrink-0">
+                <div className="flex flex-col items-center">
                   <img
                     src={selectedUser.avatar}
                     alt={selectedUser.name}
                     className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/default-avatar.png';
+                      e.target.src = '/default-avatar.png';
                     }}
                   />
-                  <div className="mt-4 flex justify-center">
-                    <button
-                      onClick={toggleBlockUser}
-                      className={`px-4 py-2 rounded-lg font-medium ${
-                        selectedUser.status === 'active' 
-                          ? 'bg-red-500 text-white hover:bg-red-600' 
-                          : 'bg-green-500 text-white hover:bg-green-600'
-                      }`}
-                    >
-                      {selectedUser.status === 'active' ? 'Block User' : 'Unblock User'}
-                    </button>
+                  <div className="mt-4 flex flex-col sm:flex-row gap-3 w-full">
+                    {selectedUser.status === 'pending' && (
+                      <button
+                        onClick={() => updateUserStatus('active')}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors w-full"
+                      >
+                        Approve User
+                      </button>
+                    )}
+                    
+                    {selectedUser.status !== 'pending' && (
+                      <button
+                        onClick={() => updateUserStatus(selectedUser.status === 'blocked' ? 'active' : 'blocked')}
+                        className={`px-4 py-2 rounded-lg font-medium w-full ${
+                          selectedUser.status === 'blocked' 
+                            ? 'bg-green-500 text-white hover:bg-green-600' 
+                            : 'bg-red-500 text-white hover:bg-red-600'
+                        } transition-colors`}
+                      >
+                        {selectedUser.status === 'blocked' ? 'Unblock User' : 'Block User'}
+                      </button>
+                    )}
                   </div>
                 </div>
                 
-                <div className="flex-grow">
+                <div className="flex-1">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-semibold text-gray-700">Basic Information</h4>
-                      <div className="mt-2 space-y-2">
-                        <p><span className="text-gray-500">Name:</span> {selectedUser.name}</p>
-                        <p><span className="text-gray-500">Email:</span> {selectedUser.email}</p>
-                        {selectedUser.phone && (
-                          <p><span className="text-gray-500">Phone:</span> {selectedUser.phone}</p>
-                        )}
-                        <p><span className="text-gray-500">Role:</span> <span className="capitalize">{selectedUser.role.replace('_', ' ')}</span></p>
-                        <p><span className="text-gray-500">Status:</span> {getStatusBadge(selectedUser.status)}</p>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-gray-700 mb-2">Basic Information</h4>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-gray-500 text-sm">Name</p>
+                            <p className="font-medium">{selectedUser.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 text-sm">Email</p>
+                            <p className="font-medium">{selectedUser.email}</p>
+                          </div>
+                          {selectedUser.phone && (
+                            <div>
+                              <p className="text-gray-500 text-sm">Phone</p>
+                              <p className="font-medium">{selectedUser.phone}</p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-gray-500 text-sm">Role</p>
+                            <p className="font-medium capitalize">{selectedUser.role.replace('_', ' ')}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 text-sm">Status</p>
+                            <div className="font-medium">{getStatusBadge(selectedUser.status)}</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     
-                    <div>
-                      <h4 className="font-semibold text-gray-700">Activity</h4>
-                      <div className="mt-2 space-y-2">
-                        <p><span className="text-gray-500">Joined:</span> {new Date(selectedUser.registeredDate).toLocaleDateString()}</p>
-                        {selectedUser.lastLogin && (
-                          <p><span className="text-gray-500">Last Login:</span> {new Date(selectedUser.lastLogin).toLocaleString()}</p>
-                        )}
-                        {selectedUser.totalBookings !== undefined && (
-                          <p><span className="text-gray-500">Total Bookings:</span> {selectedUser.totalBookings}</p>
-                        )}
-                        {selectedUser.totalReviews !== undefined && (
-                          <p><span className="text-gray-500">Total Reviews:</span> {selectedUser.totalReviews}</p>
-                        )}
-                        {selectedUser.averageRating !== undefined && (
-                          <p><span className="text-gray-500">Average Rating:</span> {selectedUser.averageRating}/5</p>
-                        )}
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-gray-700 mb-2">Activity</h4>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-gray-500 text-sm">Joined</p>
+                            <p className="font-medium">{new Date(selectedUser.registeredDate).toLocaleDateString()}</p>
+                          </div>
+                          {selectedUser.lastLogin && (
+                            <div>
+                              <p className="text-gray-500 text-sm">Last Login</p>
+                              <p className="font-medium">{new Date(selectedUser.lastLogin).toLocaleString()}</p>
+                            </div>
+                          )}
+                          {selectedUser.totalBookings !== undefined && (
+                            <div>
+                              <p className="text-gray-500 text-sm">Total Bookings</p>
+                              <p className="font-medium">{selectedUser.totalBookings}</p>
+                            </div>
+                          )}
+                          {selectedUser.totalReviews !== undefined && (
+                            <div>
+                              <p className="text-gray-500 text-sm">Total Reviews</p>
+                              <p className="font-medium">{selectedUser.totalReviews}</p>
+                            </div>
+                          )}
+                          {selectedUser.averageRating !== undefined && (
+                            <div>
+                              <p className="text-gray-500 text-sm">Average Rating</p>
+                              <p className="font-medium">{selectedUser.averageRating}/5</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                   
                   {selectedUser.bio && (
-                    <div className="mt-4">
-                      <h4 className="font-semibold text-gray-700">Bio</h4>
-                      <p className="mt-1 text-gray-600">{selectedUser.bio}</p>
+                    <div className="mt-6">
+                      <h4 className="font-semibold text-gray-700 mb-2">Bio</h4>
+                      <p className="text-gray-600 whitespace-pre-line">{selectedUser.bio}</p>
                     </div>
                   )}
                 </div>
