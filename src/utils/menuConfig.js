@@ -15,10 +15,15 @@ export const menuConfig = {
         icon: createIcon(FaChartLine),
       },
       {
-        title: "Creat Tours",
-        path: "/guide/tourcreate",
+        title: "Tours",
+        path: "/guide/tourpackages",
         icon: createIcon(FaMapMarkedAlt),
       },
+      // {
+      //   title: "Creat Tours",
+      //   path: "/guide/tourcreate",
+      //   icon: createIcon(FaMapMarkedAlt),
+      // },
       {
         title: "Earnings",
         path: "/guide/earnings",
