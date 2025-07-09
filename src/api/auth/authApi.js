@@ -4,12 +4,17 @@ import axios from 'axios';
 export const login = async (credentials) => {
   try {
     const response = await apiClient.post('/v1/auth/login', credentials);
+    
+    if(response.data.data?.status === "pending"){
+      throw new Error('Your account is pending approval. Please wait for admin approval.')
+    }
+
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || 'Login failed');
     }
-    throw new Error('An unexpected error occurred');
+    throw new Error('An unexpected error occurred');  
   }
 };
 
@@ -35,6 +40,7 @@ export const signup = async (userData) => {
 
     if (backendRole === 'travel_guide') {
       signupPayload.license = userData.license || userData.guideId;
+      signupPayload. verification_documents = userData. verification_documents,
       signupPayload.years_of_experience = userData.years_of_experience || 0;
       signupPayload.languages_spoken = userData.languages_spoken || ['English'];
     } else if (backendRole === 'vendor') {
@@ -46,7 +52,7 @@ export const signup = async (userData) => {
       signupPayload.location = userData.location
       signupPayload.latitude = userData.latitude || 0;
       signupPayload.longitude = userData.longitude || 0;
-      signupPayload.restaurantType = userData.restaurantType;// Ensure this is passed
+      signupPayload.restaurantType = userData.restaurantType;
     }
 
     const response = await apiClient.post('/v1/auth/signup', signupPayload, {

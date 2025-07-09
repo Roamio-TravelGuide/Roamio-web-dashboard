@@ -13,7 +13,8 @@ import {
   Phone, 
   Building,
   CreditCard,
-  CheckCircle
+  CheckCircle,
+  FileUp,
 } from 'lucide-react';
 import { signup } from '../../api/auth/authApi';
 import { useNavigate } from 'react-router-dom';
@@ -37,6 +38,8 @@ const UnifiedSignup = () => {
     address: '',
     password: '',
     confirmPassword: '',
+    verificationDocument:'',
+    years_of_experience:'',
   });
   
   const [errors, setErrors] = useState({});
@@ -122,6 +125,26 @@ const UnifiedSignup = () => {
       required: true,
       showFor: ['guide'],
       level: 1
+    },
+    {
+      key:'verificationDocument',
+      label:'verification Document',
+      type:'file',
+      placeholder:'Add your verification document',
+      icon: FileUp,
+      required:true,
+      showFor:['guide'],
+      level:1
+    },
+    {
+      key:'years_of_experience',
+      label:'Years of Experience',
+      type:'number',
+      placeholder:'Years of Experiance',
+      icon: FileUp,
+      required:true,
+      showFor:['guide'],
+      level:1
     },
     {
       key: 'password',
