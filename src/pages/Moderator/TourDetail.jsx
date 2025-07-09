@@ -6,7 +6,7 @@ import {
   Check, AlertCircle, Headphones, Image as ImageIcon, Video, User,
   CheckCircle, XCircle, Eye, Loader2, ChevronDown, ChevronRight
 } from 'lucide-react';
-import TourStopsMap from '../../components/tour/TourStopsMap';
+import {TourStopsMap} from '../../components/tour/TourStopsMap';
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';

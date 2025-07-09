@@ -4,38 +4,6 @@ import axios from 'axios';
 
 export const createTour = async (tourData) => {
   try {
-    if (!tourData.guide_id) {
-      throw new Error('Guide ID is required');
-    }
-
-    if (!tourData.price || isNaN(tourData.price)) {
-      throw new Error('Valid price is required');
-    }
-
-    if (!tourData.duration_minutes || isNaN(tourData.duration_minutes)) {
-      throw new Error('Valid duration is required');
-    }
-
-    // Validate tour stops
-    if (!Array.isArray(tourData.tour_stops)) {
-      throw new Error('Tour stops must be an array');
-    }
-
-    tourData.tour_stops.forEach((stop, index) => {
-      if (!stop.stop_name) {
-        throw new Error(`Stop ${index + 1} must have a name`);
-      }
-      if (!stop.location) {
-        throw new Error(`Stop ${index + 1} must have a location`);
-      }
-    });
-
-    console.log('Submitting tour with:', {
-      title: tourData.title,
-      guide_id: tourData.guide_id,
-      stop_count: tourData.tour_stops.length
-    });
-
     const response = await apiClient.post('tour-packages/createTour', tourData, {
       headers: {
         'Content-Type': 'application/json'
@@ -82,3 +50,100 @@ export const getTourById = async (tourId) => {
     throw error;
   }
 };
+
+export const uploadtempcover = async (formData) => {
+  try {
+    // console.log(formData);
+    const response = await apiClient.post('storage/temp-cover', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw error;
+  }
+};
+
+export const viewtempcover = async (s3Key) => {
+  try {
+    const response = await apiClient.get('storage/file-url', {
+      params: { s3Key },
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('URL generation error:', error);
+    throw error;
+  }
+};
+
+export const uploadtempmedia = async (formData) => {
+  try {
+    // console.log(formData)
+    const response = await apiClient.post('storage/temp-media', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw error;
+  }
+}
+
+export const finalizemedia = async (formData) => {
+  try {
+    // console.log(formData);
+    const response = await apiClient.post('storage/finalize', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Finalization error:', error);
+    throw error;
+  }
+}
+
+export const createTourStops = async (packageId, stops) => {
+  try {
+    const response = await apiClient.post('tour-packages/tour-stops/bulk', {
+      package_id: packageId,
+      stops
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Tour stops creation failed:', error);
+    throw error;
+  }
+};
+
+export const createLocation = async (locationData) => {
+  try {
+    const response = await apiClient.post('tour-packages/locations', locationData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Location creation failed:', error);
+    throw error;
+  }
+};
+

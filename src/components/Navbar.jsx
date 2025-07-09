@@ -28,7 +28,7 @@ const Navbar = ({ userType, user, onLogout }) => {
 
   return (
     <div className="sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm">
-      <div className="mx-auto sm:px-6">
+      <div className="mx-auto sm:px-6 lg:px-12">
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-4">
             <img
