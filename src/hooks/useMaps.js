@@ -5,8 +5,7 @@ const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiYWJkdWwwMTEiLCJhIjoiY21jYnN5OXl0MDBvMDJr
 export const useMapbox = () => {
   const getDistanceBetweenPoints = useCallback(
     (point1, point2) => {
-      // Haversine formula to calculate distance between two points
-      const R = 6371000; // Earth's radius in meters
+      const R = 6371000;
       const dLat = (point2.lat - point1.lat) * Math.PI / 180;
       const dLng = (point2.lng - point1.lng) * Math.PI / 180;
       const a = 
@@ -14,7 +13,7 @@ export const useMapbox = () => {
         Math.cos(point1.lat * Math.PI / 180) * Math.cos(point2.lat * Math.PI / 180) * 
         Math.sin(dLng/2) * Math.sin(dLng/2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c; // Distance in meters
+      return R * c;
     },
     []
   );

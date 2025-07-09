@@ -10,10 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-amplify/ui-react": "^6.11.2",
+    "@aws-sdk/client-s3": "^3.842.0",
+    "@aws-sdk/s3-presigned-post": "^3.842.0",
     "@googlemaps/js-api-loader": "^1.16.8",
     "@react-google-maps/api": "^2.20.7",
     "@tailwindcss/vite": "^4.1.8",
     "@vis.gl/react-google-maps": "^1.5.3",
+    "aws-amplify": "^6.15.3",
+    "aws-sdk": "^2.1692.0",
     "axios": "^1.10.0",
     "dotenv": "^16.5.0",
     "framer-motion": "^12.17.0",

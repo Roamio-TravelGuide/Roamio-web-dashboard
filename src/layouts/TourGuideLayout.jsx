@@ -21,7 +21,7 @@ const TourGuideLayout = () => {
         }}
       />
       
-      <main className="flex-grow p-4 md:p-6 bg-gray-50">
+      <main className="flex-grow bg-gray-50">
         <Outlet />
       </main>
     </div>
