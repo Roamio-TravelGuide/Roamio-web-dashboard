@@ -19,7 +19,8 @@ const SignInPage = () => {
   const roleRoutes = {
     admin: '/admin/dashboard',
     travel_guide: '/guide/dashboard',
-    moderator: '/moderator/dashboard'
+    moderator: '/moderator/dashboard',
+    vendor: '/vendor/dashboard',
   };
 
   const handleSubmit = async (e) => {
