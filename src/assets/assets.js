@@ -29,6 +29,8 @@ import Train from './Landing/train.jpg';
 import Lake from './Landing/PanoramicRiver.jpg';
 import Church from './Landing/Church.jpg';
 import Kovil from './Landing/Kovil.jpg';
+import TourCreate from './Tour/view-travel-adventure-essentials.jpg'
+
 
 
 export const images = {
@@ -62,7 +64,7 @@ export const images = {
   Lake,
   Church,
   Kovil,
-  
+  TourCreate
 };
 
 export const audio = {

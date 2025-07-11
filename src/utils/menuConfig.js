@@ -1,10 +1,20 @@
-import { FaUsers, FaChartLine, FaCog, FaMapMarkedAlt, FaCalendarAlt, FaWallet } from 'react-icons/fa';
-import React from 'react';
+import {
+  FaUsers,
+  FaChartLine,
+  FaCog,
+  FaMapMarkedAlt,
+  FaCalendarAlt,
+  FaWallet,
+  FaBullhorn,
+  FaRegClock,
+  FaRegStar,
+  FaRegQuestionCircle,
+} from "react-icons/fa";
+import React from "react";
 
 // Helper function to create icon elements
-const createIcon = (IconComponent) => (
-  React.createElement(IconComponent, { className: "w-5 h-5" })
-);
+const createIcon = (IconComponent) =>
+  React.createElement(IconComponent, { className: "w-5 h-5" });
 
 export const menuConfig = {
   travel_guide: {
@@ -15,10 +25,15 @@ export const menuConfig = {
         icon: createIcon(FaChartLine),
       },
       {
-        title: "Creat Tours",
-        path: "/guide/tourcreate",
+        title: "Tours",
+        path: "/guide/tourpackages",
         icon: createIcon(FaMapMarkedAlt),
       },
+      // {
+      //   title: "Creat Tours",
+      //   path: "/guide/tourcreate",
+      //   icon: createIcon(FaMapMarkedAlt),
+      // },
       {
         title: "Earnings",
         path: "/guide/earnings",
@@ -37,7 +52,41 @@ export const menuConfig = {
         title: "Profile",
         path: "/moderator/dashboard",
         icon: createIcon(FaCog),
-      }
-    ]
-  }
+      },
+    ],
+  },
+  vendor: {
+    navItems: [
+      {
+        title: "Dashboard",
+        path: "/vendor/dashboard",
+        icon: createIcon(FaChartLine),
+      },
+      {
+        title: "Profile",
+        path: "/vendor/profile",
+        icon: createIcon(FaUsers),
+      },
+      {
+        title: "Location",
+        path: "/vendor/location",
+        icon: createIcon(FaMapMarkedAlt),
+      },
+      {
+        title: "Promotions",
+        path: "/vendor/promotions",
+        icon: createIcon(FaBullhorn),
+      },
+      {
+        title: "Support",
+        path: "/vendor/support",
+        icon: createIcon(FaRegQuestionCircle),
+      },
+      {
+        title: "Billing",
+        path: "/vendor/billing",
+        icon: createIcon(FaWallet),
+      },
+    ],
+  },
 };

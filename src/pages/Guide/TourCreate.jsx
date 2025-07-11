@@ -1,64 +1,61 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { StepIndicator } from '../../components/ui/StepIndicator.jsx';
 import { BasicInfoStep } from '../../components/tour/BasicInfoStep.jsx';
 import { RouteMapStep } from '../../components/tour/RouteMapStep.jsx';
 import { MediaUploadStep } from '../../components/tour/MediaUploadStep.jsx';
 import { ReviewStep } from '../../components/tour/ReviewStep.jsx';
 import { useMapbox } from '../../hooks/useMaps.js';
-import { createTour } from '../../api/tour/tourApi.js';
+import { createTour , finalizemedia ,createLocation ,createTourStops} from '../../api/tour/tourApi.js';
 import { useAuth } from '../../contexts/authContext.jsx';
+// import { ToastContext } from '../../contexts/ToastContext';
 
-const STEPS = [
-  { title: 'Basic Info', description: 'Tour details' },
-  { title: 'Plan Route', description: 'Map & stops' },
-  { title: 'Add Media', description: 'Audio & images' },
-  { title: 'Review', description: 'Final check' }
-];
 
 const PRICE_PER_MINUTE = 500;
 const MINIMUM_PRICE = 1000;
 
-export const TourCreate = () => {
-  const { authState } = useAuth();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [tourData, setTourData] = useState({
-    title: '',
-    description: '',
-    price: 0,
-    duration_minutes: 0,
-    tour_stops: [],
-    cover_image: undefined,
-    cover_image_url: undefined
-  });
-  const [validationWarnings, setValidationWarnings] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { getDistanceBetweenPoints, getWalkingTime } = useMapbox();
+const tabs = [
+  { id: 1, name: 'Basic Info' },
+  { id: 2, name: 'Route' },
+  { id: 3, name: 'Media' },
+  { id: 4, name: 'Review' }
+];
 
-  const validateCurrentStep = () => {
-  switch (currentStep) {
-    case 1: 
-      return tourData.title?.trim() && tourData.cover_image;
-    case 2: 
-      return tourData.tour_stops?.length >= 2 && 
-             tourData.tour_stops.every(stop => stop.location);
-    case 3: 
-      return tourData.tour_stops.every(stop => 
-        stop.media?.some(m => m.media_type === 'audio')
-      ) && validationWarnings.every(w => w.severity !== 'error');
-    case 4: 
-      return true;
-    default: 
-      return false;
-  }
+const initialTourData = {
+  title: '',
+  description: '',
+  price: 0,
+  duration_minutes: 0,
+  tour_stops: [],
+  cover_image: undefined,
+  cover_image_url: undefined
 };
 
-  useEffect(() => {
-    if (currentStep >= 3) {
-      validateMediaContent();
+export const TourCreate = () => {
+  // const { addToast } = useContext(ToastContext);
+  const { authState } = useAuth();
+  const { getDistanceBetweenPoints, getWalkingTime } = useMapbox();
+  
+  const [currentStep, setCurrentStep] = useState(1);
+  const [tourData, setTourData] = useState(initialTourData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validateCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return tourData.title?.trim() && tourData.description?.trim();
+      case 2: 
+        return tourData.tour_stops?.length >= 2 &&
+               tourData.tour_stops.every(stop => stop.location);
+      case 3: 
+        return tourData.tour_stops.every(stop => 
+          stop.media?.some(m => m.media_type === 'audio')
+        ) && validationWarnings.every(w => w.severity !== 'error');
+      case 4: 
+        return true;
+      default: 
+        return false;
     }
-  }, [tourData.tour_stops, currentStep]);
+  };
 
   const validateMediaContent = () => {
     const warnings = [];
@@ -87,10 +84,10 @@ export const TourCreate = () => {
       const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
       const totalAudioDuration = audioFiles.reduce((total, audio) => total + (audio.duration_seconds || 0), 0);
 
-      if (totalAudioDuration > maxRecommendedAudioTime) {
+      if (totalAudioDuration < maxRecommendedAudioTime) {
         warnings.push({
           stopIndex: index,
-          message: `Audio duration (${totalAudioDuration}s) exceeds 80% of walking time (${maxRecommendedAudioTime}s) to next stop`,
+          message: `Audio duration (${totalAudioDuration}s) is too short for this stop`,
           severity: 'warning'
         });
       }
@@ -104,32 +101,32 @@ export const TourCreate = () => {
       }
     });
 
-    setValidationWarnings(warnings);
+    return warnings;
   };
 
-  const calculateTourDuration = () => {
+  const validationWarnings = useMemo(() => {
+    return currentStep >= 3 ? validateMediaContent() : [];
+  }, [tourData.tour_stops, currentStep]);
+
+  const durationMinutes = useMemo(() => {
     const totalSeconds = tourData.tour_stops.reduce((total, stop) => {
       const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
-      return total + audioFiles.reduce((stopTotal, audio) => stopTotal + (audio.duration_seconds || 0), 0);
+      return total + audioFiles.reduce((stopTotal, audio) => 
+        stopTotal + (audio.duration_seconds || 0), 0);
     }, 0);
     return Math.ceil(totalSeconds / 60);
-  };
+  }, [tourData.tour_stops]);
 
-  const calculateTourPrice = () => {
-    const totalMinutes = calculateTourDuration();
-    const basePrice = totalMinutes * PRICE_PER_MINUTE;
+  const price = useMemo(() => {
+    const basePrice = durationMinutes * PRICE_PER_MINUTE;
     return Math.max(basePrice, MINIMUM_PRICE);
-  };
+  }, [durationMinutes]);
 
-  const handleNext = () => {
-    if (validateCurrentStep() && currentStep < STEPS.length) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
+  const canGoNext = currentStep < tabs.length && validateCurrentStep();
+  const canGoBack = currentStep > 1;
 
-  const handlePrevious = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
-  };
+  const handleNext = () => canGoNext && setCurrentStep(c => c + 1);
+  const handlePrevious = () => canGoBack && setCurrentStep(c => c - 1);
 
   const handleTourDataUpdate = (updates) => {
     setTourData(prev => ({ ...prev, ...updates }));
@@ -139,66 +136,243 @@ export const TourCreate = () => {
     setTourData(prev => ({ ...prev, tour_stops: stops }));
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      if (!authState.user?.id) {
-        throw new Error('User not authenticated');
-      }
+//   // Add proper error handling in the controller
+//   const handleSubmit = async () => {
+//   setIsSubmitting(true);
+  
+//   try {
+//     // 1. Create basic tour package
+//     const basicTourData = {
+//       title: tourData.title,
+//       description: tourData.description || '',
+//       price: price,
+//       duration_minutes: durationMinutes,
+//       guide_id: authState.user.id,
+//       stops: tourData.tour_stops.map((stop, index) => ({
+//         stop_name: stop.stop_name,
+//         description: stop.description,
+//         location: stop.location,
+//         sequence_no: index + 1
+//       }))
+//     };
 
-      const finalData = {
-        ...tourData,
-        price: calculateTourPrice(),
-        duration_minutes: calculateTourDuration(),
-        status: 'pending_approval',
-        guide_id: authState.user.id,
-      };
+//     // 2. Create tour package and stops
+//     const response = await createTour(basicTourData);
+//     const package_id = response.data.data.id;
+    
+//     // 3. Finalize media (now stops exist)
+//     if (tourData.tour_stops.some(stop => stop.media?.length)) {
+//       await handleMediaUploads(package_id, authState.user.id);
+//     }
 
-      const requestData = {
-        title: finalData.title,
-        description: finalData.description || '',
-        price: finalData.price,
-        duration_minutes: finalData.duration_minutes,
-        status: finalData.status,
-        guide_id: finalData.guide_id,
-        cover_image_url: finalData.cover_image_url || '',
-        tour_stops: finalData.tour_stops.map((stop, index) => ({
-          sequence_no: index + 1,
-          stop_name: stop.stop_name || `Stop ${index + 1}`,
-          description: stop.description || '',
-          location: stop.location ? {
+//     // 4. Success
+//     console.log('Tour created successfully!');
+//     // Redirect or show success message
+
+//   } catch (error) {
+//     console.error('Tour submission failed:', error);
+//     // Show error to user
+//   } finally {
+//     setIsSubmitting(false);
+//   }
+// };
+
+// const handleMediaUploads = async (package_id, uploadedById) => {
+//   const fileReferences = tourData.tour_stops.flatMap((stop, stopIndex) => {
+//     return stop.media?.map(mediaItem => ({
+//       key: mediaItem.key,
+//       type: mediaItem.media_type === 'audio' ? 'stop_audio' : 'stop_image',
+//       duration_seconds: mediaItem.duration_seconds,
+//       file_size: mediaItem.file_size,
+//       format: mediaItem.format,
+//       stopIndex: stopIndex, // 0-based index
+//       stopSequence: stopIndex + 1 // For reference
+//     })) || [];
+//   });
+
+//   // Add cover image if exists
+//   if (tourData.cover_image?.key) {
+//     fileReferences.push({
+//       key: tourData.cover_image.key,
+//       type: 'cover',
+//       file_size: tourData.cover_image.file_size,
+//       format: tourData.cover_image.format
+//     });
+//   }
+
+//   const formData = new FormData();
+//   formData.append('fileReferences', JSON.stringify(fileReferences));
+//   formData.append('packageId', package_id);
+//   formData.append('uploadedById', uploadedById);
+
+//   await finalizemedia(formData);
+// };
+
+//   const updateTourStops = async (package_id) => {
+//   try {
+//     // First create all locations
+//     const stopsWithLocations = await Promise.all(
+//       tourData.tour_stops.map(async (stop) => {
+//         if (!stop.location) return { ...stop, location_id: null };
+        
+//         const locationResponse = await createLocation({
+//           longitude: stop.location.longitude,
+//           latitude: stop.location.latitude,
+//           address: stop.location.address || '',
+//           city: stop.location.city || '',
+//           province: stop.location.province || '',
+//           district: stop.location.district || '',
+//           postal_code: stop.location.postal_code || ''
+//         });
+        
+//         return { 
+//           ...stop, 
+//           location_id: locationResponse.data.id // Make sure to access the correct response property
+//         };
+//       })
+//     );
+
+//     // Then create all tour stops in order
+//     await createTourStops(
+//       package_id,
+//       stopsWithLocations.map((stop, index) => ({
+//         sequence_no: index + 1, // Ensure sequence starts at 1
+//         stop_name: stop.stop_name || `Stop ${index + 1}`,
+//         description: stop.description || '',
+//         location_id: stop.location_id || null
+//       }))
+//     );
+//   } catch (error) {
+//     console.error('Failed to create tour stops:', error);
+//     throw error;
+//   }
+// };
+
+const handleSubmit = async () => {
+  setIsSubmitting(true);
+  // setSubmitError(null);
+
+  try {
+    // 1. Create basic tour package
+    const basicTourData = {
+      title: tourData.title,
+      description: tourData.description,
+      price: price,
+      duration_minutes: durationMinutes,
+      status: 'pending_approval',
+      guide_id: authState.user.id
+    };
+
+    // 2. Create the tour package
+    const tourResponse = await createTour(basicTourData);
+    const package_id = tourResponse.data?.id || tourResponse.id;
+    
+    if (!package_id) {
+      throw new Error('Failed to get package ID from response');
+    }
+
+    // 3. Process locations and stops
+    const stopsWithLocations = await Promise.all(
+      tourData.tour_stops.map(async (stop) => {
+        if (!stop.location) return { ...stop, location_id: null };
+
+        try {
+          const locationResponse = await createLocation({
             longitude: stop.location.longitude,
             latitude: stop.location.latitude,
-            address: stop.location.address || '',
-            city: stop.location.city || '',
-            province: stop.location.province || '',
-            district: stop.location.district || '',
-            postal_code: stop.location.postal_code || ''
-          } : null,
-          media: stop.media?.map(mediaItem => ({
-            media_type: mediaItem.media_type,
-            url: mediaItem.url || '',
-            duration_seconds: mediaItem.duration_seconds || 0,
-            caption: mediaItem.caption || ''
-          })) || []
-        }))
-      };
+            address: stop.location.address,
+            city: stop.location.city,
+            province: stop.location.province,
+            district: stop.location.district,
+            postal_code: stop.location.postal_code
+          });
 
-      const res = await createTour(requestData);
-      console.log('Tour created successfully:', res);
-      
-      // Redirect or show success message
-    } catch (error) {
-      console.error('Error submitting tour:', error);
-      // Show error message to user
-    } finally {
-      setIsSubmitting(false);
+          return {
+            ...stop,
+            location_id: locationResponse.data?.id || locationResponse.id
+          };
+        } catch (error) {
+          console.error('Location creation failed:', error);
+          return { ...stop, location_id: null };
+        }
+      })
+    );
+
+    // 4. Create tour stops
+    await createTourStops(
+      package_id,
+      stopsWithLocations.map((stop, index) => ({
+        sequence_no: index + 1,
+        stop_name: stop.stop_name || `Stop ${index + 1}`,
+        description: stop.description || '',
+        location_id: stop.location_id || null
+      }))
+    );
+
+    // 5. Handle media uploads if they exist
+    const hasStopMedia = tourData.tour_stops.some(stop => stop.media?.length > 0);
+    const hasCoverImage = tourData.cover_image_temp || tourData.cover_image;
+
+    if (hasStopMedia || hasCoverImage) {
+      const fileReferences = [];
+
+      // Add stop media
+      tourData.tour_stops.forEach((stop, stopIndex) => {
+        stop.media?.forEach(mediaItem => {
+          fileReferences.push({
+            key: mediaItem.key,
+            type: mediaItem.media_type === 'audio' ? 'stop_audio' : 'stop_image',
+            duration_seconds: mediaItem.duration_seconds,
+            file_size: mediaItem.file_size,
+            format: mediaItem.format,
+            stopIndex: stopIndex,
+            stopSequence: stopIndex + 1
+          });
+        });
+      });
+
+      // Add cover image if exists
+      if (tourData.cover_image_temp?.key) {
+        fileReferences.push({
+          key: tourData.cover_image_temp.key,
+          type: 'cover',
+          file_size: tourData.cover_image_temp.file_size,
+          format: tourData.cover_image_temp.format
+        });
+      }
+
+      if (fileReferences.length > 0) {
+        const formData = new FormData();
+        formData.append('fileReferences', JSON.stringify(fileReferences));
+        formData.append('packageId', package_id);
+        formData.append('uploadedById', authState.user.id);
+        
+        await finalizemedia(formData);
+      }
     }
-  };
-  
+
+    console.log('Tour created successfully!');
+    // Redirect or show success message
+
+  } catch (error) {
+    console.error('Tour submission failed:', error);
+    // setSubmitError(
+    //   error.response?.data?.message || 
+    //   error.message || 
+    //   'Failed to create tour. Please try again.'
+    // );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
   const renderCurrentStep = () => {
     const commonProps = {
-      tourData,
+      tourData: {
+        ...tourData,
+        price,
+        duration_minutes: durationMinutes
+      },
       onUpdate: handleTourDataUpdate,
       stops: tourData.tour_stops,
       onStopsUpdate: handleStopsUpdate,
@@ -206,124 +380,64 @@ export const TourCreate = () => {
     };
 
     switch (currentStep) {
-      case 1: 
-        return <BasicInfoStep {...commonProps} />;
-      case 2: 
-        return <RouteMapStep {...commonProps} />;
-      case 3: 
-        return <MediaUploadStep {...commonProps} />;
-      case 4: 
-        return (
-          <ReviewStep
-            {...commonProps}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            tourData={{
-              ...tourData,
-              price: calculateTourPrice(),
-              duration_minutes: calculateTourDuration()
-            }}
-          />
-        );
-      default: 
-        return null;
+      case 1: return <BasicInfoStep {...commonProps} />;
+      case 2: return <RouteMapStep {...commonProps} />;
+      case 3: return <MediaUploadStep {...commonProps} />;
+      case 4: return <ReviewStep {...commonProps} onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
+      default: return null;
     }
   };
 
-  const isCurrentStepValid = validateCurrentStep();
-  const canProceed = isCurrentStepValid;
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-12 mx-auto">
-        {/* Header Section */}
-        <div className="mb-12 text-center">
-          <h1 className="mb-3 text-4xl font-bold text-gray-900">
-            Create New Tour Package
-          </h1>
-          <p className="max-w-2xl mx-auto text-lg text-gray-600">
-            Craft an immersive experience with our step-by-step tour creation process
-          </p>
-        </div>
-
-        {/* Main Content */}
-        <div className="max-w-6xl mx-auto">
-          {/* Step Indicator */}
-          <div className="mb-8">
-            <StepIndicator
-              currentStep={currentStep}
-              totalSteps={STEPS.length}
-              steps={STEPS}
-              activeColor="bg-gradient-to-r from-teal-600 to-blue-600"
-            />
+    <div className="relative min-h-screen bg-fixed bg-center bg-cover">
+      <div className="px-4 py-8 mx-auto">
+        <div className="mx-8 overflow-hidden bg-white rounded-lg shadow">
+          <div className="p-6 sm:p-8">
+            {renderCurrentStep()}
           </div>
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={handlePrevious}
+                disabled={!canGoBack}
+                className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                  !canGoBack
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Previous
+              </button>
 
-          {/* Form Container */}
-          <div className="overflow-hidden bg-white shadow-lg rounded-xl">
-            {/* Form Content */}
-            <div className="p-8">
-              {renderCurrentStep()}
+              {currentStep < tabs.length ? (
+                <button
+                  onClick={handleNext}
+                  disabled={!canGoNext}
+                  className={`inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-md ${
+                    canGoNext
+                      ? 'bg-indigo-600 hover:bg-indigo-700'
+                      : 'bg-gray-300 cursor-not-allowed'
+                  }`}
+                >
+                  Next
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className={`inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-md ${
+                    !isSubmitting
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-green-400 cursor-not-allowed'
+                  }`}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Tour'}
+                </button>
+              )}
             </div>
-
-            {/* Navigation Footer */}
-            {currentStep < 4 && (
-              <div className="px-8 py-6 border-t border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={handlePrevious}
-                    disabled={currentStep === 1}
-                    className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${
-                      currentStep === 1
-                        ? 'text-gray-400 cursor-not-allowed'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <ArrowLeft size={18} />
-                    <span>Back</span>
-                  </button>
-
-                  <div className="text-sm font-medium text-gray-500">
-                    Step {currentStep} of {STEPS.length}
-                  </div>
-
-                  <button
-                    onClick={handleNext}
-                    disabled={!canProceed}
-                    className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium text-white transition-all ${
-                      canProceed
-                        ? 'bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 shadow-md hover:shadow-lg'
-                        : 'bg-gray-300 cursor-not-allowed'
-                    }`}
-                  >
-                    <span>Continue</span>
-                    <ArrowRight size={18} />
-                  </button>
-                </div>
-
-                {!isCurrentStepValid && (
-                  <div className="mt-4 text-center">
-                    <p className="text-sm text-red-500">
-                      Please complete all required fields to continue
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-        </div>
-
-        {/* Help Section */}
-        <div className="max-w-2xl mx-auto mt-12 text-center">
-          <p className="text-gray-500">
-            Need assistance?{' '}
-            <a href="#" className="font-medium text-teal-600 hover:text-teal-700">
-              View our guide
-            </a>{' '}
-            or{' '}
-            <a href="#" className="font-medium text-teal-600 hover:text-teal-700">
-              contact support
-            </a>
-          </p>
         </div>
       </div>
     </div>
