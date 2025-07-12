@@ -2,6 +2,13 @@
 import apiClient from '../apiClient';
 import axios from 'axios';
 
+// Helper function to format dates consistently
+function formatDate(date) {
+  if (date instanceof Date) return date.toISOString();
+  const parsed = new Date(date);
+  return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+}
+
 export const getAllUsers = async () => {
   try {
     const response = await apiClient.get('/users/getAllUsers');
@@ -16,12 +23,12 @@ export const getAllUsers = async () => {
         status: user.status.toLowerCase(),
         role: user.role,
         avatar: user.profile_picture_url || '/default-avatar.png',
-        registeredDate: user.registered_date,
-        lastLogin: user.last_login,
+        registeredDate: formatDate(user.registered_date),
+        lastLogin: user.last_login ? formatDate(user.last_login) : null,
         bio: user.bio,
         totalBookings: user.traveler_count || 0,
         totalReviews: user.report_count || 0,
-        averageRating: 0,
+        ...(user.role !== 'traveler' && { averageRating: user.average_rating || 0 }),
       })),
       message: response.data.message,
     };
@@ -30,5 +37,44 @@ export const getAllUsers = async () => {
       throw error.response?.data?.message || 'Fetching users failed';
     }
     throw new Error('An unexpected error occurred');
+  }
+};
+
+export const getUserStatistics = async () => {
+  try {
+    const response = await apiClient.get('/users/getAllUsers');
+    const users = response.data.users;
+
+    // Calculate statistics from the user data
+    return {
+      total: users.length,
+      active: users.filter(user => user.status.toLowerCase() === 'active').length,
+      pending: users.filter(user => user.status.toLowerCase() === 'pending').length,
+      blocked: users.filter(user => user.status.toLowerCase() === 'blocked').length,
+      travelers: users.filter(user => user.role === 'traveler').length,
+      tourGuides: users.filter(user => user.role === 'tour_guide').length,
+      moderators: users.filter(user => user.role === 'moderator').length,
+      vendors: users.filter(user => user.role === 'vendor').length,
+      lastUpdated: new Date().toISOString()
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data?.message || 'Fetching statistics failed';
+    }
+    throw new Error('An unexpected error occurred while fetching statistics');
+  }
+};
+
+export const updateUserStatus = async (userId, newStatus) => {
+  try {
+    const response = await apiClient.patch(`/users/${userId}/status`, {
+      status: newStatus
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data?.message || 'Updating user status failed';
+    }
+    throw new Error('An unexpected error occurred while updating status');
   }
 };
