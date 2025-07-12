@@ -48,12 +48,12 @@ const AppRoutes = () => {
             <Route path="/guide/dashboard" element={<GuideDashboard />} />
             <Route path="/guide/tourpackages" element={<TourPackages/>}/>
             <Route path="/guide/tourcreate" element={<TourCreate />} />
-            <Route path="/guide/tours/view" element={<TourDet/>} />
+            <Route path="/guide/tour/view/:id" element={<TourDet/>} />
           </Route>
 
           <Route element={<ModeratorLayout/>}>
             <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
-            <Route path="/tour/:id" element={<TourDetail/>} />
+            <Route path="/moderator/tour/:id" element={<TourDetail/>} />
           </Route>
 
           <Route element={<VendorLayout />}>
