@@ -13,7 +13,8 @@ import SignupPage from '../pages/Auth/UnifiedSignup';
 import GuideDashboard from '../pages/Guide/Dashboard';
 import TourCreate from '../pages/Guide/TourCreate';
 import TourDet from '../pages/Guide/TourDetail';
-import TourPackages from '../pages/Guide/TourPackages'
+import TourPackages from '../pages/Guide/TourPackages';
+import Complaints from '../pages/Guide/Complaints'
 
 import ModeratorLayout from '../layouts/ModeratorLayout';
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
@@ -48,6 +49,8 @@ const AppRoutes = () => {
             <Route path="/guide/dashboard" element={<GuideDashboard />} />
             <Route path="/guide/tourpackages" element={<TourPackages/>}/>
             <Route path="/guide/tourcreate" element={<TourCreate />} />
+            <Route path="/guide/complaints" element={<Complaints />} />
+            <Route path="/guide/tours/view" element={<TourDet/>} />
             <Route path="/guide/tour/view/:id" element={<TourDet/>} />
           </Route>
 
