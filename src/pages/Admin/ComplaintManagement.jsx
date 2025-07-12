@@ -19,10 +19,10 @@ import {
   Trash2
 } from 'lucide-react';
 
-const ComplaintManagement: React.FC = () => {
+const ComplaintManagement = () => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedComplaints, setSelectedComplaints] = useState<string[]>([]);
+  const [selectedComplaints, setSelectedComplaints] = useState([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
 
   const complaintStats = [
@@ -30,7 +30,7 @@ const ComplaintManagement: React.FC = () => {
       title: 'Total Complaints',
       value: '127',
       change: '-8%',
-      changeType: 'negative' as const,
+      changeType: 'negative',
       icon: MessageSquare,
       color: 'blue'
     },
@@ -38,7 +38,7 @@ const ComplaintManagement: React.FC = () => {
       title: 'Pending Review',
       value: '23',
       change: '+5%',
-      changeType: 'positive' as const,
+      changeType: 'positive',
       icon: Clock,
       color: 'amber'
     },
@@ -46,7 +46,7 @@ const ComplaintManagement: React.FC = () => {
       title: 'Resolved Today',
       value: '12',
       change: '+15%', 
-      changeType: 'positive' as const,
+      changeType: 'positive',
       icon: CheckCircle2,
       color: 'emerald'
     },
@@ -54,7 +54,7 @@ const ComplaintManagement: React.FC = () => {
       title: 'Critical Tasks',
       value: '8',
       change: '-2%',
-      changeType: 'negative' as const,
+      changeType: 'negative',
       icon: AlertTriangle,
       color: 'red'
     }
@@ -148,7 +148,7 @@ const ComplaintManagement: React.FC = () => {
     return matchesFilter && matchesSearch;
   });
 
-  const getFilterCount = (filterId: string) => {
+  const getFilterCount = (filterId) => {
     if (filterId === 'all') return complaints.length;
     if (filterId === 'pending') return complaints.filter(c => c.status === 'Pending').length;
     if (filterId === 'in-progress') return complaints.filter(c => c.status === 'In Progress').length;
@@ -165,27 +165,27 @@ const ComplaintManagement: React.FC = () => {
     { id: 'critical', label: 'Critical' }
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     const colors = {
       'Pending': 'bg-amber-100 text-amber-800',
       'In Progress': 'bg-blue-100 text-blue-800',
       'Resolved': 'bg-emerald-100 text-emerald-800',
       'Closed': 'bg-gray-100 text-gray-800'
     };
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority) => {
     const colors = {
       'Critical': 'bg-red-100 text-red-800',
       'High': 'bg-orange-100 text-orange-800',
       'Medium': 'bg-yellow-100 text-yellow-800',
       'Low': 'bg-green-100 text-green-800'
     };
-    return colors[priority as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[priority] || 'bg-gray-100 text-gray-800';
   };
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryColor = (category) => {
     const colors = {
       'Audio Quality': 'bg-blue-100 text-blue-800',
       'Content Violation': 'bg-red-100 text-red-800',
@@ -193,30 +193,30 @@ const ComplaintManagement: React.FC = () => {
       'Service Issue': 'bg-purple-100 text-purple-800',
       'Billing': 'bg-emerald-100 text-emerald-800'
     };
-    return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    return colors[category] || 'bg-gray-100 text-gray-800';
   };
 
-  const getColorClasses = (color: string) => {
+  const getColorClasses = (color) => {
     const colors = {
       blue: 'bg-blue-50 text-blue-700 border-blue-200',
       amber: 'bg-amber-50 text-amber-700 border-amber-200',
       emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       red: 'bg-red-50 text-red-700 border-red-200'
     };
-    return colors[color as keyof typeof colors];
+    return colors[color];
   };
 
-  const getIconBg = (color: string) => {
+  const getIconBg = (color) => {
     const colors = {
       blue: 'bg-blue-500',
       amber: 'bg-amber-500',
       emerald: 'bg-emerald-500',
       red: 'bg-red-500'
     };
-    return colors[color as keyof typeof colors];
+    return colors[color];
   };
 
-  const handleSelectComplaint = (complaintId: string) => {
+  const handleSelectComplaint = (complaintId) => {
     setSelectedComplaints(prev => 
       prev.includes(complaintId) 
         ? prev.filter(id => id !== complaintId)
@@ -232,7 +232,7 @@ const ComplaintManagement: React.FC = () => {
     }
   };
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = (action) => {
     console.log(`Applying ${action} to complaints:`, selectedComplaints);
     setSelectedComplaints([]);
     setShowBulkActions(false);

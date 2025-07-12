@@ -29,7 +29,7 @@ import {
   CheckSquareIcon,
 } from "lucide-react";
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const [showFilter, setShowFilter] = useState(false);
   const chartData = [
     { name: "Mon", thisMonth: 4000, lastMonth: 2400 },
@@ -46,7 +46,7 @@ const Dashboard: React.FC = () => {
       title: "Monthly Revenue",
       value: "$45,231",
       change: "+18%",
-      changeType: "positive" as const,
+      changeType: "positive",
       icon: DollarSign,
       color: "emerald",
     },
@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
       title: "Active Complaints",
       value: "23",
       change: "-8%",
-      changeType: "negative" as const,
+      changeType: "negative",
       icon: MessageSquare,
       color: "amber",
     },
@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
       title: "Audio Tours",
       value: "1,847",
       change: "+5%",
-      changeType: "positive" as const,
+      changeType: "positive",
       icon: Headphones,
       color: "purple",
     },
@@ -122,24 +122,24 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const getColorClasses = (color: string) => {
+  const getColorClasses = (color) => {
     const colors = {
       emerald: "bg-emerald-50 text-emerald-600 border-emerald-200",
       amber: "bg-amber-50 text-amber-600 border-amber-200",
       purple: "bg-purple-50 text-purple-600 border-purple-200",
       blue: "bg-blue-50 text-blue-600 border-blue-200",
     };
-    return colors[color as keyof typeof colors];
+    return colors[color] || "";
   };
 
-  const getIconBg = (color: string) => {
+  const getIconBg = (color) => {
     const colors = {
       emerald: "bg-emerald-500",
       amber: "bg-amber-500",
       purple: "bg-purple-500",
       blue: "bg-blue-500",
     };
-    return colors[color as keyof typeof colors];
+    return colors[color] || "";
   };
 
   return (

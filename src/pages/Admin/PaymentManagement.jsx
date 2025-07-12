@@ -60,133 +60,21 @@ import {
   Play,
 } from "lucide-react";
 
-interface TourPackage {
-  id: string;
-  title: string;
-  location: string;
-  price: number;
-  rating: number;
-  downloads: number;
-  duration: string;
-  image: string;
-  status: string;
-}
-
-interface SponsoredPlace {
-  id: string;
-  name: string;
-  type: string;
-  location: string;
-  rating: number;
-  image: string;
-  sponsorshipType: string;
-  monthlyFee: number;
-}
-
-interface ReviewedPackage {
-  id: string;
-  title: string;
-  guide: string;
-  reviewDate: string;
-  status: string;
-  rating: number;
-}
-
-interface Transaction {
-  id: string;
-  transactionId: string;
-  user: string;
-  userEmail: string;
-  type: 'tour_purchase' | 'vendor_listing' | 'guide_payout';
-  amount: number;
-  status: 'pending' | 'success' | 'failed';
-  date: string;
-  details?: {
-    packageName?: string;
-    vendorName?: string;
-    guideName?: string;
-    paymentMethod?: string;
-    commission?: number;
-    paidToGuide?: number;
-  };
-}
-
-interface GuidePayout {
-  payoutId: string;
-  guideName: string;
-  packageName: string;
-  purchaseAmount: number;
-  commission: number;
-  payableAmount: number;
-  payoutStatus: 'pending' | 'unpaid' | 'success' | 'failed';
-  lastPayout?: string;
-}
-
-interface VendorListing {
-  vendorName: string;
-  vendorEmail: string;
-  vendorPhone: string;
-  listingType: 'Featured' | 'Premium' | 'Standard';
-  paymentAmount: number;
-  duration: string;
-  status: 'active' | 'expired' | 'pending';
-  startDate: string;
-  expiryDate: string;
-  paymentReference: string;
-  visibilityStatus: 'active' | 'hidden';
-  location: string;
-}
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  type: "Travel Guide" | "Traveller" | "Vendor" | "Moderator";
-  status: "Active" | "Inactive";
-  joinDate: string;
-  avatar: string;
-  // Travel Guide specific fields
-  documents?: string;
-  contact?: { email: string; phone: string };
-  certification?: "Certified" | "Pending";
-  experience?: string;
-  languagesSpoken?: string[];
-  tourPackages?: TourPackage[];
-  totalEarnings?: string;
-  // Traveller specific fields
-  downloadedPackages?: TourPackage[];
-  hiddenPlaces?: Array<{
-    id: string;
-    name: string;
-    type: string;
-    location: string;
-    discoveryDate: string;
-    rating: number;
-    image: string;
-  }>;
-  // Moderator specific fields
-  region?: string;
-  reviewedPackages?: ReviewedPackage[];
-  // Vendor specific fields
-  location?: string;
-  sponsoredPlaces?: SponsoredPlace[];
-}
-
-const PaymentManagement: React.FC = () => {
+const PaymentManagement = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
   const [showBankProcessingModal, setShowBankProcessingModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
-  const [selectedListing, setSelectedListing] = useState<VendorListing | null>(null);
+  const [selectedListing, setSelectedListing] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [dateRange, setDateRange] = useState('30days');
 
   // Sample transaction data with new structure
-  const transactions: Transaction[] = [
+  const transactions = [
     {
       id: "TXN001",
       transactionId: "PH_001234567",
@@ -294,7 +182,7 @@ const PaymentManagement: React.FC = () => {
   ];
 
   // Guide payout data with updated fields
-  const guidePayouts: GuidePayout[] = [
+  const guidePayouts = [
     {
       payoutId: "PO_001",
       guideName: "John Silva",
@@ -335,7 +223,7 @@ const PaymentManagement: React.FC = () => {
   ];
 
   // Vendor listing data with updated structure
-  const vendorListings: VendorListing[] = [
+  const vendorListings = [
     {
       vendorName: "Café Aroma",
       vendorEmail: "contact@cafearoma.lk",
@@ -395,7 +283,7 @@ const PaymentManagement: React.FC = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'success':
         return 'bg-green-100 text-green-800';
@@ -408,7 +296,7 @@ const PaymentManagement: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status) => {
     switch (status) {
       case 'success':
         return <CheckCircle2 className="w-4 h-4" />;
@@ -421,7 +309,7 @@ const PaymentManagement: React.FC = () => {
     }
   };
 
-  const getPayoutStatusColor = (status: string) => {
+  const getPayoutStatusColor = (status) => {
     switch (status) {
       case 'success':
         return 'bg-green-100 text-green-800';
@@ -436,7 +324,7 @@ const PaymentManagement: React.FC = () => {
     }
   };
 
-  const getPayoutStatusIcon = (status: string) => {
+  const getPayoutStatusIcon = (status) => {
     switch (status) {
       case 'success':
         return <CheckCircle2 className="w-4 h-4" />;
@@ -451,7 +339,7 @@ const PaymentManagement: React.FC = () => {
     }
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type) => {
     switch (type) {
       case 'tour_purchase':
         return <Headphones className="w-4 h-4 text-blue-500" />;
@@ -464,7 +352,7 @@ const PaymentManagement: React.FC = () => {
     }
   };
 
-  const getTypeLabel = (type: string) => {
+  const getTypeLabel = (type) => {
     switch (type) {
       case 'tour_purchase':
         return 'Tour Purchase';
@@ -477,19 +365,19 @@ const PaymentManagement: React.FC = () => {
     }
   };
 
-  const handleViewTransaction = (transaction: Transaction) => {
+  const handleViewTransaction = (transaction) => {
     setSelectedTransaction(transaction);
     setShowTransactionDetails(true);
   };
 
-  const handleDeleteTransaction = (transactionId: string) => {
+  const handleDeleteTransaction = (transactionId) => {
     if (confirm('Are you sure you want to delete this transaction?')) {
       console.log('Deleting transaction:', transactionId);
       alert('Transaction deleted successfully!');
     }
   };
 
-  const handleRetryTransaction = (transactionId: string) => {
+  const handleRetryTransaction = (transactionId) => {
     console.log('Retrying transaction:', transactionId);
     alert('Transaction retry initiated!');
   };
@@ -499,7 +387,7 @@ const PaymentManagement: React.FC = () => {
     alert('Payment data exported successfully!');
   };
 
-  const handleProcessPayout = (guideName: string) => {
+  const handleProcessPayout = (guideName) => {
     console.log('Processing payout for:', guideName);
     alert(`Payout processed for ${guideName}!`);
     setShowTransactionDetails(false);
@@ -509,27 +397,27 @@ const PaymentManagement: React.FC = () => {
     setShowBankProcessingModal(true);
   };
 
-  const handleViewDetails = (guideName: string) => {
+  const handleViewDetails = (guideName) => {
     console.log('Viewing details for:', guideName);
     alert(`Viewing payout details for ${guideName}`);
   };
 
-  const handlePayNow = (guideName: string) => {
+  const handlePayNow = (guideName) => {
     console.log('Processing payment for:', guideName);
     alert(`Processing payment for ${guideName}...`);
   };
 
-  const handleRetry = (guideName: string) => {
+  const handleRetry = (guideName) => {
     console.log('Retrying payment for:', guideName);
     alert(`Retrying payment for ${guideName}...`);
   };
 
-  const handleManageListing = (listing: VendorListing) => {
+  const handleManageListing = (listing) => {
     setSelectedListing(listing);
     setShowManageModal(true);
   };
 
-  const handleRenewListing = (listing: VendorListing) => {
+  const handleRenewListing = (listing) => {
     setSelectedListing(listing);
     setShowRenewModal(true);
   };

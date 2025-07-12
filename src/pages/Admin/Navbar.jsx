@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from 'prop-types';
 import {
   BarChart3,
   Users,
@@ -8,12 +9,7 @@ import {
   Bell,
 } from "lucide-react";
 
-interface NavbarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-}
-
-const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
+const Navbar = ({ activeTab, setActiveTab }) => {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
     { id: "users", label: "All Users", icon: Users },

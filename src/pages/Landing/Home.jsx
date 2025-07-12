@@ -4,15 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { audio } from "../../assets/assets";
 
-<<<<<<< HEAD:src/pages/Landing/Home.tsx
-type Props = {};
-
-const Home = (props: Props) => {
-  const backgroundImages  = [images.Evening,images.Mosque,images.Church,images.Train,images.Lake,images.Kovil];
-=======
 const Home = () => {
   const backgroundImages = [images.Evening, images.Mosque, images.Church, images.Train, images.Lake, images.Kovil];
->>>>>>> fb2c0da9a1167fd3191c59d6766abf08c7c92b5e:src/pages/Landing/Home.jsx
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoaded, setIsImageLoaded] = useState(true);
   const [isVisible, setIsVisible] = useState({});

@@ -31,81 +31,13 @@ import {
   EyeOff,
 } from "lucide-react";
 
-interface TourPackage {
-  id: string;
-  title: string;
-  location: string;
-  price: number;
-  rating: number;
-  downloads: number;
-  duration: string;
-  image: string;
-  status: string;
-}
-
-interface SponsoredPlace {
-  id: string;
-  name: string;
-  type: string;
-  location: string;
-  rating: number;
-  image: string;
-  sponsorshipType: string;
-  monthlyFee: number;
-}
-
-interface ReviewedPackage {
-  id: string;
-  title: string;
-  guide: string;
-  reviewDate: string;
-  status: string;
-  rating: number;
-}
-
-interface HiddenPlace {
-  id: string;
-  name: string;
-  location: string;
-  type: string;
-  rating: number;
-  image: string;
-  discoveredDate: string;
-}
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  type: "Travel Guide" | "Traveller" | "Vendor" | "Moderator";
-  status: "Active" | "Inactive";
-  joinDate: string;
-  avatar: string;
-  // Travel Guide specific fields
-  documents?: string;
-  contact?: { email: string; phone: string };
-  certification?: "Certified" | "Pending";
-  experience?: string;
-  tourPackages?: TourPackage[];
-  totalEarnings?: string;
-  // Traveller specific fields
-  downloadedPackages?: TourPackage[];
-  hiddenPlaces?: HiddenPlace[];
-  // Moderator specific fields
-  region?: string;
-  reviewedPackages?: ReviewedPackage[];
-  // Vendor specific fields
-  location?: string;
-  sponsoredPlaces?: SponsoredPlace[];
-}
-
-const UserManagement: React.FC = () => {
+const UserManagement = () => {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showGuideProfile, setShowGuideProfile] = useState(false);
   const [showEditGuide, setShowEditGuide] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [selectedGuide, setSelectedGuide] = useState<User | null>(null);
+  const [selectedGuide, setSelectedGuide] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [activeFilters, setActiveFilters] = useState({
     active: false,
@@ -113,7 +45,7 @@ const UserManagement: React.FC = () => {
     certified: false,
   });
 
-  const users: User[] = [
+  const users = [
     {
       id: 2,
       name: "Mike Chen",
@@ -337,7 +269,7 @@ const UserManagement: React.FC = () => {
     return matchesFilter && matchesSearch && matchesActiveFilters;
   });
 
-  const getFilterCount = (filterId: string) => {
+  const getFilterCount = (filterId) => {
     if (filterId === "all") return users.length;
     if (filterId === "travellers")
       return users.filter((u) => u.type === "Traveller").length;
@@ -358,29 +290,29 @@ const UserManagement: React.FC = () => {
     { id: "moderators", label: "Moderators" },
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     return status === "Active"
       ? "bg-emerald-100 text-emerald-800"
       : "bg-gray-100 text-gray-800";
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeColor = (type) => {
     const colors = {
       "Travel Guide": "bg-blue-100 text-blue-800",
       Traveller: "bg-purple-100 text-purple-800",
       Vendor: "bg-amber-100 text-amber-800",
       Moderator: "bg-emerald-100 text-emerald-800",
     };
-    return colors[type as keyof typeof colors] || "bg-gray-100 text-gray-800";
+    return colors[type] || "bg-gray-100 text-gray-800";
   };
 
-  const getCertificationColor = (certification: string) => {
+  const getCertificationColor = (certification) => {
     return certification === "Certified"
       ? "bg-emerald-100 text-emerald-800"
       : "bg-amber-100 text-amber-800";
   };
 
-  const getCertificationIcon = (certification: string) => {
+  const getCertificationIcon = (certification) => {
     return certification === "Certified" ? (
       <CheckCircle className="w-3 h-3" />
     ) : (
@@ -388,17 +320,17 @@ const UserManagement: React.FC = () => {
     );
   };
 
-  const handleViewUser = (user: User) => {
+  const handleViewUser = (user) => {
     setSelectedGuide(user);
     setShowGuideProfile(true);
   };
 
-  const handleEditUser = (user: User) => {
+  const handleEditUser = (user) => {
     setSelectedGuide(user);
     setShowEditGuide(true);
   };
 
-  const handleDeleteUser = (user: User) => {
+  const handleDeleteUser = (user) => {
     setSelectedGuide(user);
     setShowDeleteConfirm(true);
   };
@@ -409,17 +341,17 @@ const UserManagement: React.FC = () => {
     setSelectedGuide(null);
   };
 
-  const handleDeletePackage = (packageId: string) => {
+  const handleDeletePackage = (packageId) => {
     console.log("Deleting package:", packageId);
   };
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusBadgeColor = (status) => {
     return status === "Published"
       ? "bg-emerald-100 text-emerald-800"
       : "bg-amber-100 text-amber-800";
   };
 
-  const handleFilterChange = (filterKey: keyof typeof activeFilters) => {
+  const handleFilterChange = (filterKey) => {
     setActiveFilters((prev) => ({
       ...prev,
       [filterKey]: !prev[filterKey],
@@ -505,7 +437,7 @@ const UserManagement: React.FC = () => {
     );
   };
 
-  const renderUserSpecificColumns = (user: User) => {
+  const renderUserSpecificColumns = (user) => {
     switch (selectedFilter) {
       case "guides":
         if (user.type === "Travel Guide") {
@@ -524,10 +456,10 @@ const UserManagement: React.FC = () => {
               </td>
               <td className="py-4 px-4">
                 <div className="flex items-center space-x-2">
-                  {getCertificationIcon(user.certification!)}
+                  {getCertificationIcon(user.certification)}
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${getCertificationColor(
-                      user.certification!
+                      user.certification
                     )}`}
                   >
                     {user.certification}
@@ -606,7 +538,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const renderActionButtons = (user: User) => {
+  const renderActionButtons = (user) => {
     return (
       <div className="flex items-center space-x-2">
         <button
@@ -825,8 +757,8 @@ const UserManagement: React.FC = () => {
            style={{
               maxHeight: "90vh",
               overflowY: "auto",
-              scrollbarWidth: "none", // Firefox
-              msOverflowStyle: "none", // IE/Edge
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
             }}
           >
           
@@ -945,10 +877,10 @@ const UserManagement: React.FC = () => {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="bg-white rounded-lg p-4 border border-gray-200">
                       <div className="flex items-center space-x-3">
-                        {getCertificationIcon(selectedGuide.certification!)}
+                        {getCertificationIcon(selectedGuide.certification)}
                         <div>
                           <p className="text-sm text-gray-600">Certification Status</p>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCertificationColor(selectedGuide.certification!)}`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCertificationColor(selectedGuide.certification)}`}>
                             {selectedGuide.certification}
                           </span>
                         </div>
@@ -1203,8 +1135,8 @@ const UserManagement: React.FC = () => {
             style={{
               maxHeight: "90vh",
               overflowY: "auto",
-              scrollbarWidth: "none", // Firefox
-              msOverflowStyle: "none", // IE/Edge
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
             }}
           >
             <div className="bg-teal-600 to-blue-600 p-3 text-white">
