@@ -5,10 +5,10 @@ import { RouteMapStep } from '../../components/tour/RouteMapStep.jsx';
 import { MediaUploadStep } from '../../components/tour/MediaUploadStep.jsx';
 import { ReviewStep } from '../../components/tour/ReviewStep.jsx';
 import { useMapbox } from '../../hooks/useMaps.js';
-import { createTour , finalizemedia ,createLocation ,createTourStops} from '../../api/tour/tourApi.js';
+import { createTour, finalizemedia, createLocation, createTourStops } from '../../api/tour/tourApi.js';
 import { useAuth } from '../../contexts/authContext.jsx';
-// import { ToastContext } from '../../contexts/ToastContext';
-
+import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const PRICE_PER_MINUTE = 500;
 const MINIMUM_PRICE = 1000;
@@ -31,7 +31,7 @@ const initialTourData = {
 };
 
 export const TourCreate = () => {
-  // const { addToast } = useContext(ToastContext);
+  const navigate = useNavigate();
   const { authState } = useAuth();
   const { getDistanceBetweenPoints, getWalkingTime } = useMapbox();
   
@@ -108,19 +108,18 @@ export const TourCreate = () => {
     return currentStep >= 3 ? validateMediaContent() : [];
   }, [tourData.tour_stops, currentStep]);
 
-  const durationMinutes = useMemo(() => {
-    const totalSeconds = tourData.tour_stops.reduce((total, stop) => {
+  const durationSeconds = useMemo(() => {
+    return tourData.tour_stops.reduce((total, stop) => {
       const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
       return total + audioFiles.reduce((stopTotal, audio) => 
         stopTotal + (audio.duration_seconds || 0), 0);
     }, 0);
-    return Math.ceil(totalSeconds / 60);
   }, [tourData.tour_stops]);
 
   const price = useMemo(() => {
-    const basePrice = durationMinutes * PRICE_PER_MINUTE;
+    const basePrice = durationSeconds * (PRICE_PER_MINUTE / 60);
     return Math.max(basePrice, MINIMUM_PRICE);
-  }, [durationMinutes]);
+  }, [durationSeconds]);
 
   const canGoNext = currentStep < tabs.length && validateCurrentStep();
   const canGoBack = currentStep > 1;
@@ -136,147 +135,34 @@ export const TourCreate = () => {
     setTourData(prev => ({ ...prev, tour_stops: stops }));
   };
 
-//   // Add proper error handling in the controller
-//   const handleSubmit = async () => {
-//   setIsSubmitting(true);
-  
-//   try {
-//     // 1. Create basic tour package
-//     const basicTourData = {
-//       title: tourData.title,
-//       description: tourData.description || '',
-//       price: price,
-//       duration_minutes: durationMinutes,
-//       guide_id: authState.user.id,
-//       stops: tourData.tour_stops.map((stop, index) => ({
-//         stop_name: stop.stop_name,
-//         description: stop.description,
-//         location: stop.location,
-//         sequence_no: index + 1
-//       }))
-//     };
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    const toastId = toast.loading('Creating your tour...');
 
-//     // 2. Create tour package and stops
-//     const response = await createTour(basicTourData);
-//     const package_id = response.data.data.id;
-    
-//     // 3. Finalize media (now stops exist)
-//     if (tourData.tour_stops.some(stop => stop.media?.length)) {
-//       await handleMediaUploads(package_id, authState.user.id);
-//     }
+    try {
+      // 1. Create basic tour package
+      const basicTourData = {
+        title: tourData.title,
+        description: tourData.description,
+        price: price,
+        duration_minutes: durationSeconds,
+        status: 'pending_approval',
+        guide_id: authState.user.id
+      };
 
-//     // 4. Success
-//     console.log('Tour created successfully!');
-//     // Redirect or show success message
+      // 2. Create the tour package
+      const tourResponse = await createTour(basicTourData);
+      const package_id = tourResponse.data?.id || tourResponse.id;
+      
+      if (!package_id) {
+        throw new Error('Failed to get package ID from response');
+      }
 
-//   } catch (error) {
-//     console.error('Tour submission failed:', error);
-//     // Show error to user
-//   } finally {
-//     setIsSubmitting(false);
-//   }
-// };
+      // 3. Process locations and stops
+      const stopsWithLocations = await Promise.all(
+        tourData.tour_stops.map(async (stop) => {
+          if (!stop.location) return { ...stop, location_id: null };
 
-// const handleMediaUploads = async (package_id, uploadedById) => {
-//   const fileReferences = tourData.tour_stops.flatMap((stop, stopIndex) => {
-//     return stop.media?.map(mediaItem => ({
-//       key: mediaItem.key,
-//       type: mediaItem.media_type === 'audio' ? 'stop_audio' : 'stop_image',
-//       duration_seconds: mediaItem.duration_seconds,
-//       file_size: mediaItem.file_size,
-//       format: mediaItem.format,
-//       stopIndex: stopIndex, // 0-based index
-//       stopSequence: stopIndex + 1 // For reference
-//     })) || [];
-//   });
-
-//   // Add cover image if exists
-//   if (tourData.cover_image?.key) {
-//     fileReferences.push({
-//       key: tourData.cover_image.key,
-//       type: 'cover',
-//       file_size: tourData.cover_image.file_size,
-//       format: tourData.cover_image.format
-//     });
-//   }
-
-//   const formData = new FormData();
-//   formData.append('fileReferences', JSON.stringify(fileReferences));
-//   formData.append('packageId', package_id);
-//   formData.append('uploadedById', uploadedById);
-
-//   await finalizemedia(formData);
-// };
-
-//   const updateTourStops = async (package_id) => {
-//   try {
-//     // First create all locations
-//     const stopsWithLocations = await Promise.all(
-//       tourData.tour_stops.map(async (stop) => {
-//         if (!stop.location) return { ...stop, location_id: null };
-        
-//         const locationResponse = await createLocation({
-//           longitude: stop.location.longitude,
-//           latitude: stop.location.latitude,
-//           address: stop.location.address || '',
-//           city: stop.location.city || '',
-//           province: stop.location.province || '',
-//           district: stop.location.district || '',
-//           postal_code: stop.location.postal_code || ''
-//         });
-        
-//         return { 
-//           ...stop, 
-//           location_id: locationResponse.data.id // Make sure to access the correct response property
-//         };
-//       })
-//     );
-
-//     // Then create all tour stops in order
-//     await createTourStops(
-//       package_id,
-//       stopsWithLocations.map((stop, index) => ({
-//         sequence_no: index + 1, // Ensure sequence starts at 1
-//         stop_name: stop.stop_name || `Stop ${index + 1}`,
-//         description: stop.description || '',
-//         location_id: stop.location_id || null
-//       }))
-//     );
-//   } catch (error) {
-//     console.error('Failed to create tour stops:', error);
-//     throw error;
-//   }
-// };
-
-const handleSubmit = async () => {
-  setIsSubmitting(true);
-  // setSubmitError(null);
-
-  try {
-    // 1. Create basic tour package
-    const basicTourData = {
-      title: tourData.title,
-      description: tourData.description,
-      price: price,
-      duration_minutes: durationMinutes,
-      status: 'pending_approval',
-      guide_id: authState.user.id
-    };
-
-    // 2. Create the tour package
-    const tourResponse = await createTour(basicTourData);
-    const package_id = tourResponse.data?.id || tourResponse.id;
-    
-    if (!package_id) {
-      throw new Error('Failed to get package ID from response');
-    }
-
-    // 3. Process locations and stops
-    const stopsWithLocations = await Promise.all(
-      tourData.tour_stops.map(async (stop) => {
-        if (!stop.location) return { ...stop, location_id: null };
-
-        try {
           const locationResponse = await createLocation({
             longitude: stop.location.longitude,
             latitude: stop.location.latitude,
@@ -291,29 +177,21 @@ const handleSubmit = async () => {
             ...stop,
             location_id: locationResponse.data?.id || locationResponse.id
           };
-        } catch (error) {
-          console.error('Location creation failed:', error);
-          return { ...stop, location_id: null };
-        }
-      })
-    );
+        })
+      );
 
-    // 4. Create tour stops
-    await createTourStops(
-      package_id,
-      stopsWithLocations.map((stop, index) => ({
-        sequence_no: index + 1,
-        stop_name: stop.stop_name || `Stop ${index + 1}`,
-        description: stop.description || '',
-        location_id: stop.location_id || null
-      }))
-    );
+      // 4. Create tour stops
+      await createTourStops(
+        package_id,
+        stopsWithLocations.map((stop, index) => ({
+          sequence_no: index + 1,
+          stop_name: stop.stop_name || `Stop ${index + 1}`,
+          description: stop.description || '',
+          location_id: stop.location_id || null
+        }))
+      );
 
-    // 5. Handle media uploads if they exist
-    const hasStopMedia = tourData.tour_stops.some(stop => stop.media?.length > 0);
-    const hasCoverImage = tourData.cover_image_temp || tourData.cover_image;
-
-    if (hasStopMedia || hasCoverImage) {
+      // 5. Handle media uploads
       const fileReferences = [];
 
       // Add stop media
@@ -349,29 +227,28 @@ const handleSubmit = async () => {
         
         await finalizemedia(formData);
       }
+
+      toast.success('Tour created successfully!', { id: toastId });
+      setTimeout(() => navigate('/guide/tourpackages'), 1500);
+
+    } catch (error) {
+      console.error('Tour submission failed:', error);
+      toast.error(
+        error.response?.data?.message || 
+        'Failed to create tour. Please try again.',
+        { id: toastId }
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    console.log('Tour created successfully!');
-    // Redirect or show success message
-
-  } catch (error) {
-    console.error('Tour submission failed:', error);
-    // setSubmitError(
-    //   error.response?.data?.message || 
-    //   error.message || 
-    //   'Failed to create tour. Please try again.'
-    // );
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   const renderCurrentStep = () => {
     const commonProps = {
       tourData: {
         ...tourData,
         price,
-        duration_minutes: durationMinutes
+        duration_minutes: Math.ceil(durationSeconds / 60)
       },
       onUpdate: handleTourDataUpdate,
       stops: tourData.tour_stops,

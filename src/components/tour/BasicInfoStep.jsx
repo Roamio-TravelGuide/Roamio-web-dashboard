@@ -1,7 +1,8 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { UploadCloud, X, Info, Image as ImageIcon } from 'lucide-react';
-import { uploadtempcover, viewtempcover } from '../../api/tour/tourApi';
+import { UploadCloud, X, Info, ImageIcon, Loader2 } from 'lucide-react';
+import { uploadtempcover, viewtempcover, deletetempcover } from '../../api/tour/tourApi';
 import { useUploadSession } from '../../hooks/useUploadSession';
+import { toast } from 'react-hot-toast';
 
 export const BasicInfoStep = ({ tourData, onUpdate }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -10,25 +11,13 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
   const [uploadError, setUploadError] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const sessionId = useUploadSession();
-  const [isSessionReady, setIsSessionReady] = useState(false);
 
-  // Track when session is ready
   useEffect(() => {
-    if (sessionId) {
-      setIsSessionReady(true);
-    } else {
-      setIsSessionReady(false);
-    }
-  }, [sessionId]);
-
-  // Handle initial preview setup
-  useEffect(() => {
-    const setupPreview = async () => {
-      try {
-        if (tourData.cover_image_temp?.url) {
-          setPreviewImage(tourData.cover_image_temp.url);
-        } else if (tourData.cover_image_temp?.key) {
-          const { url } = await viewtempcover(tourData.cover_image_temp.key);
+    if (tourData.cover_image_temp?.url) {
+      setPreviewImage(tourData.cover_image_temp.url);
+    } else if (tourData.cover_image_temp?.key) {
+      viewtempcover(tourData.cover_image_temp.key)
+        .then(({ url }) => {
           setPreviewImage(url);
           onUpdate({
             cover_image_temp: {
@@ -36,33 +25,50 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
               url: url
             }
           });
-        } else if (tourData.cover_image_url) {
-          setPreviewImage(tourData.cover_image_url);
-        }
-      } catch (error) {
-        console.error('Preview setup error:', error);
-        setUploadError('Failed to load image. Please re-upload.');
-      }
-    };
-    setupPreview();
+        })
+        .catch(error => {
+          console.error('Preview setup error:', error);
+          setUploadError('Failed to load image. Please re-upload.');
+          toast.error('Failed to load image. Please re-upload.');
+        });
+    } else if (tourData.cover_image_url) {
+      setPreviewImage(tourData.cover_image_url);
+    }
   }, [tourData.cover_image_url, tourData.cover_image_temp, onUpdate]);
 
-  const uploadToTemp = async (file) => {
-    try {
-      if (!sessionId) {
-        throw new Error('Upload session is not ready yet');
-      }
+  const handleImageUpload = useCallback(async (file) => {
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please upload an image file (JPEG, PNG)');
+      toast.error('Please upload an image file (JPEG, PNG)');
+      return;
+    }
 
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Image size must be less than 10MB');
+      toast.error('Image size must be less than 10MB');
+      return;
+    }
+
+    if (!sessionId) {
+      setUploadError('Upload service is initializing. Please try again in a moment.');
+      toast.error('Upload service is initializing. Please try again in a moment.');
+      return;
+    }
+
+    const uploadToast = toast.loading('Uploading image...');
+    
+    try {
       setIsUploading(true);
       setUploadError(null);
       setUploadProgress(0);
       
+      const localUrl = URL.createObjectURL(file);
+      setPreviewImage(localUrl);
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('type', 'cover');
       formData.append('sessionId', sessionId);
-
-      console.log('Uploading with sessionId:', sessionId); // Debug log
 
       const uploadResponse = await uploadtempcover(formData, {
         headers: {
@@ -74,96 +80,88 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
             (progressEvent.loaded * 100) / progressEvent.total
           );
           setUploadProgress(percentCompleted);
+          toast.loading(`Uploading image... ${percentCompleted}%`, { id: uploadToast });
         }
       });
 
       const { url } = await viewtempcover(uploadResponse.key);
 
-      const tempFileData = {
-        url: url,
-        tempId: uploadResponse.tempId,
-        key: uploadResponse.key
-      };
-
       onUpdate({ 
-        cover_image_temp: tempFileData,
+        cover_image_temp: {
+          url: url,
+          tempId: uploadResponse.tempId,
+          key: uploadResponse.key
+        },
         cover_image_file: undefined,
         cover_image_url: undefined
       });
 
-      return url;
+      setPreviewImage(url);
+      URL.revokeObjectURL(localUrl);
+      
+      toast.success('Image uploaded successfully!', { id: uploadToast });
     } catch (error) {
       console.error('Upload error:', error);
-      setUploadError(error.response?.data?.error || error.message || 'Upload failed. Please try again.');
-      throw error;
+      const errorMessage = error.response?.data?.error || error.message || 'Upload failed. Please try again.';
+      setUploadError(errorMessage);
+      setPreviewImage(null);
+      toast.error(errorMessage, { id: uploadToast });
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
     }
-  };
+  }, [sessionId, onUpdate]);
 
-  const handleImageUpload = useCallback(async (file) => {
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please upload an image file (JPEG, PNG)');
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('Image size must be less than 10MB');
-      return;
-    }
-
-    if (!isSessionReady) {
-      setUploadError('Upload service is initializing. Please try again in a moment.');
-      return;
-    }
-
-    try {
-      const localUrl = URL.createObjectURL(file);
-      setPreviewImage(localUrl);
-      setUploadError(null);
-      
-      const s3Url = await uploadToTemp(file);
-      setPreviewImage(s3Url);
-      
-      URL.revokeObjectURL(localUrl);
-    } catch (error) {
-      console.error('Image upload error:', error);
-      setPreviewImage(null);
-    }
-  }, [isSessionReady, onUpdate]);
-
-  // Drag and drop handlers
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files?.[0]?.type.startsWith('image/')) {
-      handleImageUpload(e.dataTransfer.files[0]);
+    const file = e.dataTransfer.files?.[0];
+    if (file?.type.startsWith('image/')) {
+      handleImageUpload(file);
     } else {
       setUploadError('Only image files are allowed');
+      toast.error('Only image files are allowed');
     }
   };
 
   const handleFileInput = (e) => {
-    if (e.target.files?.[0]) {
-      handleImageUpload(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageUpload(file);
       e.target.value = '';
     }
   };
 
-  const removeImage = () => {
-    setPreviewImage(null);
-    setUploadError(null);
-    onUpdate({ 
-      cover_image_temp: undefined,
-      cover_image_file: undefined,
-      cover_image_url: undefined 
-    });
+  const removeImage = async () => {
+    const deleteToast = toast.loading('Removing image...');
+    try {
+      if (tourData.cover_image_temp?.key) {
+        await deletetempcover(tourData.cover_image_temp.key);
+      }
+      
+      setPreviewImage(null);
+      setUploadError(null);
+      
+      onUpdate({ 
+        cover_image_temp: undefined,
+        cover_image_file: undefined,
+        cover_image_url: undefined 
+      });
+      
+      toast.success('Image removed successfully', { id: deleteToast });
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      const errorMessage = 'Failed to delete image. Please try again.';
+      setUploadError(errorMessage);
+      toast.error(errorMessage, { id: deleteToast });
+    }
   };
 
   const handleImageError = () => {
-    setUploadError('Failed to load image. Please re-upload.');
+    const errorMessage = 'Failed to load image. Please re-upload.';
+    setUploadError(errorMessage);
     setPreviewImage(null);
+    toast.error(errorMessage);
   };
 
   return (
@@ -230,31 +228,46 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
                 >
                   <div className="w-full p-6 text-center">
                     <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-teal-100">
-                      <UploadCloud className="w-5 h-5 text-blue-600" />
+                      {isUploading ? (
+                        <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                      ) : (
+                        <UploadCloud className="w-5 h-5 text-blue-600" />
+                      )}
                     </div>
                     <p className="mb-2 text-sm font-medium text-gray-700">
-                      {isDragging ? 'Drop your image here' : 'Upload a cover image'}
+                      {isUploading ? 'Uploading...' : isDragging ? 'Drop your image here' : 'Upload a cover image'}
                     </p>
-                    <p className="mb-4 text-xs text-gray-500">or</p>
-                    <label className={`inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors rounded-md cursor-pointer ${
-                      isUploading || !isSessionReady ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700'
-                    }`}>
-                      <span>
-                        {isUploading ? 'Uploading...' : 
-                         !isSessionReady ? 'Initializing upload...' : 
-                         'Select file'}
-                      </span>
-                      <input
-                        type="file"
-                        className="sr-only"
-                        accept="image/*"
-                        onChange={handleFileInput}
-                        disabled={isUploading || !isSessionReady}
-                      />
-                    </label>
+                    {!isUploading && (
+                      <>
+                        <p className="mb-4 text-xs text-gray-500">or</p>
+                        <label className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors rounded-md cursor-pointer bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+                          <span>Select file</span>
+                          <input
+                            type="file"
+                            className="sr-only"
+                            accept="image/*"
+                            onChange={handleFileInput}
+                            disabled={isUploading}
+                          />
+                        </label>
+                      </>
+                    )}
                     <p className="mt-3 text-xs text-gray-500">PNG, JPG up to 10MB</p>
                     {uploadError && (
                       <p className="mt-2 text-xs text-red-500">{uploadError}</p>
+                    )}
+                    {isUploading && (
+                      <div className="w-1/2 mx-auto mt-3">
+                        <div className="w-full h-1.5 bg-gray-200 rounded-full">
+                          <div 
+                            className="h-1.5 bg-blue-600 rounded-full" 
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <p className="mt-1 text-xs text-center text-gray-500">
+                          {uploadProgress}% uploaded
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -283,9 +296,12 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
                   id="title"
                   value={tourData.title}
                   onChange={(e) => onUpdate({ title: e.target.value })}
-                  className="w-full px-4 py-2 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    isUploading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   placeholder="e.g. Sunset Beach Walking Tour"
                   required
+                  disabled={isUploading}
                 />
               </div>
 
@@ -298,8 +314,11 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
                   value={tourData.description || ''}
                   onChange={(e) => onUpdate({ description: e.target.value })}
                   rows={5}
-                  className="w-full px-4 py-2 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    isUploading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   placeholder="Describe the highlights and unique aspects of your tour..."
+                  disabled={isUploading}
                 />
                 <p className="mt-2 text-xs text-gray-500">Recommended length: 150-300 characters</p>
               </div>
