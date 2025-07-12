@@ -34,7 +34,7 @@ const Users = () => {
   active: 0,
   pending: 0,
   blocked: 0
-});
+});   
 
 useEffect(() => {
   // When you get your users data:

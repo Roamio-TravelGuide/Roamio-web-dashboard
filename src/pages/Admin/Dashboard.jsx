@@ -1,77 +1,265 @@
-import React from 'react';
-import { FaUser, FaUserTie, FaUserShield, FaStore, FaChartLine, FaCog } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Users,
+  TrendingUp,
+  DollarSign,
+  Package,
+  Shield,
+  UserPlus,
+  UserX,
+  CreditCard,
+  Activity,
+  BookOpen,
+  Briefcase,
+} from "lucide-react";
+import { Chart, registerables } from "chart.js";
+Chart.register(...registerables);
 
 const Dashboard = () => {
-  // Admin Dashboard Stats (mock data)
-  const dashboardStats = [
-    { title: 'Total Users', value: '1,234', change: '+12%', icon: <FaUser className="text-blue-500" /> },
-    { title: 'Active Guides', value: '256', change: '+5%', icon: <FaUserTie className="text-green-500" /> },
-    { title: 'Pending Complaints', value: '24', change: '-3%', icon: <FaUserShield className="text-yellow-500" /> },
-    { title: 'Total Revenue', value: '$12,345', change: '+18%', icon: <FaStore className="text-purple-500" /> },
+  const [selectedPeriod, setSelectedPeriod] = useState("30d");
+  const chartRef = useRef(null);
+
+  // Initialize chart
+  useEffect(() => {
+    if (chartRef.current) {
+      const ctx = chartRef.current.getContext("2d");
+      if (chartRef.current.chart) chartRef.current.chart.destroy();
+
+      chartRef.current.chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+          datasets: [
+            {
+              label: "Revenue (Rs.)",
+              data: [185000, 210000, 195000, 224000, 238000, 268000, 284500],
+              backgroundColor: "rgba(59, 130, 246, 0.7)",
+              borderRadius: 4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: (value) => "Rs." + value.toLocaleString() },
+            },
+            x: { grid: { display: false } },
+          },
+          plugins: { legend: { display: false } },
+        },
+      });
+    }
+    return () => chartRef.current?.chart?.destroy();
+  }, []);
+
+  // Most Critical Admin Metrics
+  const criticalMetrics = [
+    {
+      title: "Total Revenue",
+      value: "Rs. 12,84,700",
+      change: "+18.5%",
+      icon: DollarSign,
+      color: "from-purple-500 to-pink-600",
+    },
+    {
+      title: "Active Users",
+      value: "8,463",
+      change: "+12.3%",
+      icon: Users,
+      color: "from-blue-500 to-cyan-600",
+    },
+    {
+      title: "Vendors business license",
+      value: "24",
+      change: "+5",
+      icon: Shield,
+      color: "from-yellow-500 to-amber-600",
+    },
   ];
 
-  return (
-    <div className="p-6">
-      <h3 className="text-2xl font-bold mb-6">Admin Overview</h3>
-      
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {dashboardStats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                <p className="text-2xl font-semibold mt-1">{stat.value}</p>
-                <p className={`text-xs mt-1 ${stat.change.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
-                  {stat.change} from last month
-                </p>
-              </div>
-              <div className="p-3 rounded-full bg-gray-50">
-                {stat.icon}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+  // Package and Vendor Stats
+  const monthlyStats = [
+    {
+      title: "Monthly Sold Packages",
+      value: "142",
+      change: "+8%",
+      icon: Package,
+      color: "bg-blue-100 text-blue-600",
+    },
+    {
+      title: "Monthly Published Packages",
+      value: "87",
+      change: "+12%",
+      icon: BookOpen,
+      color: "bg-green-100 text-green-600",
+    },
+    {
+      title: "New Vendors Added",
+      value: "23",
+      change: "+5%",
+      icon: Briefcase,
+      color: "bg-purple-100 text-purple-600",
+    },
+  ];
 
-      {/* Recent Activity Section */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h4 className="text-lg font-semibold mb-4">Recent Activity</h4>
-        <div className="space-y-4">
-          {[1, 2, 3, 4, 5].map((item) => (
-            <div key={item} className="flex items-start pb-4 border-b border-gray-100 last:border-0">
-              <div className="p-2 bg-blue-50 rounded-full mr-3">
-                <FaUser className="text-blue-500 text-sm" />
+  // User Management Summary
+  const userManagement = {
+    pendingVerification: 12,
+    suspendedAccounts: 5,
+  };
+
+  // Financial Overview
+  const financials = {
+    totalRevenue: "Rs. 12,84,700",
+    RevenuefromPackages: "Rs. 12,84,70",
+    commissionEarned: "Rs. 2,57,000",
+    revenueFromVendors: "Rs. 1,23,000",
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+
+        {/* Critical Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {criticalMetrics.map((metric, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+            >
+              <div className="flex items-center justify-between">
+                <div
+                  className={`p-3 rounded-lg bg-gradient-to-r ${metric.color}`}
+                >
+                  <metric.icon className="w-5 h-5 text-white" />
+                </div>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    metric.change.startsWith("+")
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {metric.change}
+                </span>
               </div>
-              <div>
-                <p className="font-medium">New user registration</p>
-                <p className="text-sm text-gray-500">User #{item} registered 2 hours ago</p>
-              </div>
+              <h3 className="text-lg font-semibold mt-4">{metric.value}</h3>
+              <p className="text-sm text-gray-600">{metric.title}</p>
             </div>
           ))}
         </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h4 className="text-lg font-semibold mb-4">Quick Actions</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-            <FaUserTie className="text-blue-500 mb-2" />
-            <span>Manage Guides</span>
-          </button>
-          <button className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-            <FaUserShield className="text-green-500 mb-2" />
-            <span>Review Complaints</span>
-          </button>
-          <button className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-            <FaStore className="text-purple-500 mb-2" />
-            <span>Vendor Approvals</span>
-          </button>
-          <button className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-            <FaCog className="text-gray-500 mb-2" />
-            <span>Settings</span>
-          </button>
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column (2/3 width) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Revenue Chart */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold">Revenue Overview</h2>
+                <div className="flex items-center text-sm text-blue-600">
+                  <Activity className="w-4 h-4 mr-1" />
+                  <span>Real-time</span>
+                </div>
+              </div>
+              <div className="h-78">
+                {" "}
+                {/* Increased height */}
+                <canvas ref={chartRef}></canvas>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              {monthlyStats.map((stat, index) => (
+                <div
+                  key={index}
+                  className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                >
+                  <div className="flex items-center h-15">
+                    <div className={`p-2 rounded-lg ${stat.color} mr-3`}>
+                      <stat.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">{stat.title}</p>
+                      <div className="flex items-end">
+                        <h3 className="text-xl font-bold mr-2">{stat.value}</h3>
+                        <span
+                          className={`text-sm ${
+                            stat.change.startsWith("+")
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {stat.change}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column (1/3 width) */}
+          <div className="space-y-6">
+            {/* User Management */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center">
+                <Users className="text-blue-500 mr-2" />
+                User Management
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="p-3 bg-yellow-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <Shield className="text-yellow-500" />
+                  </div>
+                  <h3 className="text-xl font-bold mt-2">Pending</h3>
+                  <p className="text-sm text-gray-600"> {userManagement.pendingVerification} accounts</p>
+                </div>
+                <div className="p-3 bg-red-50 rounded-lg">
+                  <UserX className="text-red-500" />
+                  <h3 className="text-xl font-bold mt-2">Suspended</h3>
+                  <p className="text-sm text-gray-600">
+                    {userManagement.suspendedAccounts} accounts
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Financial Overview */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center">
+                <CreditCard className="text-green-500 mr-2" />
+                Financial Summary
+              </h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">
+                    Revenue from tour packages
+                  </span>
+                  <span className="font-medium text-green-600 ">
+                    {financials.RevenuefromPackages}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Revenue from guide</span>
+                  <span className="font-medium text-green-600">
+                    {financials.commissionEarned}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Revenue from vendors</span>
+                  <span className="font-medium text-green-600">
+                    {financials.revenueFromVendors}
+                  </span>
+                </div>
+                
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
