@@ -9,6 +9,7 @@ import {
   FaRegClock,
   FaRegStar,
   FaRegQuestionCircle,
+  
 } from "react-icons/fa";
 import React from "react";
 
@@ -37,6 +38,11 @@ export const menuConfig = {
       {
         title: "Earnings",
         path: "/guide/earnings",
+        icon: createIcon(FaWallet),
+      },
+            {
+        title: "Complaints",
+        path: "/guide/complaints",
         icon: createIcon(FaWallet),
       },
       {
