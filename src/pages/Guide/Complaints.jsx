@@ -1,337 +1,288 @@
-import React from "react";
-import {
-  AlertTriangle,
-  FileText,
-  MapPin,
-  Calendar,
-  User,
-  Mail,
-  Phone,
-  Send,
-  Upload,
-  Shield,
-} from "lucide-react";
+import React, { useState } from 'react';
+import { 
+  FiMessageSquare,
+  FiAlertTriangle,
+  FiMapPin,
+  FiMail,
+  FiClock,
+  FiCheckCircle,
+  FiChevronRight
+} from 'react-icons/fi';
 
-function Complaints() {
+const Complaints = () => {
+  const [activeTab, setActiveTab] = useState('new');
+  const [formData, setFormData] = useState({
+    type: 'location',
+    subject: '',
+    message: '',
+    urgency: 'medium'
+  });
+  const [tickets, setTickets] = useState([
+    {
+      id: 1,
+      type: 'location',
+      subject: 'Incorrect pin location',
+      message: 'Our cafe is actually 50m north of the marked location',
+      date: '2023-08-15',
+      status: 'resolved',
+      adminResponse: 'Location updated on 8/16/2023'
+    },
+    {
+      id: 2,
+      type: 'technical',
+      subject: 'Promotions not showing',
+      message: 'Created 3 promotions but not appearing in app',
+      date: '2023-08-10',
+      status: 'in-progress',
+      adminResponse: 'Investigating with tech team'
+    }
+  ]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newTicket = {
+      id: tickets.length + 1,
+      type: formData.type,
+      subject: formData.subject,
+      message: formData.message,
+      date: new Date().toISOString().split('T')[0],
+      status: 'new',
+      adminResponse: null
+    };
+    setTickets([newTicket, ...tickets]);
+    setFormData({
+      type: 'location',
+      subject: '',
+      message: '',
+      urgency: 'medium'
+    });
+    setActiveTab('my-tickets');
+  };
+
+  const getTypeIcon = (type) => {
+    switch(type) {
+      case 'location': return <FiMapPin className="text-blue-600" />;
+      case 'technical': return <FiAlertTriangle className="text-amber-600" />;
+      default: return <FiMessageSquare className="text-indigo-600" />;
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch(status) {
+      case 'resolved': 
+        return <span className="px-2 py-1 text-xs text-green-800 bg-green-100 rounded-full">Resolved</span>;
+      case 'in-progress': 
+        return <span className="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full">In Progress</span>;
+      default: 
+        return <span className="px-2 py-1 text-xs text-gray-800 bg-gray-100 rounded-full">New</span>;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto py-8">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 mb-8">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-center">
-              <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-                <AlertTriangle className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                  Tour Guide Complaint Center
-                </h1>
-                <p className="text-gray-600 text-lg">
-                  Report incidents, concerns, or workplace issues safely and
-                  confidentially
-                </p>
-              </div>
-            </div>
-            <div className="hidden md:flex items-center text-sm text-gray-500">
-              <Shield className="w-4 h-4 mr-1" />
-              Confidential
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <div className="flex items-center text-blue-700 mb-2">
-                <Shield className="w-5 h-5 mr-2" />
-                <span className="font-semibold">Confidential Process</span>
-              </div>
-              <p className="text-blue-600 text-sm">
-                Your identity is protected throughout the investigation
-              </p>
-            </div>
-
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-              <div className="flex items-center text-green-700 mb-2">
-                <Calendar className="w-5 h-5 mr-2" />
-                <span className="font-semibold">24-48 Hour Response</span>
-              </div>
-              <p className="text-green-600 text-sm">
-                We respond to all complaints within 2 business days
-              </p>
-            </div>
-
-            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-              <div className="flex items-center text-purple-700 mb-2">
-                <FileText className="w-5 h-5 mr-2" />
-                <span className="font-semibold">Documentation</span>
-              </div>
-              <p className="text-purple-600 text-sm">
-                All cases are properly documented and tracked
-              </p>
-            </div>
-          </div>
+    <section className="p-6 bg-white shadow-sm vendor-section rounded-xl">
+      <div className="flex flex-col mb-6 md:flex-row md:items-center md:justify-between">
+        <h2 className="text-2xl font-bold text-gray-800">Admin Support</h2>
+        <div className="flex gap-2 mt-4 md:mt-0">
+          <button
+            onClick={() => setActiveTab('new')}
+            className={`px-4 py-2 rounded-lg ${activeTab === 'new' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800'}`}
+          >
+            New Request
+          </button>
+          <button
+            onClick={() => setActiveTab('my-tickets')}
+            className={`px-4 py-2 rounded-lg ${activeTab === 'my-tickets' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800'}`}
+          >
+            My Tickets ({tickets.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('contact')}
+            className={`px-4 py-2 rounded-lg ${activeTab === 'contact' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800'}`}
+          >
+            Contact Admin
+          </button>
         </div>
-
-        {/* Main Form */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-          <form className="space-y-8">
-            {/* Personal Information Section */}
-            <div>
-              <div className="flex items-center mb-6 pb-3 border-b border-gray-200">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mr-3">
-                  <User className="w-5 h-5 text-blue-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Personal Information
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    First Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                    placeholder="Enter your first name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Last Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                    placeholder="Enter your last name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex items-center text-sm font-medium text-gray-700">
-                    <Mail className="w-4 h-4 mr-2" />
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                    placeholder="your.email@example.com"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex items-center text-sm font-medium text-gray-700">
-                    <Phone className="w-4 h-4 mr-2" />
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                    placeholder="+1 (555) 123-4567"
-                  />
-                </div>
-
-                <div className="md:col-span-2 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Tour Guide ID / Employee Number{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                    placeholder="Enter your identification number"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Incident Details Section */}
-            <div>
-              <div className="flex items-center mb-6 pb-3 border-b border-gray-200">
-                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mr-3">
-                  <FileText className="w-5 h-5 text-orange-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Incident Details
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="flex items-center text-sm font-medium text-gray-700">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Date of Incident <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex items-center text-sm font-medium text-gray-700">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                    placeholder="Tour location or venue"
-                  />
-                </div>
-
-                <div className="md:col-span-2 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Complaint Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                    placeholder="Brief summary of the issue"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Category <span className="text-red-500">*</span>
-                  </label>
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 bg-white">
-                    <option value="">Select a category</option>
-                    <option value="safety">Safety Concerns</option>
-                    <option value="harassment">
-                      Harassment/Discrimination
-                    </option>
-                    <option value="workplace">Workplace Conditions</option>
-                    <option value="payment">Payment Issues</option>
-                    <option value="equipment">Equipment/Resources</option>
-                    <option value="management">Management Issues</option>
-                    <option value="customer">Customer Behavior</option>
-                    <option value="scheduling">Scheduling Problems</option>
-                    <option value="training">Training Issues</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Priority Level <span className="text-red-500">*</span>
-                  </label>
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 bg-white">
-                    <option value="">Select priority</option>
-                    <option value="low">🟢 Low - Minor inconvenience</option>
-                    <option value="medium">
-                      🟡 Medium - Significant concern
-                    </option>
-                    <option value="high">
-                      🟠 High - Urgent attention needed
-                    </option>
-                    <option value="critical">
-                      🔴 Critical - Immediate action required
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Description Section */}
-            <div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Detailed Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  rows={8}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 resize-none"
-                  placeholder="Please provide a detailed description of the incident, including:
-• What happened exactly?
-• Who was involved?
-• When did it occur?
-• Were there any witnesses?
-• What was the impact?
-• Any other relevant information..."
-                />
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>
-                    Be as specific as possible to help us understand and address
-                    your concern
-                  </span>
-                  <span>0/2000 characters</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Additional Options */}
-            <div className="bg-gray-50 rounded-xl p-6 space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Additional Information
-              </h3>
-
-              <div className="space-y-4"></div>
-
-              <div className="space-y-2">
-                <label className="flex items-center text-sm font-medium text-gray-700">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Supporting Documents (Optional)
-                </label>
-                <div className="relative">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
-                    className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
-                </div>
-                <p className="text-xs text-gray-500">
-                  Upload photos, documents, emails, or other evidence (PDF, DOC,
-                  DOCX, JPG, PNG, TXT - Max 10MB per file)
-                </p>
-              </div>
-            </div>
-
-            {/* Submit Section */}
-            <div className="border-t border-gray-200 pt-8">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="text-sm text-gray-600">
-                  <p className="font-medium mb-1">
-                    By submitting this complaint:
-                  </p>
-                  <ul className="text-xs space-y-1 text-gray-500">
-                    <li>
-                      • You confirm that the information provided is accurate
-                    </li>
-                    <li>
-                      • You understand this will be investigated confidentially
-                    </li>
-                    <li>• You may be contacted for additional information</li>
-                  </ul>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    type="button"
-                    className="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    Save as Draft
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex items-center justify-center px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl"
-                  >
-                    <Send className="w-5 h-5 mr-2" />
-                    Submit Complaint
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        {/* Footer */}
       </div>
-    </div>
+
+      {activeTab === 'new' ? (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Request Type*</label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-lg"
+                required
+              >
+                <option value="location">Location Edit</option>
+                <option value="technical">Technical Issue</option>
+                <option value="account">Account Help</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Urgency*</label>
+              <select
+                name="urgency"
+                value={formData.urgency}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-lg"
+                required
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High (Urgent)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Subject*</label>
+            <input
+              type="text"
+              name="subject"
+              value={formData.subject}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-lg"
+              placeholder="Brief description of your issue"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">Details*</label>
+            <textarea
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              rows={5}
+              className="w-full p-3 border border-gray-300 rounded-lg"
+              placeholder="Please describe your issue in detail..."
+              required
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="px-6 py-3 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+            >
+              Submit Request
+            </button>
+          </div>
+        </form>
+      ) : activeTab === 'my-tickets' ? (
+        <div className="space-y-4">
+          {tickets.length > 0 ? (
+            tickets.map(ticket => (
+              <div key={ticket.id} className="overflow-hidden border rounded-xl">
+                <div className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 mt-1 bg-gray-100 rounded-full">
+                        {getTypeIcon(ticket.type)}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-800">{ticket.subject}</h3>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="flex items-center gap-1 text-sm text-gray-500">
+                            <FiClock size={14} /> {ticket.date}
+                          </span>
+                          {getStatusBadge(ticket.status)}
+                        </div>
+                      </div>
+                    </div>
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <FiChevronRight />
+                    </button>
+                  </div>
+                </div>
+
+                {ticket.adminResponse && (
+                  <div className="p-6 border-t bg-gray-50">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 mt-1 text-blue-600 bg-blue-100 rounded-full">
+                        <FiCheckCircle size={16} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-800">Admin Response</h4>
+                        <p className="mt-1 text-gray-700">{ticket.adminResponse}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="py-12 text-center bg-gray-50 rounded-xl">
+              <p className="text-gray-500">You haven't submitted any support tickets yet</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="p-6 bg-blue-50 rounded-xl">
+            <h3 className="mb-3 text-lg font-semibold text-gray-800">Contact Roamio Admin</h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 text-blue-600 bg-blue-100 rounded-full">
+                  <FiMail size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Email Address</p>
+                  <a href="mailto:support@roamio.com" className="text-blue-600 hover:underline">
+                    support@roamio.com
+                  </a>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="p-3 text-blue-600 bg-blue-100 rounded-full">
+                  <FiClock size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Response Time</p>
+                  <p className="text-gray-800">Typically within 24 hours</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-hidden bg-white border rounded-xl">
+            <div className="p-6 border-b">
+              <h3 className="text-lg font-semibold text-gray-800">Frequently Asked Questions</h3>
+            </div>
+            <div className="divide-y">
+              <div className="p-6">
+                <h4 className="font-medium text-gray-800">How do I update my business location?</h4>
+                <p className="mt-2 text-sm text-gray-600">
+                  Submit a "Location Edit" request through the support form. Include your correct address and any supporting documents.
+                </p>
+              </div>
+              <div className="p-6">
+                <h4 className="font-medium text-gray-800">Why aren't my promotions showing?</h4>
+                <p className="mt-2 text-sm text-gray-600">
+                  Promotions may take up to 2 hours to appear. If still not visible after this time, submit a technical support ticket.
+                </p>
+              </div>
+              <div className="p-6">
+                <h4 className="font-medium text-gray-800">How can I improve my recommendations?</h4>
+                <p className="mt-2 text-sm text-gray-600">
+                  Ensure your profile is complete with high-quality photos, accurate hours, and detailed descriptions. Respond promptly to reviews.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
-}
+};
 
 export default Complaints;

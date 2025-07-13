@@ -702,7 +702,7 @@ const ModeratorDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage] = useState(8);
-  const [itemsPerPage] = useState(8);
+  // const [itemsPerPage] = useState(8);
 
   const [tours, setTours] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
