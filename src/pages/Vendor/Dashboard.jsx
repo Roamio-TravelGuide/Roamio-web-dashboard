@@ -1,17 +1,21 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   FiTrendingUp, 
   FiMapPin, 
   FiStar,
-  FiChevronRight,
-  FiClock,
-  FiUsers,
-  FiDollarSign,
-  FiChevronLeft,
-  FiChevronRight as FiRight
+  FiEdit, 
+  FiUpload, 
+  FiLink, 
+  FiCheckCircle, 
+  FiXCircle,
+  FiCamera,
+  FiImage
 } from 'react-icons/fi';
 
 const VendorDashboard = () => {
+  const logoInputRef = useRef(null);
+  const coverInputRef = useRef(null);
+
   // Mock data
   const vendorData = {
     name: "Sunset Café",
@@ -68,186 +72,574 @@ const VendorDashboard = () => {
     ]
   };
 
-  const scrollRef = React.useRef(null);
+  const [formData, setFormData] = useState({
+    businessName: 'Sunset Café',
+    description: 'A cozy café with ocean views and artisanal coffee.',
+    email: 'contact@sunsetcafe.com',
+    phone: '+1 (555) 123-4567',
+    address: '123 Beachside Ave, Miami, FL',
+    socialMedia: {
+      instagram: 'sunsetcafe',
+      facebook: 'sunsetcafemiami',
+      website: 'https://sunsetcafe.com'
+    }
+  });
 
-  const scroll = (direction) => {
-    if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  const [logo, setLogo] = useState(vendorData.logo);
+  const [coverPhoto, setCoverPhoto] = useState(vendorData.coverPhoto);
+  const [isEditing, setIsEditing] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [uploading, setUploading] = useState({ logo: false, cover: false });
+  
+    // Handle form input changes
+    const handleChange = (e) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+    };
+  
+    // Handle social media input changes
+    const handleSocialChange = (e) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({
+        ...prev,
+        socialMedia: { ...prev.socialMedia, [name]: value }
+      }));
+    };
+  
+  // Handle logo upload
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.match('image.*')) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setErrors({ ...errors, logo: 'Logo file size must be less than 5MB' });
+        return;
+      }
+      setUploading({ ...uploading, logo: true });
+      // Simulate upload delay
+      setTimeout(() => {
+        setLogo(URL.createObjectURL(file));
+        setUploading({ ...uploading, logo: false });
+        setErrors({ ...errors, logo: null });
+      }, 1000);
     }
   };
 
+  // Handle cover photo upload
+  const handleCoverUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.match('image.*')) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setErrors({ ...errors, cover: 'Cover image file size must be less than 10MB' });
+        return;
+      }
+      setUploading({ ...uploading, cover: true });
+      // Simulate upload delay
+      setTimeout(() => {
+        setCoverPhoto(URL.createObjectURL(file));
+        setUploading({ ...uploading, cover: false });
+        setErrors({ ...errors, cover: null });
+      }, 1500);
+    }
+  };
+  
+    // Form validation
+    const validateForm = () => {
+      const newErrors = {};
+      if (!formData.businessName) newErrors.businessName = 'Business name is required';
+      if (!formData.email.includes('@')) newErrors.email = 'Invalid email address';
+      return newErrors;
+    };
+  
+    // Handle form submission
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      const validationErrors = validateForm();
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+      // TODO: Submit to backend
+      setIsEditing(false);
+      setErrors({});
+    };
+
+
+    const scrollRef = React.useRef(null);
+
+    const scroll = (direction) => {
+      if (scrollRef.current) {
+        const scrollAmount = direction === 'left' ? -300 : 300;
+        scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+    };
+
   return (
     <div className="min-h-screen vendor-dashboard bg-gray-50">
-      {/* Hero Section */}
-      <div className="relative w-full h-96">
-        <img 
-          src={vendorData.coverPhoto} 
-          alt="Cafe Cover" 
-          className="object-cover w-full h-full"
-        />
-        
-        <div className="absolute bottom-0 left-0 right-0 w-4/5 p-6 mx-auto -mb-12 border shadow-xl bg-white/80 backdrop-blur-sm rounded-xl border-white/20">
-          <div className="flex items-end gap-6">
-            <div className="w-24 h-24 -mt-16 overflow-hidden border-4 border-white rounded-full shadow-lg">
-              <img 
-                src={vendorData.logo} 
-                alt="Business Logo" 
-                className="object-cover w-full h-full"
-              />
-            </div>
-            
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-800">{vendorData.name}</h1>
-              <p className="mt-2 text-gray-600">Open today: 8:00 AM - 9:00 PM</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container px-6 pt-20 pb-12 mx-auto">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-3">
-          {vendorData.stats.map((stat, index) => (
-            <div key={index} className="p-6 transition-shadow bg-white shadow-sm rounded-xl hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="p-3 text-indigo-600 bg-indigo-100 rounded-full">
-                  {stat.icon}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                  <h3 className="mt-1 text-2xl font-bold">{stat.value}</h3>
-                  <p className={`text-sm mt-1 ${stat.change.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
-                    {stat.change} from last month
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Active Packages Section with Horizontal Scroll */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Active Packages</h2>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => scroll('left')}
-                className="p-2 text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200"
-              >
-                <FiChevronLeft />
-              </button>
-              <button 
-                onClick={() => scroll('right')}
-                className="p-2 text-gray-600 bg-gray-100 rounded-full hover:bg-gray-200"
-              >
-                <FiRight />
-              </button>
-            </div>
+      {/* Hero Section with Cover Photo */}
+      <div className="relative w-full h-80 md:h-96">
+        {/* Cover Photo */}
+        <div className="relative w-full h-full overflow-hidden bg-gray-200">
+          <img 
+            src={coverPhoto} 
+            alt="Business Cover" 
+            className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+          />
+          
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          
+          {/* Cover Photo Edit Button */}
+          <div className="absolute top-4 right-4">
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              disabled={uploading.cover}
+              className="flex items-center gap-2 px-4 py-2 text-white transition-all rounded-lg bg-black/50 backdrop-blur-sm hover:bg-black/70 disabled:opacity-50"
+            >
+              {uploading.cover ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white rounded-full border-t-transparent animate-spin"></div>
+                  <span className="text-sm">Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <FiCamera size={16} />
+                  <span className="text-sm">Change Cover</span>
+                </>
+              )}
+            </button>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleCoverUpload}
+              className="hidden"
+            />
           </div>
           
-          <div className="relative">
-            <div 
-              ref={scrollRef}
-              className="flex pb-4 space-x-4 overflow-x-auto scrollbar-hide"
-            >
-              {vendorData.activePackages.map(pkg => (
-                <div 
-                  key={pkg.id} 
-                  className="flex-shrink-0 p-4 transition-shadow border rounded-lg w-86 hover:shadow-md"
-                >
-                  <div className="flex justify-between">
-                    <h3 className="font-medium text-gray-800 truncate">{pkg.name}</h3>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      pkg.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {pkg.status}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-gray-600 truncate">{pkg.description}</p>
-                  <div className="grid grid-cols-3 gap-2 mt-4 text-xs">
-                    <div className="flex flex-col items-center text-gray-500">
-                      <FiDollarSign size={14} />
-                      <span>{pkg.price}</span>
-                    </div>
-                    <div className="flex flex-col items-center text-gray-500">
-                      <FiClock size={14} />
-                      <span>{pkg.duration}</span>
-                    </div>
-                    <div className="flex flex-col items-center text-gray-500">
-                      <FiUsers size={14} />
-                      <span>{pkg.bookings}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {/* Error Message for Cover */}
+          {errors.cover && (
+            <div className="absolute px-3 py-2 text-sm text-red-100 rounded-lg top-16 right-4 bg-red-500/80 backdrop-blur-sm">
+              {errors.cover}
             </div>
-          </div>
+          )}
         </div>
-
-        {/* Map and Reviews Section */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <div className="overflow-hidden bg-white shadow-sm rounded-xl">
-              <h2 className="p-6 pb-0 text-xl font-semibold text-gray-800">Location</h2>
-              <div className="relative w-full bg-gray-200 h-96">
-                <iframe
-                  title="Business Location"
-                  className="absolute inset-0 w-full h-full"
-                  src={`https://maps.google.com/maps?q=${vendorData.location.lat},${vendorData.location.lng}&z=15&output=embed`}
-                  frameBorder="0"
-                  allowFullScreen
-                ></iframe>
+        
+        {/* Business Info Card */}
+        <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl px-6 mx-auto -mb-16">
+          <div className="p-6 mx-auto bg-white border border-gray-100 shadow-xl rounded-2xl backdrop-blur-sm">
+            <div className="flex flex-col items-start gap-6 md:flex-row md:items-end">
+              {/* Logo Section */}
+              <div className="relative group">
+                <div className="w-24 h-24 -mt-12 overflow-hidden bg-gray-100 border-4 border-white shadow-lg md:w-32 md:h-32 md:-mt-16 rounded-2xl">
+                  <img 
+                    src={logo} 
+                    alt="Business Logo" 
+                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                
+                {/* Logo Edit Overlay */}
+                <button
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploading.logo}
+                  className="absolute inset-0 flex items-center justify-center w-24 h-24 -mt-12 transition-all md:w-32 md:h-32 md:-mt-16 bg-black/0 hover:bg-black/50 rounded-2xl group"
+                >
+                  <div className="text-center text-white transition-opacity duration-200 opacity-0 group-hover:opacity-100">
+                    {uploading.logo ? (
+                      <div className="w-6 h-6 mx-auto border-2 border-white rounded-full border-t-transparent animate-spin"></div>
+                    ) : (
+                      <>
+                        <FiCamera size={20} className="mx-auto mb-1" />
+                        <span className="text-xs">Change</span>
+                      </>
+                    )}
+                  </div>
+                </button>
+                
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+                
+                {/* Logo Error */}
+                {errors.logo && (
+                  <div className="absolute left-0 right-0 text-xs text-center text-red-500 -bottom-8">
+                    {errors.logo}
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
-
-          <div>
-            <div className="overflow-hidden bg-white shadow-sm rounded-xl">
-              <div className="flex items-center justify-between p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-800">Recent Reviews</h2>
-                <a href="/reviews" className="flex items-center text-sm text-indigo-600 hover:underline">
-                  View all <FiChevronRight className="ml-1" />
-                </a>
-              </div>
-              <div className="divide-y">
-                {vendorData.reviews.map((review, index) => (
-                  <div key={index} className="p-6">
-                    <div className="flex justify-between">
-                      <h4 className="font-medium">{review.user}</h4>
-                      <div className="flex items-center text-amber-500">
-                        {[...Array(5)].map((_, i) => (
-                          <FiStar 
-                            key={i} 
-                            className={`${i < review.rating ? 'fill-current' : 'text-gray-300'}`} 
-                            size={16}
-                          />
-                        ))}
+              
+              {/* Business Details */}
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                  <div>
+                    <h1 className="text-2xl font-bold leading-tight text-gray-900 md:text-3xl">
+                      {formData.businessName}
+                    </h1>
+                    <p className="mt-2 text-gray-600 line-clamp-2">
+                      {formData.description}
+                    </p>
+                    <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <FiMapPin size={14} />
+                        <span>Miami, FL</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span>Open now</span>
                       </div>
                     </div>
-                    <p className="mt-2 text-sm text-gray-600">{review.comment}</p>
-                    <p className="mt-3 text-xs text-gray-400">2 days ago</p>
                   </div>
-                ))}
+                  
+                  {/* Quick Stats */}
+                  <div className="flex gap-6">
+                    {vendorData.stats.slice(0, 2).map((stat, index) => (
+                      <div key={index} className="text-center">
+                        <div className="flex items-center justify-center w-8 h-8 mb-1 text-indigo-600 bg-indigo-100 rounded-full">
+                          {stat.icon}
+                        </div>
+                        <div className="text-lg font-bold text-gray-900">{stat.value}</div>
+                        <div className="text-xs text-gray-500">{stat.title}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      {/* Business Profile Section */}
+      <div className="container px-6 pt-24 mx-auto">
+        <section className="p-8 bg-white border border-gray-100 shadow-sm rounded-2xl vendor-section">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Business Profile</h2>
+              <p className="mt-1 text-gray-600">Manage your business information and media</p>
+            </div>
+            {!isEditing ? (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-2 px-6 py-3 text-white transition-all bg-indigo-600 rounded-lg hover:bg-indigo-700 hover:shadow-md focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                <FiEdit size={18} /> Edit Profile
+              </button>
+            ) : (
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSubmit}
+                  className="flex items-center gap-2 px-6 py-3 text-white transition-all bg-green-600 rounded-lg hover:bg-green-700 hover:shadow-md focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                  <FiCheckCircle size={18} /> Save Changes
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="flex items-center gap-2 px-6 py-3 text-gray-700 transition-all bg-gray-100 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  <FiXCircle size={18} /> Cancel
+                </button>
+              </div>
+            )}
+          </div>
+      
+            {isEditing ? (
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Basic Information */}
+                <div className="p-6 space-y-6 bg-gray-50 rounded-xl">
+                  <h3 className="pb-2 text-lg font-semibold text-gray-900 border-b border-gray-200">
+                    Basic Information
+                  </h3>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Business Name*
+                      </label>
+                      <input
+                        type="text"
+                        name="businessName"
+                        value={formData.businessName}
+                        onChange={handleChange}
+                        className={`w-full p-4 border rounded-xl transition-colors focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                          errors.businessName ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                        }`}
+                        placeholder="Enter your business name"
+                      />
+                      {errors.businessName && (
+                        <p className="flex items-center gap-1 mt-2 text-sm text-red-600">
+                          <FiXCircle size={14} />
+                          {errors.businessName}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Contact Email*
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={`w-full p-4 border rounded-xl transition-colors focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                          errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                        }`}
+                        placeholder="your@email.com"
+                      />
+                      {errors.email && (
+                        <p className="flex items-center gap-1 mt-2 text-sm text-red-600">
+                          <FiXCircle size={14} />
+                          {errors.email}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="w-full p-4 transition-colors border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="+1 (555) 123-4567"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Business Address
+                      </label>
+                      <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        className="w-full p-4 text-gray-600 bg-gray-100 border border-gray-300 rounded-xl"
+                        disabled
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Address verification is handled by our admin team
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Business Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                      className="w-full p-4 transition-colors border border-gray-300 resize-none rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      placeholder="Tell travelers about your business, what makes it special, and what they can expect..."
+                    />
+                  </div>
+                </div>
 
-      {/* Custom scrollbar styling */}
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
-    </div>
-  );
-};
+                {/* Media Upload Section */}
+                <div className="p-6 space-y-6 bg-gray-50 rounded-xl">
+                  <h3 className="pb-2 text-lg font-semibold text-gray-900 border-b border-gray-200">
+                    Business Media
+                  </h3>
+                  
+                  {/* Logo Upload */}
+                  <div>
+                    <label className="block mb-3 text-sm font-medium text-gray-700">
+                      Business Logo
+                    </label>
+                    <div className="flex items-center gap-6">
+                      <div className="relative">
+                        <div className="w-24 h-24 overflow-hidden bg-gray-200 border-2 border-gray-300 border-dashed rounded-xl">
+                          {logo ? (
+                            <img src={logo} alt="Business Logo" className="object-cover w-full h-full" />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center w-full h-full text-gray-400">
+                              <FiImage size={20} />
+                              <span className="mt-1 text-xs">No Logo</span>
+                            </div>
+                          )}
+                        </div>
+                        {uploading.logo && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+                            <div className="w-6 h-6 border-2 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          disabled={uploading.logo}
+                          className="flex items-center gap-2 px-4 py-2 text-indigo-600 transition-all border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50"
+                        >
+                          <FiUpload size={16} />
+                          {uploading.logo ? 'Uploading...' : 'Upload Logo'}
+                        </button>
+                        <p className="text-xs text-gray-500">
+                          Recommended: Square image, max 5MB
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Media Links */}
+                <div className="p-6 space-y-6 bg-gray-50 rounded-xl">
+                  <h3 className="pb-2 text-lg font-semibold text-gray-900 border-b border-gray-200">
+                    Social Media & Website
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center w-20 gap-2 text-sm font-medium text-gray-700">
+                        <div className="w-5 h-5 rounded bg-gradient-to-br from-purple-600 to-pink-500"></div>
+                        Instagram
+                      </span>
+                      <div className="flex items-center flex-1 gap-2">
+                        <span className="text-sm text-gray-500">instagram.com/</span>
+                        <input
+                          type="text"
+                          name="instagram"
+                          value={formData.socialMedia.instagram}
+                          onChange={handleSocialChange}
+                          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          placeholder="username"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center w-20 gap-2 text-sm font-medium text-gray-700">
+                        <div className="w-5 h-5 bg-blue-600 rounded"></div>
+                        Facebook
+                      </span>
+                      <div className="flex items-center flex-1 gap-2">
+                        <span className="text-sm text-gray-500">facebook.com/</span>
+                        <input
+                          type="text"
+                          name="facebook"
+                          value={formData.socialMedia.facebook}
+                          onChange={handleSocialChange}
+                          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          placeholder="username"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center w-20 gap-2 text-sm font-medium text-gray-700">
+                        <FiLink size={16} />
+                        Website
+                      </span>
+                      <input
+                        type="url"
+                        name="website"
+                        value={formData.socialMedia.website}
+                        onChange={handleSocialChange}
+                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="https://yourwebsite.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </form>
+            ) : (
+              // View Mode
+              <div className="space-y-8">
+                {/* Business Information Display */}
+                <div className="p-6 bg-gray-50 rounded-xl">
+                  <h3 className="pb-2 mb-6 text-lg font-semibold text-gray-900 border-b border-gray-200">
+                    Business Information
+                  </h3>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div>
+                      <h4 className="mb-1 text-sm font-medium text-gray-500">Business Name</h4>
+                      <p className="font-medium text-gray-900">{formData.businessName}</p>
+                    </div>
+                    <div>
+                      <h4 className="mb-1 text-sm font-medium text-gray-500">Contact Email</h4>
+                      <p className="text-gray-900">{formData.email}</p>
+                    </div>
+                    <div>
+                      <h4 className="mb-1 text-sm font-medium text-gray-500">Phone Number</h4>
+                      <p className="text-gray-900">{formData.phone}</p>
+                    </div>
+                    <div>
+                      <h4 className="mb-1 text-sm font-medium text-gray-500">Business Address</h4>
+                      <p className="text-gray-900">{formData.address}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <h4 className="mb-1 text-sm font-medium text-gray-500">Description</h4>
+                      <p className="leading-relaxed text-gray-900">{formData.description}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Media Links Display */}
+                <div className="p-6 bg-gray-50 rounded-xl">
+                  <h3 className="pb-2 mb-6 text-lg font-semibold text-gray-900 border-b border-gray-200">
+                    Online Presence
+                  </h3>
+                  <div className="flex flex-wrap gap-4">
+                    {formData.socialMedia.instagram && (
+                      <a
+                        href={`https://instagram.com/${formData.socialMedia.instagram}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 text-purple-700 transition-colors bg-purple-100 rounded-lg hover:bg-purple-200"
+                      >
+                        <div className="w-4 h-4 rounded bg-gradient-to-br from-purple-600 to-pink-500"></div>
+                        Instagram
+                      </a>
+                    )}
+                    {formData.socialMedia.facebook && (
+                      <a
+                        href={`https://facebook.com/${formData.socialMedia.facebook}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 text-blue-700 transition-colors bg-blue-100 rounded-lg hover:bg-blue-200"
+                      >
+                        <div className="w-4 h-4 bg-blue-600 rounded"></div>
+                        Facebook
+                      </a>
+                    )}
+                    {formData.socialMedia.website && (
+                      <a
+                        href={formData.socialMedia.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 text-gray-700 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
+                      >
+                        <FiLink size={16} />
+                        Website
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Custom scrollbar styling */}
+        <style jsx>{`
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+        `}</style>
+      </div>
+    );
+  };
 
 export default VendorDashboard;
