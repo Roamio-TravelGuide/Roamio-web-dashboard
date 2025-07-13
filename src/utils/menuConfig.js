@@ -1,10 +1,10 @@
 // src/utils/menuConfig.ts
-import { 
-  FaUsers, 
-  FaChartLine, 
-  FaCog, 
-  FaUser, 
-  FaUserTie, 
+import {
+  FaUsers,
+  FaChartLine,
+  FaCog,
+  FaUser,
+  FaUserTie,
   FaUserShield,
   FaStore,
   FaMapMarkedAlt,
@@ -14,8 +14,8 @@ import {
   FaRegClock,
   FaRegStar,
   FaRegQuestionCircle,
-} from 'react-icons/fa';
-import React from 'react';
+} from "react-icons/fa";
+import React from "react";
 
 // Helper function to create icon elements
 const createIcon = (IconComponent) =>
@@ -44,7 +44,7 @@ export const menuConfig = {
         path: "/guide/earnings",
         icon: createIcon(FaWallet),
       },
-            {
+      {
         title: "Support",
         path: "/guide/support",
         icon: createIcon(FaRegQuestionCircle),
@@ -62,15 +62,15 @@ export const menuConfig = {
         title: "Profile",
         path: "/moderator/dashboard",
         icon: createIcon(FaCog),
-      }
-    ]
+      },
+    ],
   },
   admin: {
     navItems: [
       {
         title: "Dashboard",
         path: "/admin/dashboard",
-        icon: createIcon(FaChartLine)
+        icon: createIcon(FaChartLine),
       },
       {
         title: "Users",
@@ -82,7 +82,7 @@ export const menuConfig = {
         path: "/admin/complaints",
         icon: createIcon(FaUsers),
       },
-    ]
+    ],
   },
   vendor: {
     navItems: [
