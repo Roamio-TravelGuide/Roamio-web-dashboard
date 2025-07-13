@@ -3,6 +3,7 @@ import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiCompass } from 'react-
 import { login } from '../../api/auth/authApi.js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/authContext.jsx';
+import { toast } from 'react-hot-toast';
 
 const SignInPage = () => {
   const [email, setEmail] = useState('');
@@ -10,7 +11,6 @@ const SignInPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState('');
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,19 +19,20 @@ const SignInPage = () => {
   const roleRoutes = {
     admin: '/admin/dashboard',
     travel_guide: '/guide/dashboard',
-    moderator: '/moderator/dashboard'
+    moderator: '/moderator/dashboard',
+    vendor: '/vendor/dashboard',
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!email || !password) {
-      setError('Please fill in all fields');
+      toast.error('Please fill in all fields');
       return;
     }
     
     setIsLoading(true);
-    setError('');
+    const toastId = toast.loading('Signing in...');
     
     try {
       const response = await login({ email, password });
@@ -51,19 +52,19 @@ const SignInPage = () => {
       const userRole = response.user.role.toLowerCase();
       const redirectPath = roleRoutes[userRole] || '/';
       
+      // Show success message
+      toast.success(`Welcome back, ${response.user.name}!`, { id: toastId });
+
       // Redirect to intended path or role-specific dashboard
       const from = location.state?.from?.pathname || redirectPath;
       navigate(from, { replace: true });
 
     } catch (error) {
       console.error('Login error:', error);
-      setError(
-        typeof error === 'string' 
-          ? error 
-          : error instanceof Error 
-            ? error.message 
-            : 'Login failed. Please try again.'
-      );
+      const errorMessage = error.response?.data?.message || 
+                         error.message || 
+                         'Login failed. Please try again.';
+      toast.error(errorMessage, { id: toastId });
     } finally {
       setIsLoading(false);
     }
@@ -71,13 +72,6 @@ const SignInPage = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50">
-      {/* Error message display */}
-      {error && (
-        <div className="fixed z-50 px-4 py-3 text-red-700 transform -translate-x-1/2 bg-red-100 border border-red-400 rounded top-4 left-1/2">
-          {error}
-        </div>
-      )}
-
       {/* Video Background Container - Only shows on larger screens */}
       <div className="fixed inset-0 hidden w-full h-full overflow-hidden lg:block">
         <video

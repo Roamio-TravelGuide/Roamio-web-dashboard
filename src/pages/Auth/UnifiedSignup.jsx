@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   MapPin, 
   Users, 
@@ -17,9 +17,11 @@ import {
   FileUp,
 } from 'lucide-react';
 import { signup } from '../../api/auth/authApi';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const UnifiedSignup = () => {
+  const navigate = useNavigate();
   const [selectedUserType, setSelectedUserType] = useState(null);
   const [currentLevel, setCurrentLevel] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -408,6 +410,26 @@ const UnifiedSignup = () => {
       
     } catch (error) {
       console.error('Signup error:', error);
+      // Show loading toast
+      const toastId = toast.loading('Creating your account...');
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      console.log('Signup successful:', { userType: selectedUserType, ...formData });
+      
+      // Show success toast
+      toast.success('Account created successfully!', { id: toastId });
+      
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+      
+    } catch (error) {
+      // Show error toast
+      toast.error('Failed to create account. Please try again.');
+      
       setErrors({
         general: error.message || 'Failed to create account. Please try again.'
       });
@@ -586,6 +608,7 @@ const UnifiedSignup = () => {
         </div>
       )}
       
+      {/* Form Container */}
       <div className="relative z-10 flex items-center justify-center min-h-screen p-8">
         <div className={`w-full max-w-lg transition-all duration-500 ease-[cubic-bezier(0.68,-0.55,0.27,1.55)] ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
           <div className="p-8 border shadow-2xl sm:p-10 border-white/30 bg-white/10 backdrop-blur-xl rounded-2xl">
@@ -616,7 +639,7 @@ const UnifiedSignup = () => {
               )}
             </div>
             
-            <div className={`space-y-5 transition-all duration-500 delay-300 ${isAnimating ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'}`}>
+            <form onSubmit={handleSubmit} className={`space-y-5 transition-all duration-500 delay-300 ${isAnimating ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'}`}>
               {errors.general && (
                 <div className="p-4 text-sm text-red-100 border border-red-300 rounded-lg bg-red-500/20">
                   {errors.general}
@@ -648,8 +671,7 @@ const UnifiedSignup = () => {
                   </button>
                 ) : (
                   <button
-                    type="button"
-                    onClick={handleSubmit}
+                    type="submit"
                     disabled={isLoading}
                     className={`flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r ${config.gradient} hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-95 ${isLoading ? 'opacity-80 cursor-not-allowed' : ''}`}
                   >
@@ -667,7 +689,7 @@ const UnifiedSignup = () => {
                   </button>
                 )}
               </div>
-            </div>
+            </form>
             
             <div className={`mt-6 text-sm text-center text-white/60 transition-all duration-500 delay-700 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
               Already have an account?{' '}
