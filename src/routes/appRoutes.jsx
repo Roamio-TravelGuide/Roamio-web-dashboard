@@ -22,9 +22,8 @@ import TourDetail from '../pages/Moderator/TourDetail';
 
 import VendorDashboard from '../pages/Vendor/Dashboard';
 import VendorLayout from '../layouts/VendorLayout';
-import VendorProfile from '../pages/Vendor/Profile';
 import VendorLocation from '../pages/Vendor/Location';
-import VendorPromotions from '../pages/Vendor/Promotions';
+// import VendorPromotions from '../pages/Vendor/Promotions';
 import VendorSupport from '../pages/Vendor/Support';
 import VendorBilling from '../pages/Vendor/Billing';
 
@@ -61,9 +60,8 @@ const AppRoutes = () => {
 
           <Route element={<VendorLayout />}>
             <Route path="/vendor/dashboard" element={<VendorDashboard />} />
-            <Route path="/vendor/profile" element={<VendorProfile />} />
             <Route path="/vendor/location" element={<VendorLocation />} />
-            <Route path="/vendor/promotions" element={<VendorPromotions />} />
+            {/* <Route path="/vendor/promotions" element={<VendorPromotions />} /> */}
             <Route path="/vendor/support" element={<VendorSupport />} />
             <Route path="/vendor/billing" element={<VendorBilling />} />
           </Route>
