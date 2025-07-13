@@ -3,7 +3,7 @@ import axios from 'axios';
 
 export const login = async (credentials) => {
   try {
-    const response = await apiClient.post('/v1/auth/login', credentials);
+    const response = await apiClient.post('/auth/login', credentials);
     
     if(response.data.data?.status === "pending"){
       throw new Error('Your account is pending approval. Please wait for admin approval.')
