@@ -6,13 +6,22 @@ import {
   FiMail,
   FiClock,
   FiCheckCircle,
-  FiChevronRight
+  FiChevronRight,
+  FiShield,
+  FiUser,
+  FiDollarSign,
+  FiTool,
+  FiBriefcase,
+  FiUsers,
+  FiCalendar,
+  FiBook,
+  FiHelpCircle
 } from 'react-icons/fi';
 
 const Complaints = () => {
   const [activeTab, setActiveTab] = useState('new');
   const [formData, setFormData] = useState({
-    type: 'location',
+    type: '',
     subject: '',
     message: '',
     urgency: 'medium'
@@ -20,21 +29,21 @@ const Complaints = () => {
   const [tickets, setTickets] = useState([
     {
       id: 1,
-      type: 'location',
-      subject: 'Incorrect pin location',
-      message: 'Our cafe is actually 50m north of the marked location',
+      type: 'safety',
+      subject: 'Unsafe working conditions',
+      message: 'The equipment in our workspace is outdated and potentially dangerous',
       date: '2023-08-15',
       status: 'resolved',
-      adminResponse: 'Location updated on 8/16/2023'
+      adminResponse: 'Safety inspection scheduled for 8/20/2023'
     },
     {
       id: 2,
-      type: 'technical',
-      subject: 'Promotions not showing',
-      message: 'Created 3 promotions but not appearing in app',
+      type: 'payment',
+      subject: 'Delayed payments',
+      message: 'Haven\'t received payment for last month\'s work',
       date: '2023-08-10',
       status: 'in-progress',
-      adminResponse: 'Investigating with tech team'
+      adminResponse: 'Finance team is processing the payment'
     }
   ]);
 
@@ -56,7 +65,7 @@ const Complaints = () => {
     };
     setTickets([newTicket, ...tickets]);
     setFormData({
-      type: 'location',
+      type: '',
       subject: '',
       message: '',
       urgency: 'medium'
@@ -66,9 +75,31 @@ const Complaints = () => {
 
   const getTypeIcon = (type) => {
     switch(type) {
-      case 'location': return <FiMapPin className="text-blue-600" />;
-      case 'technical': return <FiAlertTriangle className="text-amber-600" />;
-      default: return <FiMessageSquare className="text-indigo-600" />;
+      case 'safety': return <FiShield className="text-red-600" />;
+      case 'harassment': return <FiUser className="text-purple-600" />;
+      case 'workplace': return <FiBriefcase className="text-amber-600" />;
+      case 'payment': return <FiDollarSign className="text-green-600" />;
+      case 'equipment': return <FiTool className="text-blue-600" />;
+      case 'management': return <FiUsers className="text-indigo-600" />;
+      case 'customer': return <FiUser className="text-pink-600" />;
+      case 'scheduling': return <FiCalendar className="text-teal-600" />;
+      case 'training': return <FiBook className="text-orange-600" />;
+      default: return <FiHelpCircle className="text-gray-600" />;
+    }
+  };
+
+  const getTypeLabel = (type) => {
+    switch(type) {
+      case 'safety': return 'Safety Concerns';
+      case 'harassment': return 'Harassment/Discrimination';
+      case 'workplace': return 'Workplace Conditions';
+      case 'payment': return 'Payment Issues';
+      case 'equipment': return 'Equipment/Resources';
+      case 'management': return 'Management Issues';
+      case 'customer': return 'Customer Behavior';
+      case 'scheduling': return 'Scheduling Problems';
+      case 'training': return 'Training Issues';
+      default: return 'Other';
     }
   };
 
@@ -86,7 +117,7 @@ const Complaints = () => {
   return (
     <section className="p-6 bg-white shadow-sm vendor-section rounded-xl">
       <div className="flex flex-col mb-6 md:flex-row md:items-center md:justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">Admin Support</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Vendor Support</h2>
         <div className="flex gap-2 mt-4 md:mt-0">
           <button
             onClick={() => setActiveTab('new')}
@@ -113,7 +144,7 @@ const Complaints = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <label className="block mb-1 text-sm font-medium text-gray-700">Request Type*</label>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Category*</label>
               <select
                 name="type"
                 value={formData.type}
@@ -121,9 +152,16 @@ const Complaints = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg"
                 required
               >
-                <option value="location">Location Edit</option>
-                <option value="technical">Technical Issue</option>
-                <option value="account">Account Help</option>
+                <option value="">Select a category</option>
+                <option value="safety">Safety Concerns</option>
+                <option value="harassment">Harassment/Discrimination</option>
+                <option value="workplace">Workplace Conditions</option>
+                <option value="payment">Payment Issues</option>
+                <option value="equipment">Equipment/Resources</option>
+                <option value="management">Management Issues</option>
+                <option value="customer">Customer Behavior</option>
+                <option value="scheduling">Scheduling Problems</option>
+                <option value="training">Training Issues</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -195,6 +233,9 @@ const Complaints = () => {
                           <span className="flex items-center gap-1 text-sm text-gray-500">
                             <FiClock size={14} /> {ticket.date}
                           </span>
+                          <span className="text-sm text-gray-500">
+                            {getTypeLabel(ticket.type)}
+                          </span>
                           {getStatusBadge(ticket.status)}
                         </div>
                       </div>
@@ -229,7 +270,7 @@ const Complaints = () => {
       ) : (
         <div className="space-y-6">
           <div className="p-6 bg-blue-50 rounded-xl">
-            <h3 className="mb-3 text-lg font-semibold text-gray-800">Contact Roamio Admin</h3>
+            <h3 className="mb-3 text-lg font-semibold text-gray-800">Contact Support Team</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="p-3 text-blue-600 bg-blue-100 rounded-full">
@@ -237,8 +278,8 @@ const Complaints = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Email Address</p>
-                  <a href="mailto:support@roamio.com" className="text-blue-600 hover:underline">
-                    support@roamio.com
+                  <a href="mailto:support@example.com" className="text-blue-600 hover:underline">
+                    support@example.com
                   </a>
                 </div>
               </div>
@@ -260,21 +301,21 @@ const Complaints = () => {
             </div>
             <div className="divide-y">
               <div className="p-6">
-                <h4 className="font-medium text-gray-800">How do I update my business location?</h4>
+                <h4 className="font-medium text-gray-800">How quickly are safety concerns addressed?</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Submit a "Location Edit" request through the support form. Include your correct address and any supporting documents.
+                  All safety concerns are prioritized and typically addressed within 24 hours. Emergency situations are handled immediately.
                 </p>
               </div>
               <div className="p-6">
-                <h4 className="font-medium text-gray-800">Why aren't my promotions showing?</h4>
+                <h4 className="font-medium text-gray-800">What payment issues can I report?</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Promotions may take up to 2 hours to appear. If still not visible after this time, submit a technical support ticket.
+                  You can report missing payments, incorrect amounts, or payment delays. Please include invoice numbers and dates for faster resolution.
                 </p>
               </div>
               <div className="p-6">
-                <h4 className="font-medium text-gray-800">How can I improve my recommendations?</h4>
+                <h4 className="font-medium text-gray-800">How are harassment complaints handled?</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Ensure your profile is complete with high-quality photos, accurate hours, and detailed descriptions. Respond promptly to reviews.
+                  All harassment complaints are treated with strict confidentiality and investigated promptly by our HR team.
                 </p>
               </div>
             </div>
