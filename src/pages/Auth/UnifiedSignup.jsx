@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MapPin, 
   Users, 
@@ -29,7 +29,6 @@ const UnifiedSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -374,6 +373,9 @@ const UnifiedSignup = () => {
     setErrors({});
     
     try {
+      // Show loading toast
+      const toastId = toast.loading('Creating your account...');
+      
       const roleMap = {
         'guide': 'travel_guide',
         'restaurant': 'vendor',
@@ -406,27 +408,15 @@ const UnifiedSignup = () => {
       }
 
       await signup(payload);
-      setShowSuccessPopup(true);
-      
-    } catch (error) {
-      console.error('Signup error:', error);
-      // Show loading toast
-      const toastId = toast.loading('Creating your account...');
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      console.log('Signup successful:', { userType: selectedUserType, ...formData });
       
       // Show success toast
       toast.success('Account created successfully!', { id: toastId });
       
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+      setShowSuccessPopup(true);
       
     } catch (error) {
+      console.error('Signup error:', error);
+      
       // Show error toast
       toast.error('Failed to create account. Please try again.');
       
@@ -588,9 +578,9 @@ const UnifiedSignup = () => {
       {/* Success Popup */}
       {showSuccessPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="relative w-full max-w-md p-8 bg-gradient-to-br from-teal-800 to-teal-900 rounded-2xl shadow-2xl border border-teal-400/30 animate-spring">
+          <div className="relative w-full max-w-md p-8 border shadow-2xl bg-gradient-to-br from-teal-800 to-teal-900 rounded-2xl border-teal-400/30 animate-spring">
             <div className="flex flex-col items-center text-center">
-              <div className="p-3 mb-4 bg-teal-500/20 rounded-full">
+              <div className="p-3 mb-4 rounded-full bg-teal-500/20">
                 <CheckCircle className="w-12 h-12 text-teal-300" strokeWidth={1.5} />
               </div>
               <h3 className="text-2xl font-bold text-white">Account Created Successfully!</h3>

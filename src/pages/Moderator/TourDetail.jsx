@@ -80,7 +80,6 @@ const AudioPlayer = React.memo(({
               </p>
             </div>
           </div>
-          <StatusBadge status={media.status || 'pending'} />
         </div>
 
         <div className="mb-3">
@@ -245,10 +244,6 @@ const ImageGallery = React.memo(({ images, onImageClick }) => {
                 <Eye className="w-4 h-4 text-white" />
               </button>
             </div>
-            
-            <div className="absolute transition-opacity opacity-0 top-1 right-1 group-hover:opacity-100">
-              <StatusBadge status={image.status || 'pending'} />
-            </div>
           </div>
           
           <div className="p-2 bg-white">
@@ -299,12 +294,80 @@ const TourStopCard = React.memo(({ stop, isActive, onClick }) => {
 });
 
 // Modal components with better accessibility
-const TourRejectModal = ({ isOpen, onClose, reason, onReasonChange, onConfirm, isSubmitting }) => {
+const TourRejectModal = ({ isOpen, onClose, onConfirm, isSubmitting }) => {
+  const [selectedReasons, setSelectedReasons] = React.useState({
+    audio: [],
+    image: [],
+    other: false
+  });
+  const [otherReason, setOtherReason] = React.useState('');
+
+  const audioReasons = [
+    'Background noise',
+    'Incomplete playback',
+    'Language used is not clear and not relevant',
+    'Offensive or unrelated content'
+  ];
+
+  const imageReasons = [
+    'Image is stretched or distorted',
+    'Offensive or irrelevant content',
+    'Image does not match the tour stop'
+  ];
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setSelectedReasons({ audio: [], image: [], other: false });
+      setOtherReason('');
+    }
+  }, [isOpen]);
+
+  const handleReasonChange = (category, reasonText, checked) => {
+    setSelectedReasons(prev => ({
+      ...prev,
+      [category]: checked 
+        ? [...prev[category], reasonText]
+        : prev[category].filter(r => r !== reasonText)
+    }));
+  };
+
+  const handleOtherChange = (checked) => {
+    setSelectedReasons(prev => ({ ...prev, other: checked }));
+    if (!checked) {
+      setOtherReason('');
+    }
+  };
+
+  const generateRejectionReason = () => {
+    const reasons = [];
+    
+    if (selectedReasons.audio.length > 0) {
+      reasons.push(`Audio issues: ${selectedReasons.audio.join(', ')}`);
+    }
+    
+    if (selectedReasons.image.length > 0) {
+      reasons.push(`Image issues: ${selectedReasons.image.join(', ')}`);
+    }
+    
+    if (selectedReasons.other && otherReason.trim()) {
+      reasons.push(`Other: ${otherReason.trim()}`);
+    }
+    
+    return reasons.join('. ');
+  };
+
+  const handleConfirm = () => {
+    const finalReason = generateRejectionReason();
+    onConfirm(finalReason);
+  };
+
+  const isValid = selectedReasons.audio.length > 0;
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-xl">
+      <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Reject Tour Package</h3>
@@ -317,20 +380,95 @@ const TourRejectModal = ({ isOpen, onClose, reason, onReasonChange, onConfirm, i
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="mb-4 text-gray-600">
-            You're about to reject this entire tour package. Please provide a reason.
+          
+          <p className="mb-6 text-gray-600">
+            Please select the reason(s) for rejecting this tour package. <strong>At least one audio issue must be selected.</strong> Image issues and other reasons are optional.
           </p>
-          <textarea
-            value={reason}
-            onChange={(e) => onReasonChange(e.target.value)}
-            placeholder="Please provide a detailed reason for rejection..."
-            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            rows={4}
-            required
-            autoFocus
-            disabled={isSubmitting}
-            aria-label="Rejection reason"
-          />
+
+          <div className="space-y-6">
+            {/* Audio Issues Section */}
+            <div>
+              <h4 className="flex items-center mb-3 text-sm font-semibold text-gray-900">
+                <Headphones className="w-4 h-4 mr-2 text-blue-600" />
+                Audio Issues (Required - Select at least one)
+              </h4>
+              <div className="space-y-2">
+                {audioReasons.map((audioReason) => (
+                  <label key={audioReason} className="flex items-start space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedReasons.audio.includes(audioReason)}
+                      onChange={(e) => handleReasonChange('audio', audioReason, e.target.checked)}
+                      className="w-4 h-4 mt-0.5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                      disabled={isSubmitting}
+                    />
+                    <span className="text-sm text-gray-700">{audioReason}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Image Issues Section */}
+            <div>
+              <h4 className="flex items-center mb-3 text-sm font-semibold text-gray-900">
+                <ImageIcon className="w-4 h-4 mr-2 text-green-600" />
+                Image Issues (Optional)
+              </h4>
+              <div className="space-y-2">
+                {imageReasons.map((imageReason) => (
+                  <label key={imageReason} className="flex items-start space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedReasons.image.includes(imageReason)}
+                      onChange={(e) => handleReasonChange('image', imageReason, e.target.checked)}
+                      className="w-4 h-4 mt-0.5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                      disabled={isSubmitting}
+                    />
+                    <span className="text-sm text-gray-700">{imageReason}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Other Reason Section */}
+            <div>
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedReasons.other}
+                  onChange={(e) => handleOtherChange(e.target.checked)}
+                  className="w-4 h-4 mt-0.5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm font-semibold text-gray-900">Other reason</span>
+              </label>
+              
+              {selectedReasons.other && (
+                <textarea
+                  value={otherReason}
+                  onChange={(e) => setOtherReason(e.target.value)}
+                  placeholder="Please specify the other reason for rejection..."
+                  className="w-full p-3 mt-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  rows={3}
+                  disabled={isSubmitting}
+                  aria-label="Other rejection reason"
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Validation Message */}
+          {!isValid && (
+            <div className="p-3 mt-4 border rounded-lg border-amber-200 bg-amber-50">
+              <div className="flex items-start space-x-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-amber-700">
+                  At least one audio issue must be selected to reject a tour.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end mt-6 space-x-3">
             <button
               onClick={onClose}
@@ -340,10 +478,10 @@ const TourRejectModal = ({ isOpen, onClose, reason, onReasonChange, onConfirm, i
               Cancel
             </button>
             <button
-              onClick={onConfirm}
-              disabled={!reason.trim() || isSubmitting}
+              onClick={handleConfirm}
+              disabled={!isValid || isSubmitting}
               className={`px-4 py-2 text-white rounded-lg flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-                reason.trim() && !isSubmitting
+                isValid && !isSubmitting
                   ? 'bg-red-600 hover:bg-red-700' 
                   : 'bg-red-300 cursor-not-allowed'
               }`}
@@ -528,12 +666,9 @@ const TourDetail = () => {
     const handleTimeUpdate = () => {
       const newCurrentTime = audio.currentTime;
       setCurrentTime(newCurrentTime);
-      // Debug log to verify updates
-      console.log('Audio time update:', newCurrentTime, 'duration:', audio.duration);
     };
     const handleLoadedMetadata = () => {
       setDuration(audio.duration);
-      console.log('Audio loaded, duration:', audio.duration);
     };
     const handleEnded = () => {
       setPlayingAudio(null);
@@ -556,7 +691,7 @@ const TourDetail = () => {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, []);
+  }, [playingAudio]); // Add playingAudio as dependency to ensure proper tracking
 
   // Update audio volume and playback rate
   useEffect(() => {
@@ -572,9 +707,12 @@ const TourDetail = () => {
         audioRef.current?.pause();
         setPlayingAudio(null);
       } else {
+        // Reset current time when switching audio files
+        setCurrentTime(0);
         setPlayingAudio(mediaId);
         if (audioRef.current) {
           audioRef.current.src = audioUrl;
+          audioRef.current.currentTime = 0;
           audioRef.current.play().catch((error) => {
             console.error('Audio play failed:', error);
             toast.error('Failed to play audio');
@@ -665,8 +803,8 @@ const TourDetail = () => {
     setTourRejectReason('');
   }, []);
 
-  const confirmRejectTour = useCallback(async () => {
-    if (!tour || !id || !tourRejectReason.trim() || isRejecting) return;
+  const confirmRejectTour = useCallback(async (rejectionReason) => {
+    if (!tour || !id || !rejectionReason?.trim() || isRejecting) return;
 
     setIsRejecting(true);
     const toastId = toast.loading('Rejecting tour...');
@@ -676,7 +814,7 @@ const TourDetail = () => {
         `${API_BASE_URL}/tour-packages/${id}/status`,
         {
           status: 'rejected',
-          rejection_reason: tourRejectReason
+          rejection_reason: rejectionReason
         },
         {
           headers: { 'Content-Type': 'application/json' },
@@ -688,7 +826,7 @@ const TourDetail = () => {
         setTour(prev => prev ? { 
           ...prev, 
           status: 'rejected', 
-          rejection_reason: tourRejectReason 
+          rejection_reason: rejectionReason 
         } : null);
         
         setShowTourRejectModal(false);
@@ -726,7 +864,7 @@ const TourDetail = () => {
     } finally {
       setIsRejecting(false);
     }
-  }, [tour, id, tourRejectReason, isRejecting]);
+  }, [tour, id, isRejecting]);
 
   const toggleSection = useCallback((section) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -1120,8 +1258,6 @@ const TourDetail = () => {
             setTourRejectReason('');
           }
         }}
-        reason={tourRejectReason}
-        onReasonChange={setTourRejectReason}
         onConfirm={confirmRejectTour}
         isSubmitting={isRejecting}
       />

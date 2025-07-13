@@ -8,23 +8,14 @@ import {
   FaUserShield,
   FaStore,
   FaMapMarkedAlt,
-  FaWallet
-} from 'react-icons/fa';
-import React from 'react';
-import {
-  FaUsers,
-  FaChartLine,
-  FaCog,
-  FaMapMarkedAlt,
-  FaCalendarAlt,
   FaWallet,
+  FaCalendarAlt,
   FaBullhorn,
   FaRegClock,
   FaRegStar,
   FaRegQuestionCircle,
-  
-} from "react-icons/fa";
-import React from "react";
+} from 'react-icons/fa';
+import React from 'react';
 
 // Helper function to create icon elements
 const createIcon = (IconComponent) =>
@@ -92,10 +83,6 @@ export const menuConfig = {
         icon: createIcon(FaUsers),
       },
     ]
-  }
-};
-      },
-    ],
   },
   vendor: {
     navItems: [
