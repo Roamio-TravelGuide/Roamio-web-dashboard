@@ -43,7 +43,7 @@ export const menuConfig = {
             {
         title: "Complaints",
         path: "/guide/complaints",
-        icon: createIcon(FaWallet),
+        icon: createIcon(FaRegQuestionCircle),
       },
       {
         title: "Settings",
