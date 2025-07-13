@@ -41,8 +41,8 @@ export const menuConfig = {
         icon: createIcon(FaWallet),
       },
             {
-        title: "Complaints",
-        path: "/guide/complaints",
+        title: "Support",
+        path: "/guide/support",
         icon: createIcon(FaRegQuestionCircle),
       },
       {

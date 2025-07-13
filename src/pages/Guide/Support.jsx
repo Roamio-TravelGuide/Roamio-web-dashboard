@@ -18,7 +18,7 @@ import {
   FiHelpCircle
 } from 'react-icons/fi';
 
-const Complaints = () => {
+const Support = () => {
   const [activeTab, setActiveTab] = useState('new');
   const [formData, setFormData] = useState({
     type: '',
@@ -326,4 +326,4 @@ const Complaints = () => {
   );
 };
 
-export default Complaints;
+export default Support;
