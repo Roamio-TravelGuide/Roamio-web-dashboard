@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FiMessageSquare,
   FiAlertTriangle,
@@ -6,81 +6,193 @@ import {
   FiMail,
   FiClock,
   FiCheckCircle,
-  FiChevronRight
+  FiChevronRight,
+  FiDollarSign,
+  FiTool,
+  FiUser,
+  FiHelpCircle,
+  FiLoader
 } from 'react-icons/fi';
+import { supportAPI } from '../../api/support';
+import { useAuth } from '../../contexts/authContext';
+import toast from 'react-hot-toast';
 
 const VendorSupport = () => {
   const [activeTab, setActiveTab] = useState('new');
   const [formData, setFormData] = useState({
-    type: 'location',
+    category: '',
     subject: '',
-    message: '',
+    description: '',
     urgency: 'medium'
   });
-  const [tickets, setTickets] = useState([
-    {
-      id: 1,
-      type: 'location',
-      subject: 'Incorrect pin location',
-      message: 'Our cafe is actually 50m north of the marked location',
-      date: '2023-08-15',
-      status: 'resolved',
-      adminResponse: 'Location updated on 8/16/2023'
-    },
-    {
-      id: 2,
-      type: 'technical',
-      subject: 'Promotions not showing',
-      message: 'Created 3 promotions but not appearing in app',
-      date: '2023-08-10',
-      status: 'in-progress',
-      adminResponse: 'Investigating with tech team'
+  const [tickets, setTickets] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    total: 0
+  });
+
+  const { user } = useAuth();
+
+  // Load support categories when component mounts
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await supportAPI.getCategories();
+        setCategories(response.data.categories);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        toast.error('Failed to load support categories');
+      }
+    };
+
+    loadCategories();
+  }, []);
+
+  // Load user tickets when switching to tickets tab
+  useEffect(() => {
+    if (activeTab === 'my-tickets') {
+      loadUserTickets();
     }
-  ]);
+  }, [activeTab]);
+
+  const loadUserTickets = async (page = 1) => {
+    setTicketsLoading(true);
+    try {
+      const response = await supportAPI.getUserTickets({
+        page,
+        limit: 10,
+        sortBy: 'created_at',
+        sortOrder: 'desc'
+      });
+      
+      setTickets(response.data.tickets);
+      setPagination({
+        page: response.data.pagination.page,
+        totalPages: response.data.pagination.totalPages,
+        total: response.data.pagination.total
+      });
+    } catch (error) {
+      console.error('Error loading tickets:', error);
+      toast.error('Failed to load support tickets');
+    } finally {
+      setTicketsLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newTicket = {
-      id: tickets.length + 1,
-      type: formData.type,
-      subject: formData.subject,
-      message: formData.message,
-      date: new Date().toISOString().split('T')[0],
-      status: 'new',
-      adminResponse: null
-    };
-    setTickets([newTicket, ...tickets]);
-    setFormData({
-      type: 'location',
-      subject: '',
-      message: '',
-      urgency: 'medium'
-    });
-    setActiveTab('my-tickets');
+    setLoading(true);
+
+    try {
+      const ticketData = {
+        category: formData.category,
+        subject: formData.subject,
+        description: formData.description,
+        urgency: formData.urgency
+      };
+
+      await supportAPI.createTicket(ticketData);
+      
+      toast.success('Support ticket created successfully');
+      
+      // Reset form
+      setFormData({
+        category: '',
+        subject: '',
+        description: '',
+        urgency: 'medium'
+      });
+      
+      // Switch to tickets tab and reload
+      setActiveTab('my-tickets');
+      loadUserTickets();
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      
+      let errorMessage = 'Failed to create support ticket';
+      
+      // Handle validation errors
+      if (error.response?.status === 400 && error.response?.data?.errors) {
+        const validationErrors = error.response.data.errors;
+        errorMessage = validationErrors.map(err => err.message).join('. ');
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getTypeIcon = (type) => {
-    switch(type) {
-      case 'location': return <FiMapPin className="text-blue-600" />;
+  const getTypeIcon = (category) => {
+    switch(category) {
+      case 'account': return <FiUser className="text-blue-600" />;
       case 'technical': return <FiAlertTriangle className="text-amber-600" />;
+      case 'payment': return <FiDollarSign className="text-green-600" />;
+      case 'billing': return <FiDollarSign className="text-green-600" />;
+      case 'feature_request': return <FiTool className="text-purple-600" />;
       default: return <FiMessageSquare className="text-indigo-600" />;
     }
+  };
+
+  const getCategoryLabel = (category) => {
+    const categoryMap = {
+      'account': 'Account Help',
+      'technical': 'Technical Issue',
+      'payment': 'Payment Issues',
+      'billing': 'Billing',
+      'feature_request': 'Feature Request',
+      'other': 'Other'
+    };
+    return categoryMap[category] || category;
   };
 
   const getStatusBadge = (status) => {
     switch(status) {
       case 'resolved': 
         return <span className="px-2 py-1 text-xs text-green-800 bg-green-100 rounded-full">Resolved</span>;
-      case 'in-progress': 
+      case 'in_progress': 
         return <span className="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full">In Progress</span>;
+      case 'rejected':
+        return <span className="px-2 py-1 text-xs text-red-800 bg-red-100 rounded-full">Rejected</span>;
       default: 
-        return <span className="px-2 py-1 text-xs text-gray-800 bg-gray-100 rounded-full">New</span>;
+        return <span className="px-2 py-1 text-xs text-gray-800 bg-gray-100 rounded-full">Open</span>;
     }
+  };
+
+  const getUrgencyBadge = (urgency) => {
+    switch(urgency) {
+      case 'critical':
+        return <span className="px-2 py-1 text-xs text-red-800 bg-red-100 rounded-full">Critical</span>;
+      case 'high':
+        return <span className="px-2 py-1 text-xs text-orange-800 bg-orange-100 rounded-full">High</span>;
+      case 'medium':
+        return <span className="px-2 py-1 text-xs text-yellow-800 bg-yellow-100 rounded-full">Medium</span>;
+      case 'low':
+        return <span className="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full">Low</span>;
+      default:
+        return <span className="px-2 py-1 text-xs text-gray-800 bg-gray-100 rounded-full">Medium</span>;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -98,7 +210,7 @@ const VendorSupport = () => {
             onClick={() => setActiveTab('my-tickets')}
             className={`px-4 py-2 rounded-lg ${activeTab === 'my-tickets' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800'}`}
           >
-            My Tickets ({tickets.length})
+            My Tickets {pagination.total > 0 && `(${pagination.total})`}
           </button>
           <button
             onClick={() => setActiveTab('contact')}
@@ -113,19 +225,27 @@ const VendorSupport = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <label className="block mb-1 text-sm font-medium text-gray-700">Request Type*</label>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Category*</label>
               <select
-                name="type"
-                value={formData.type}
+                name="category"
+                value={formData.category}
                 onChange={handleChange}
                 className="w-full p-3 border border-gray-300 rounded-lg"
                 required
+                disabled={loading}
               >
-                <option value="location">Location Edit</option>
-                <option value="technical">Technical Issue</option>
-                <option value="account">Account Help</option>
-                <option value="other">Other</option>
+                <option value="">Select a category</option>
+                {categories.map(cat => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
               </select>
+              {formData.category && (
+                <p className="mt-1 text-xs text-gray-500">
+                  {categories.find(c => c.value === formData.category)?.description}
+                </p>
+              )}
             </div>
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700">Urgency*</label>
@@ -135,10 +255,12 @@ const VendorSupport = () => {
                 onChange={handleChange}
                 className="w-full p-3 border border-gray-300 rounded-lg"
                 required
+                disabled={loading}
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High (Urgent)</option>
+                <option value="critical">Critical</option>
               </select>
             </div>
           </div>
@@ -150,79 +272,173 @@ const VendorSupport = () => {
               name="subject"
               value={formData.subject}
               onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-lg"
+              className={`w-full p-3 border rounded-lg ${
+                formData.subject.length > 0 && formData.subject.length < 5 
+                  ? 'border-red-300 focus:border-red-500' 
+                  : 'border-gray-300'
+              }`}
               placeholder="Brief description of your issue"
               required
+              disabled={loading}
+              minLength={5}
+              maxLength={200}
             />
+            <div className="flex justify-between mt-1">
+              <p className={`text-xs ${
+                formData.subject.length > 0 && formData.subject.length < 5 
+                  ? 'text-red-500' 
+                  : 'text-gray-500'
+              }`}>
+                {formData.subject.length < 5 && formData.subject.length > 0 
+                  ? `Subject must be at least 5 characters (${5 - formData.subject.length} more needed)`
+                  : 'Minimum 5 characters'
+                }
+              </p>
+              <p className="text-xs text-gray-500">
+                {formData.subject.length}/200
+              </p>
+            </div>
           </div>
 
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">Details*</label>
             <textarea
-              name="message"
-              value={formData.message}
+              name="description"
+              value={formData.description}
               onChange={handleChange}
               rows={5}
-              className="w-full p-3 border border-gray-300 rounded-lg"
+              className={`w-full p-3 border rounded-lg ${
+                formData.description.length > 0 && formData.description.length < 20 
+                  ? 'border-red-300 focus:border-red-500' 
+                  : 'border-gray-300'
+              }`}
               placeholder="Please describe your issue in detail..."
               required
+              disabled={loading}
+              minLength={20}
+              maxLength={2000}
             />
+            <div className="flex justify-between mt-1">
+              <p className={`text-xs ${
+                formData.description.length > 0 && formData.description.length < 20 
+                  ? 'text-red-500' 
+                  : 'text-gray-500'
+              }`}>
+                {formData.description.length < 20 && formData.description.length > 0 
+                  ? `Description must be at least 20 characters (${20 - formData.description.length} more needed)`
+                  : 'Minimum 20 characters'
+                }
+              </p>
+              <p className="text-xs text-gray-500">
+                {formData.description.length}/2000
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-6 py-3 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+              disabled={loading}
+              className="flex items-center gap-2 px-6 py-3 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Request
+              {loading && <FiLoader className="animate-spin" />}
+              {loading ? 'Submitting...' : 'Submit Request'}
             </button>
           </div>
         </form>
       ) : activeTab === 'my-tickets' ? (
         <div className="space-y-4">
-          {tickets.length > 0 ? (
-            tickets.map(ticket => (
-              <div key={ticket.id} className="overflow-hidden border rounded-xl">
-                <div className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 mt-1 bg-gray-100 rounded-full">
-                        {getTypeIcon(ticket.type)}
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <FiLoader className="w-6 h-6 animate-spin text-indigo-600" />
+              <span className="ml-2 text-gray-600">Loading tickets...</span>
+            </div>
+          ) : tickets.length > 0 ? (
+            <>
+              {tickets.map(ticket => (
+                <div key={ticket.id} className="overflow-hidden border rounded-xl">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 mt-1 bg-gray-100 rounded-full">
+                          {getTypeIcon(ticket.category)}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-800">{ticket.subject}</h3>
+                          <p className="mt-1 text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
+                          <div className="flex items-center gap-3 mt-3 flex-wrap">
+                            <span className="flex items-center gap-1 text-sm text-gray-500">
+                              <FiClock size={14} /> {formatDate(ticket.created_at)}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {getCategoryLabel(ticket.category)}
+                            </span>
+                            {getStatusBadge(ticket.status)}
+                            {getUrgencyBadge(ticket.urgency)}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-medium text-gray-800">{ticket.subject}</h3>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="flex items-center gap-1 text-sm text-gray-500">
-                            <FiClock size={14} /> {ticket.date}
-                          </span>
-                          {getStatusBadge(ticket.status)}
+                      <button className="text-gray-400 hover:text-gray-600">
+                        <FiChevronRight />
+                      </button>
+                    </div>
+                  </div>
+
+                  {ticket.resolution && (
+                    <div className="p-6 border-t bg-gray-50">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 mt-1 text-blue-600 bg-blue-100 rounded-full">
+                          <FiCheckCircle size={16} />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-800">Admin Response</h4>
+                          <p className="mt-1 text-gray-700">{ticket.resolution}</p>
+                          {ticket.resolved_at && (
+                            <p className="mt-2 text-xs text-gray-500">
+                              Resolved on {formatDate(ticket.resolved_at)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <FiChevronRight />
+                  )}
+                </div>
+              ))}
+              
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4">
+                  <p className="text-sm text-gray-600">
+                    Page {pagination.page} of {pagination.totalPages} ({pagination.total} total tickets)
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => loadUserTickets(pagination.page - 1)}
+                      disabled={pagination.page === 1 || ticketsLoading}
+                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => loadUserTickets(pagination.page + 1)}
+                      disabled={pagination.page === pagination.totalPages || ticketsLoading}
+                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
                     </button>
                   </div>
                 </div>
-
-                {ticket.adminResponse && (
-                  <div className="p-6 border-t bg-gray-50">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 mt-1 text-blue-600 bg-blue-100 rounded-full">
-                        <FiCheckCircle size={16} />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-800">Admin Response</h4>
-                        <p className="mt-1 text-gray-700">{ticket.adminResponse}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))
+              )}
+            </>
           ) : (
             <div className="py-12 text-center bg-gray-50 rounded-xl">
-              <p className="text-gray-500">You haven't submitted any support tickets yet</p>
+              <FiMessageSquare className="w-12 h-12 mx-auto text-gray-400" />
+              <p className="mt-2 text-gray-500">You haven't submitted any support tickets yet</p>
+              <button
+                onClick={() => setActiveTab('new')}
+                className="mt-4 px-4 py-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+              >
+                Create your first ticket
+              </button>
             </div>
           )}
         </div>
