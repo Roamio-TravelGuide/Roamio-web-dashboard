@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { supportAPI } from '../../api/support';
+import { useAuth } from '../../contexts/authContext';
 import { 
   FiMessageSquare,
   FiAlertTriangle,
@@ -15,63 +18,116 @@ import {
   FiUsers,
   FiCalendar,
   FiBook,
-  FiHelpCircle
+  FiHelpCircle,
+  FiLoader
 } from 'react-icons/fi';
 
 const Support = () => {
   const [activeTab, setActiveTab] = useState('new');
   const [formData, setFormData] = useState({
-    type: '',
+    category: '',
     subject: '',
-    message: '',
+    description: '',
     urgency: 'medium'
   });
-  const [tickets, setTickets] = useState([
-    {
-      id: 1,
-      type: 'safety',
-      subject: 'Unsafe working conditions',
-      message: 'The equipment in our workspace is outdated and potentially dangerous',
-      date: '2023-08-15',
-      status: 'resolved',
-      adminResponse: 'Safety inspection scheduled for 8/20/2023'
-    },
-    {
-      id: 2,
-      type: 'payment',
-      subject: 'Delayed payments',
-      message: 'Haven\'t received payment for last month\'s work',
-      date: '2023-08-10',
-      status: 'in-progress',
-      adminResponse: 'Finance team is processing the payment'
-    }
-  ]);
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    totalPages: 1,
+    total: 0
+  });
+
+  const { user } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newTicket = {
-      id: tickets.length + 1,
-      type: formData.type,
-      subject: formData.subject,
-      message: formData.message,
-      date: new Date().toISOString().split('T')[0],
-      status: 'new',
-      adminResponse: null
-    };
-    setTickets([newTicket, ...tickets]);
-    setFormData({
-      type: '',
-      subject: '',
-      message: '',
-      urgency: 'medium'
-    });
-    setActiveTab('my-tickets');
+    setLoading(true);
+
+    try {
+      const ticketData = {
+        subject: formData.subject,
+        description: formData.description,
+        category: formData.category,
+        urgency: formData.urgency
+      };
+
+      const response = await supportAPI.createTicket(ticketData);
+      
+      if (response.success) {
+        toast.success('Support ticket created successfully!');
+        setFormData({
+          category: '',
+          subject: '',
+          description: '',
+          urgency: 'medium'
+        });
+        setActiveTab('my-tickets');
+        // Refresh tickets list
+        fetchTickets();
+      } else {
+        toast.error(response.message || 'Failed to create support ticket');
+      }
+    } catch (error) {
+      console.error('Error creating support ticket:', error);
+      
+      if (error.response?.data?.details) {
+        // Handle validation errors
+        const errorDetails = error.response.data.details;
+        const errorMessages = [];
+        
+        if (errorDetails.subject) {
+          errorMessages.push(`Subject: ${errorDetails.subject}`);
+        }
+        if (errorDetails.description) {
+          errorMessages.push(`Description: ${errorDetails.description}`);
+        }
+        if (errorDetails.category) {
+          errorMessages.push(`Category: ${errorDetails.category}`);
+        }
+        
+        if (errorMessages.length > 0) {
+          toast.error(`Please fix the following:\n${errorMessages.join('\n')}`);
+        } else {
+          toast.error(error.response.data.message || 'Validation failed');
+        }
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to create support ticket. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const fetchTickets = async () => {
+    setTicketsLoading(true);
+    try {
+      const response = await supportAPI.getUserTickets();
+      if (response.success) {
+        setTickets(response.data.tickets || []);
+        setPagination(response.data.pagination || { page: 1, totalPages: 1, total: 0 });
+      } else {
+        toast.error('Failed to fetch support tickets');
+      }
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+      toast.error('Failed to load support tickets');
+    } finally {
+      setTicketsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'my-tickets') {
+      fetchTickets();
+    }
+  }, [activeTab]);
 
   const getTypeIcon = (type) => {
     switch(type) {
@@ -107,17 +163,42 @@ const Support = () => {
     switch(status) {
       case 'resolved': 
         return <span className="px-2 py-1 text-xs text-green-800 bg-green-100 rounded-full">Resolved</span>;
-      case 'in-progress': 
+      case 'in_progress': 
         return <span className="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full">In Progress</span>;
+      case 'rejected':
+        return <span className="px-2 py-1 text-xs text-red-800 bg-red-100 rounded-full">Rejected</span>;
       default: 
-        return <span className="px-2 py-1 text-xs text-gray-800 bg-gray-100 rounded-full">New</span>;
+        return <span className="px-2 py-1 text-xs text-gray-800 bg-gray-100 rounded-full">Open</span>;
     }
+  };
+
+  const getUrgencyBadge = (urgency) => {
+    switch(urgency) {
+      case 'critical':
+        return <span className="px-2 py-1 text-xs text-red-800 bg-red-100 rounded-full">Critical</span>;
+      case 'high':
+        return <span className="px-2 py-1 text-xs text-orange-800 bg-orange-100 rounded-full">High</span>;
+      case 'medium':
+        return <span className="px-2 py-1 text-xs text-yellow-800 bg-yellow-100 rounded-full">Medium</span>;
+      case 'low':
+        return <span className="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded-full">Low</span>;
+      default:
+        return <span className="px-2 py-1 text-xs text-gray-800 bg-gray-100 rounded-full">Medium</span>;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
     <section className="p-6 bg-white shadow-sm vendor-section rounded-xl">
       <div className="flex flex-col mb-6 md:flex-row md:items-center md:justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">Vendor Support</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Guide Support</h2>
         <div className="flex gap-2 mt-4 md:mt-0">
           <button
             onClick={() => setActiveTab('new')}
@@ -146,8 +227,8 @@ const Support = () => {
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700">Category*</label>
               <select
-                name="type"
-                value={formData.type}
+                name="category"
+                value={formData.category}
                 onChange={handleChange}
                 className="w-full p-3 border border-gray-300 rounded-lg"
                 required
@@ -188,23 +269,67 @@ const Support = () => {
               name="subject"
               value={formData.subject}
               onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-lg"
+              className={`w-full p-3 border rounded-lg ${
+                formData.subject.length > 0 && formData.subject.length < 5 
+                  ? 'border-red-300 focus:border-red-500' 
+                  : 'border-gray-300'
+              }`}
               placeholder="Brief description of your issue"
               required
+              disabled={loading}
+              minLength={5}
+              maxLength={100}
             />
+            <div className="flex justify-between mt-1">
+              <p className={`text-xs ${
+                formData.subject.length > 0 && formData.subject.length < 5 
+                  ? 'text-red-500' 
+                  : 'text-gray-500'
+              }`}>
+                {formData.subject.length < 5 && formData.subject.length > 0 
+                  ? `Subject must be at least 5 characters (${5 - formData.subject.length} more needed)`
+                  : 'Minimum 5 characters'
+                }
+              </p>
+              <p className="text-xs text-gray-500">
+                {formData.subject.length}/100
+              </p>
+            </div>
           </div>
 
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">Details*</label>
             <textarea
-              name="message"
-              value={formData.message}
+              name="description"
+              value={formData.description}
               onChange={handleChange}
               rows={5}
-              className="w-full p-3 border border-gray-300 rounded-lg"
+              className={`w-full p-3 border rounded-lg ${
+                formData.description.length > 0 && formData.description.length < 20 
+                  ? 'border-red-300 focus:border-red-500' 
+                  : 'border-gray-300'
+              }`}
               placeholder="Please describe your issue in detail..."
               required
+              disabled={loading}
+              minLength={20}
+              maxLength={2000}
             />
+            <div className="flex justify-between mt-1">
+              <p className={`text-xs ${
+                formData.description.length > 0 && formData.description.length < 20 
+                  ? 'text-red-500' 
+                  : 'text-gray-500'
+              }`}>
+                {formData.description.length < 20 && formData.description.length > 0 
+                  ? `Description must be at least 20 characters (${20 - formData.description.length} more needed)`
+                  : 'Minimum 20 characters'
+                }
+              </p>
+              <p className="text-xs text-gray-500">
+                {formData.description.length}/2000
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end">
@@ -218,25 +343,32 @@ const Support = () => {
         </form>
       ) : activeTab === 'my-tickets' ? (
         <div className="space-y-4">
-          {tickets.length > 0 ? (
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <FiLoader className="w-6 h-6 animate-spin text-indigo-600" />
+              <span className="ml-2 text-gray-600">Loading tickets...</span>
+            </div>
+          ) : tickets.length > 0 ? (
             tickets.map(ticket => (
               <div key={ticket.id} className="overflow-hidden border rounded-xl">
                 <div className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
                       <div className="p-3 mt-1 bg-gray-100 rounded-full">
-                        {getTypeIcon(ticket.type)}
+                        {getTypeIcon(ticket.category)}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-medium text-gray-800">{ticket.subject}</h3>
-                        <div className="flex items-center gap-3 mt-2">
+                        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
+                        <div className="flex items-center gap-3 mt-3 flex-wrap">
                           <span className="flex items-center gap-1 text-sm text-gray-500">
-                            <FiClock size={14} /> {ticket.date}
+                            <FiClock size={14} /> {formatDate(ticket.created_at)}
                           </span>
                           <span className="text-sm text-gray-500">
-                            {getTypeLabel(ticket.type)}
+                            {getTypeLabel(ticket.category)}
                           </span>
                           {getStatusBadge(ticket.status)}
+                          {getUrgencyBadge(ticket.urgency)}
                         </div>
                       </div>
                     </div>
@@ -246,7 +378,7 @@ const Support = () => {
                   </div>
                 </div>
 
-                {ticket.adminResponse && (
+                {ticket.resolution && (
                   <div className="p-6 border-t bg-gray-50">
                     <div className="flex items-start gap-3">
                       <div className="p-2 mt-1 text-blue-600 bg-blue-100 rounded-full">
@@ -254,7 +386,12 @@ const Support = () => {
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-800">Admin Response</h4>
-                        <p className="mt-1 text-gray-700">{ticket.adminResponse}</p>
+                        <p className="mt-1 text-gray-700">{ticket.resolution}</p>
+                        {ticket.resolved_at && (
+                          <p className="mt-2 text-xs text-gray-500">
+                            Resolved on {formatDate(ticket.resolved_at)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -263,7 +400,14 @@ const Support = () => {
             ))
           ) : (
             <div className="py-12 text-center bg-gray-50 rounded-xl">
+              <FiMessageSquare className="w-12 h-12 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-500">You haven't submitted any support tickets yet</p>
+              <button 
+                onClick={() => setActiveTab('new')} 
+                className="mt-3 text-indigo-600 hover:text-indigo-800 font-medium"
+              >
+                Create your first ticket
+              </button>
             </div>
           )}
         </div>

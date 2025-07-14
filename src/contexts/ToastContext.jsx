@@ -1,7 +1,19 @@
-import { createContext, useState } from 'react';
+import { createContext, useState, useContext } from 'react';
 import { Toast } from '../components/Toast';
 
 export const ToastContext = createContext();
+
+// Hook to use toast context
+export const useToast = () => {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return {
+    showToast: context.showToast,
+    toast: context.toast
+  };
+};
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
@@ -34,7 +46,7 @@ export const ToastProvider = ({ children }) => {
   };
 
   return (
-    <ToastContext.Provider value={{ toast }}>
+    <ToastContext.Provider value={{ toast, showToast }}>
       {children}
       <div className="fixed z-50 space-y-2 bottom-4 right-4">
         {toasts.map((toast) => (

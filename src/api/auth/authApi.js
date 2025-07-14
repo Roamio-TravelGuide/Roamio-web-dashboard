@@ -4,8 +4,10 @@ import axios from 'axios';
 export const login = async (credentials) => {
   try {
     const response = await apiClient.post('/auth/login', credentials);
+
+    console.log(response);
     
-    if(response.data.data?.status === "pending"){
+    if(response.data.data?.status === "pending_approval") {
       throw new Error('Your account is pending approval. Please wait for admin approval.')
     }
 
@@ -55,7 +57,7 @@ export const signup = async (userData) => {
       signupPayload.restaurantType = userData.restaurantType;
     }
 
-    const response = await apiClient.post('/v1/auth/signup', signupPayload, {
+    const response = await apiClient.post('/auth/signup', signupPayload, {
       headers: {
         'Content-Type': 'application/json'
       }
