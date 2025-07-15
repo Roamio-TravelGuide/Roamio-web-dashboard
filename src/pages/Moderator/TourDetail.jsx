@@ -767,7 +767,7 @@ const TourDetail = () => {
         setTour(prev => prev ? { ...prev, status: 'published', rejection_reason: undefined } : null);
         setError(null);
         
-        toast.success('🎉 Tour approved successfully! The tour is now published and available to users.', { 
+        toast.success('Tour approved successfully! The tour is now published and available to users.', { 
           id: toastId,
           duration: 5000
         });
@@ -833,7 +833,7 @@ const TourDetail = () => {
         setTourRejectReason('');
         setError(null);
         
-        toast.success('✅ Tour rejected successfully. The guide has been notified with your feedback.', { 
+        toast.success('Tour rejected successfully. The guide has been notified with your feedback.', { 
           id: toastId,
           duration: 5000
         });
