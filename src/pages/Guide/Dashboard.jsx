@@ -1,379 +1,468 @@
-import React, { useState, useEffect } from "react";
-import { FaUsers, FaMoneyCheck, FaRegStar, FaCalendar, FaPlane, FaMapMarker } from "react-icons/fa";
-import { Eye, Edit3, MoreHorizontal, Users, Star, MapPin, Calendar, MessageSquare, Activity, TrendingUp, DollarSign, Package, BarChart3, Bell, Search, Filter } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { 
+  MapPin, Clock, Users, Star, DollarSign, TrendingUp, 
+  BarChart2, FileText, ChevronDown, Loader2, Calendar,
+  Award, Heart, Repeat, Headphones, Image as ImageIcon , CheckCircle , Share2 , Video
+} from 'lucide-react';
 
-function Dashboard() {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [tours, setTours] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+const GuideDashboard = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState('30d');
+  const [stats, setStats] = useState({
+    performance: {},
+    tours: [],
+    engagement: {},
+    financials: {}
+  });
 
-  // Sample data for charts
-  const revenueData = [
-    { name: 'Sun', value: 200 },
-    { name: 'Mon', value: 300 },
-    { name: 'Tue', value: 250 },
-    { name: 'Wed', value: 400 },
-    { name: 'Thu', value: 350 },
-    { name: 'Fri', value: 450 },
-    { name: 'Sat', value: 380 }
-  ];
-
-  const destinationData = [
-    { name: 'Tokyo, Japan', value: 35, color: '#3B82F6' },
-    { name: 'Sydney, Australia', value: 28, color: '#10B981' },
-    { name: 'Paris, France', value: 22, color: '#F59E0B' },
-    { name: 'Venice, Italy', value: 15, color: '#EF4444' }
-  ];
-
-  const travelPackages = [
-    {
-      id: 1,
-      name: 'Seoul, South Korea',
-      duration: '7 Days',
-      price: 2100,
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop',
-      status: 'Hot Deal'
-    },
-    {
-      id: 2,
-      name: 'Venice, Italy',
-      duration: '5 Days',
-      price: 1500,
-      image: 'https://images.unsplash.com/photo-1523906921802-b5d2d899e93b?w=300&h=200&fit=crop',
-      status: 'New Deal'
-    },
-    {
-      id: 3,
-      name: 'Serengeti, Tanzania',
-      duration: '6 Days',
-      price: 3200,
-      image: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=300&h=200&fit=crop',
-      status: 'Hot Deal'
-    }
-  ];
-
-  const recentBookings = [
-    { id: 1, name: 'Camelia Swan', package: 'Venice Dreams', duration: '5D4N', date: 'Jun 25 - Jun 30', price: 1500, status: 'Confirmed' },
-    { id: 2, name: 'Raphael Goodman', package: 'Safari Adventure', duration: '6D7N', date: 'Jun 25 - Jul 2', price: 3200, status: 'Pending' },
-    { id: 3, name: 'Ludvig Contessa', package: 'Alpine Escape', duration: '7D6N', date: 'Jun 25 - Jul 2', price: 2100, status: 'Confirmed' },
-    { id: 4, name: 'Arminia Raul Meyes', package: 'Caribbean Cruise', duration: '10D9N', date: 'Jun 30 - Jul 9', price: 2800, status: 'Confirmed' }
-  ];
-
-  const messages = [
-    { id: 1, name: 'Europa Hotel', message: 'New booking received', time: '2m ago', avatar: '🏨' },
-    { id: 2, name: 'Global Travel Co', message: 'Payment confirmed for Julia', time: '5m ago', avatar: '✈️' },
-    { id: 3, name: 'Kalendra Umbara', message: 'Hi, I need assistance with...', time: '8m ago', avatar: '👤' },
-    { id: 4, name: 'Osman Farooq', message: 'Package has been updated', time: '12m ago', avatar: '📦' }
-  ];
-
-  const upcomingTrips = [
-    { id: 1, destination: 'Paris, France', date: 'Jul 15 - Jul 20', participants: 4, image: 'https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=60&h=60&fit=crop' },
-    { id: 2, destination: 'Tokyo, Japan', date: 'Jul 22 - Jul 28', participants: 6, image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=60&h=60&fit=crop' },
-    { id: 3, destination: 'Sydney, Australia', date: 'Aug 5 - Aug 12', participants: 3, image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=60&h=60&fit=crop' }
-  ];
-
-  const recentActivity = [
-    { id: 1, user: 'Alberto Cortez', action: 'updated his profile and added a new tour', time: '2h ago' },
-    { id: 2, user: 'Camelia Swan', action: 'booked the Venice Dreams package', time: '4h ago' },
-    { id: 3, user: 'Payment', action: 'was processed for Ludwig Contessa Alpine Escape', time: '6h ago' },
-    { id: 4, user: 'Arminia Raul Meyes', action: 'cancelled her Caribbean Cruise Package', time: '8h ago' }
-  ];
-
-  // Calendar logic
-  const getDaysInMonth = (month, year) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (month, year) => {
-    return new Date(year, month, 1).getDay();
-  };
-
-  const renderCalendar = () => {
-    const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
-    const firstDay = getFirstDayOfMonth(selectedMonth, selectedYear);
-    const days = [];
-    
-    // Previous month's trailing days
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`prev-${i}`} className="p-2 text-gray-400"></div>);
-    }
-    
-    // Current month days
-    for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = day === new Date().getDate() && 
-                     selectedMonth === new Date().getMonth() && 
-                     selectedYear === new Date().getFullYear();
+  // Sample data - replace with API calls
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
       
-      days.push(
-        <div 
-          key={day} 
-          className={`p-2 text-sm cursor-pointer hover:bg-blue-50 rounded ${
-            isToday ? 'bg-blue-600 text-white' : 'text-gray-700'
-          }`}
-        >
-          {day}
-        </div>
-      );
-    }
-    
-    return days;
-  };
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      setStats({
+        performance: {
+          avgRating: 4.7,
+          ratingChange: '+0.2',
+          completionRate: 92,
+          completionChange: '+3%',
+          avgDuration: 42,
+          durationChange: '-2min'
+        },
+        tours: [
+          {
+            id: 1,
+            title: "Sigiriya Rock Fortress",
+            status: "published",
+            bookings: 87,
+            bookingTrend: '12%',
+            revenue: 3520,
+            revenueTrend: '18%',
+            rating: 4.8,
+            stops: 8,
+            media: {
+              audio: 12,
+              images: 24,
+              videos: 3
+            }
+          },
+          {
+            id: 2,
+            title: "Kandy Temple Walk",
+            status: "published",
+            bookings: 42,
+            bookingTrend: '5%',
+            revenue: 1250,
+            revenueTrend: '8%',
+            rating: 4.6,
+            stops: 5,
+            media: {
+              audio: 8,
+              images: 15,
+              videos: 2
+            }
+          },
+          {
+            id: 3,
+            title: "Colombo City Explorer",
+            status: "pending",
+            bookings: 0,
+            bookingTrend: '0%',
+            revenue: 0,
+            revenueTrend: '0%',
+            rating: null,
+            stops: 6,
+            media: {
+              audio: 6,
+              images: 12,
+              videos: 0
+            }
+          }
+        ],
+        engagement: {
+          totalVisitors: 1432,
+          newVisitors: 1024,
+          returningVisitors: 408,
+          favoriteTours: 287,
+          shares: 156,
+          avgSessionDuration: '12:45'
+        },
+        financials: {
+          totalRevenue: 5820.50,
+          monthlyRevenue: 1820.25,
+          avgRevenuePerTour: 485.04,
+          projectedRevenue: 7240.00,
+          conversionRate: 12.4
+        }
+      });
+
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [timeRange]);
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
     }).format(amount);
   };
 
-  const getStatusColor = (status) => {
-    switch(status.toLowerCase()) {
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const renderTrendIndicator = (value) => {
+    const isPositive = value.includes('+');
+    return (
+      <span className={`inline-flex items-center ml-2 text-xs font-medium ${
+        isPositive ? 'text-green-600' : 'text-red-600'
+      }`}>
+        {value}
+        <ChevronDown className={`w-3 h-3 ml-0.5 ${
+          isPositive ? 'text-green-600 rotate-180' : 'text-red-600'
+        }`} />
+      </span>
+    );
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-gray-200 rounded-full border-t-blue-500 animate-spin"></div>
-          <div className="text-lg font-medium text-gray-600">Loading dashboard...</div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header Stats */}
-      <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-3">
-        <div className="p-6 bg-white rounded-lg shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Booking</p>
-              <p className="text-2xl font-bold text-gray-900">1,200</p>
-              <p className="text-sm text-green-600">+2.58%</p>
-            </div>
-            <div className="p-3 rounded-lg bg-blue-50">
-              <Calendar className="w-6 h-6 text-blue-600" />
-            </div>
+  const renderMetricCard = (title, value, change, icon, color) => (
+    <div className="p-4 bg-white border border-gray-100 shadow-sm rounded-xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500">{title}</p>
+          <div className="flex items-end mt-1">
+            <p className="text-2xl font-semibold text-gray-900">{value}</p>
+            {change && renderTrendIndicator(change)}
           </div>
         </div>
-        
-        <div className="p-6 bg-white rounded-lg shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total New Customers</p>
-              <p className="text-2xl font-bold text-gray-900">2,845</p>
-              <p className="text-sm text-red-600">-1.45%</p>
-            </div>
-            <div className="p-3 rounded-lg bg-green-50">
-              <Users className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-6 bg-white rounded-lg shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Earnings</p>
-              <p className="text-2xl font-bold text-gray-900">$12,890</p>
-              <p className="text-sm text-green-600">+3.75%</p>
-            </div>
-            <div className="p-3 rounded-lg bg-yellow-50">
-              <DollarSign className="w-6 h-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-4">
-        {/* Left Column */}
-        <div className="space-y-6 lg:col-span-3">
-          {/* Revenue Overview */}
-          <div className="p-6 bg-white rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Revenue Overview</h3>
-              <div className="flex space-x-2">
-                <button className="px-3 py-1 text-sm text-blue-600 bg-blue-100 rounded">Weekly</button>
-                <button className="px-3 py-1 text-sm text-gray-600 rounded hover:bg-gray-100">Monthly</button>
-              </div>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Travel Packages */}
-          <div className="p-6 bg-white rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Travel Packages</h3>
-              <button className="text-sm text-blue-600 hover:text-blue-800">View All</button>
-            </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {travelPackages.map((pkg) => (
-                <div key={pkg.id} className="overflow-hidden border rounded-lg">
-                  <img src={pkg.image} alt={pkg.name} className="object-cover w-full h-32" />
-                  <div className="p-4">
-                    <h4 className="font-medium text-gray-900">{pkg.name}</h4>
-                    <p className="text-sm text-gray-600">{pkg.duration}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-lg font-semibold text-gray-900">{formatCurrency(pkg.price)}</span>
-                      <span className={`px-2 py-1 text-xs rounded ${
-                        pkg.status === 'Hot Deal' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {pkg.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Bookings */}
-          <div className="p-6 bg-white rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Bookings</h3>
-              <button className="text-sm text-blue-600 hover:text-blue-800">View All</button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="py-2 text-sm font-medium text-left text-gray-600">Name</th>
-                    <th className="py-2 text-sm font-medium text-left text-gray-600">Package</th>
-                    <th className="py-2 text-sm font-medium text-left text-gray-600">Duration</th>
-                    <th className="py-2 text-sm font-medium text-left text-gray-600">Date</th>
-                    <th className="py-2 text-sm font-medium text-left text-gray-600">Price</th>
-                    <th className="py-2 text-sm font-medium text-left text-gray-600">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentBookings.map((booking) => (
-                    <tr key={booking.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 text-sm text-gray-900">{booking.name}</td>
-                      <td className="py-3 text-sm text-gray-600">{booking.package}</td>
-                      <td className="py-3 text-sm text-gray-600">{booking.duration}</td>
-                      <td className="py-3 text-sm text-gray-600">{booking.date}</td>
-                      <td className="py-3 text-sm text-gray-900">{formatCurrency(booking.price)}</td>
-                      <td className="py-3">
-                        <span className={`px-2 py-1 text-xs rounded ${getStatusColor(booking.status)}`}>
-                          {booking.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Calendar */}
-          <div className="p-6 bg-white rounded-lg shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">July 2025</h3>
-              <div className="flex space-x-2">
-                <button className="p-1 rounded hover:bg-gray-100">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button className="p-1 rounded hover:bg-gray-100">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-center">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                <div key={day} className="p-2 text-xs font-medium text-gray-600">{day}</div>
-              ))}
-              {renderCalendar()}
-            </div>
-          </div>
-
-          {/* Upcoming Trips */}
-          <div className="p-6 bg-white rounded-lg shadow-sm">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Upcoming Trips</h3>
-            <div className="space-y-3">
-              {upcomingTrips.map((trip) => (
-                <div key={trip.id} className="flex items-center p-3 space-x-3 rounded-lg bg-gray-50">
-                  <img src={trip.image} alt={trip.destination} className="object-cover w-12 h-12 rounded-lg" />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{trip.destination}</h4>
-                    <p className="text-sm text-gray-600">{trip.date}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">{trip.participants} participants</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="p-6 bg-white rounded-lg shadow-sm">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Messages</h3>
-            <div className="space-y-3">
-              {messages.map((message) => (
-                <div key={message.id} className="flex items-start space-x-3">
-                  <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
-                    <span className="text-sm">{message.avatar}</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-medium text-gray-900">{message.name}</h4>
-                      <span className="text-xs text-gray-500">{message.time}</span>
-                    </div>
-                    <p className="text-sm text-gray-600">{message.message}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="p-6 bg-white rounded-lg shadow-sm">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Recent Activity</h3>
-            <div className="space-y-3">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3">
-                  <div className="w-2 h-2 mt-2 bg-blue-600 rounded-full"></div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      <span className="font-medium">{activity.user}</span> {activity.action}
-                    </p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className={`p-2 rounded-lg ${color}`}>
+          {icon}
         </div>
       </div>
     </div>
   );
-}
 
-export default Dashboard;
+  return (
+    <div className="min-h-screen p-6 bg-gray-50">
+      {/* Time Range Selector */}
+      <div className="flex justify-end mb-6">
+        <div className="inline-flex rounded-md shadow-sm">
+          {['7d', '30d', '90d', 'ytd'].map((range) => (
+            <button
+              key={range}
+              onClick={() => setTimeRange(range)}
+              className={`px-3 py-1.5 text-sm font-medium ${
+                timeRange === range
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              } ${range === '7d' ? 'rounded-l-lg' : ''} ${
+                range === 'ytd' ? 'rounded-r-lg' : 'border-r border-gray-200'
+              }`}
+            >
+              {range.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Performance Metrics */}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {renderMetricCard(
+              'Avg. Rating',
+              stats.performance.avgRating,
+              stats.performance.ratingChange,
+              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />,
+              'bg-yellow-50'
+            )}
+            {renderMetricCard(
+              'Completion Rate',
+              `${stats.performance.completionRate}%`,
+              stats.performance.completionChange,
+              <CheckCircle className="w-5 h-5 text-green-500" />,
+              'bg-green-50'
+            )}
+            {renderMetricCard(
+              'Avg. Duration',
+              `${stats.performance.avgDuration} min`,
+              stats.performance.durationChange,
+              <Clock className="w-5 h-5 text-blue-500" />,
+              'bg-blue-50'
+            )}
+            {renderMetricCard(
+              'Total Tours',
+              stats.tours.length,
+              null,
+              <MapPin className="w-5 h-5 text-purple-500" />,
+              'bg-purple-50'
+            )}
+          </div>
+
+          {/* Financial Overview */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900">Financial Summary</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <DollarSign className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Total Revenue</span>
+                  </div>
+                  <span className="font-medium">{formatCurrency(stats.financials.totalRevenue)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Monthly Revenue</span>
+                  </div>
+                  <span className="font-medium">{formatCurrency(stats.financials.monthlyRevenue)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <BarChart2 className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Avg. Revenue/Tour</span>
+                  </div>
+                  <span className="font-medium">{formatCurrency(stats.financials.avgRevenuePerTour)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Calendar className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Projected Revenue</span>
+                  </div>
+                  <span className="font-medium text-blue-600">{formatCurrency(stats.financials.projectedRevenue)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Users className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Conversion Rate</span>
+                  </div>
+                  <span className="font-medium">{stats.financials.conversionRate}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl lg:col-span-2">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900">Tour Performance</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Tour</th>
+                      <th scope="col" className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
+                      <th scope="col" className="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Bookings</th>
+                      <th scope="col" className="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Revenue</th>
+                      <th scope="col" className="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Rating</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {stats.tours.map((tour) => (
+                      <tr key={tour.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 w-10 h-10 overflow-hidden rounded-lg">
+                              <img className="object-cover w-full h-full" src={`https://source.unsplash.com/random/100x100/?${tour.title.split(' ')[0]}`} alt={tour.title} />
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{tour.title}</div>
+                              <div className="text-xs text-gray-500">
+                                {tour.stops} stops • {tour.media.audio} audio • {tour.media.images} images
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            tour.status === 'published' ? 'bg-green-100 text-green-800' : 
+                            tour.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {tour.status.charAt(0).toUpperCase() + tour.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
+                          <div>
+                            <span className="text-gray-900">{tour.bookings}</span>
+                            {renderTrendIndicator(tour.bookingTrend)}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
+                          <div>
+                            <span className="text-gray-900">{formatCurrency(tour.revenue)}</span>
+                            {renderTrendIndicator(tour.revenueTrend)}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm font-medium text-right whitespace-nowrap">
+                          {tour.rating ? (
+                            <div className="flex items-center justify-end">
+                              <Star className="w-4 h-4 mr-1 text-yellow-400 fill-yellow-400" />
+                              <span>{tour.rating}</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Engagement Metrics */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900">Visitor Engagement</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Users className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Total Visitors</span>
+                  </div>
+                  <span className="font-medium">{stats.engagement.totalVisitors.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Award className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">New Visitors</span>
+                  </div>
+                  <span className="font-medium">{stats.engagement.newVisitors.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Repeat className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Returning Visitors</span>
+                  </div>
+                  <span className="font-medium">{stats.engagement.returningVisitors.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Heart className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Favorites</span>
+                  </div>
+                  <span className="font-medium">{stats.engagement.favoriteTours.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Share2 className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Shares</span>
+                  </div>
+                  <span className="font-medium">{stats.engagement.shares.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Clock className="w-5 h-5 mr-3 text-gray-400" />
+                    <span className="text-gray-600">Avg. Session</span>
+                  </div>
+                  <span className="font-medium">{stats.engagement.avgSessionDuration}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 bg-white border border-gray-100 shadow-sm rounded-xl lg:col-span-2">
+              <h3 className="mb-4 text-lg font-semibold text-gray-900">Content Analysis</h3>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <h4 className="mb-3 text-sm font-medium text-gray-500">Media Distribution</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="flex items-center text-sm font-medium text-gray-700">
+                          <Headphones className="w-4 h-4 mr-2 text-blue-500" />
+                          Audio Clips
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {stats.tours.reduce((sum, tour) => sum + tour.media.audio, 0)}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-200 rounded-full">
+                        <div 
+                          className="h-2 bg-blue-600 rounded-full" 
+                          style={{ width: '65%' }}
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="flex items-center text-sm font-medium text-gray-700">
+                          <ImageIcon className="w-4 h-4 mr-2 text-green-500" />
+                          Images
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {stats.tours.reduce((sum, tour) => sum + tour.media.images, 0)}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-200 rounded-full">
+                        <div 
+                          className="h-2 bg-green-600 rounded-full" 
+                          style={{ width: '85%' }}
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="flex items-center text-sm font-medium text-gray-700">
+                          <Video className="w-4 h-4 mr-2 text-purple-500" />
+                          Videos
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {stats.tours.reduce((sum, tour) => sum + tour.media.videos, 0)}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-200 rounded-full">
+                        <div 
+                          className="h-2 bg-purple-600 rounded-full" 
+                          style={{ width: '25%' }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="mb-3 text-sm font-medium text-gray-500">Tour Completion</h4>
+                  <div className="flex items-center justify-center h-full">
+                    <div className="relative w-40 h-40">
+                      <svg className="w-full h-full" viewBox="0 0 100 100">
+                        <circle
+                          className="text-gray-200"
+                          strokeWidth="8"
+                          stroke="currentColor"
+                          fill="transparent"
+                          r="40"
+                          cx="50"
+                          cy="50"
+                        />
+                        <circle
+                          className="text-green-500"
+                          strokeWidth="8"
+                          strokeDasharray={`${stats.performance.completionRate * 2.51}, 251`}
+                          strokeLinecap="round"
+                          stroke="currentColor"
+                          fill="transparent"
+                          r="40"
+                          cx="50"
+                          cy="50"
+                        />
+                      </svg>
+                      <div className="absolute top-0 left-0 flex items-center justify-center w-full h-full">
+                        <div className="text-2xl font-bold text-gray-900">{stats.performance.completionRate}%</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default GuideDashboard;

@@ -33,9 +33,18 @@ export const createTour = async (tourData) => {
   }
 };
 
-export const getTourPackageById = async (guideId) => {
+export const getTourPackagesByGuideId = async (guideId, filters = {}) => {
   try {
-    return await apiClient.get(`tour-packages/guide/${guideId}`);
+    const params = new URLSearchParams();
+    // console.log(guideId);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', filters.page);
+    if (filters.limit) params.append('limit', filters.limit);
+    
+    const response = await apiClient.get(`tour-packages/guide/${guideId}?${params.toString()}`);
+    // console.log(response);
+    return response.data;
   } catch (error) {
     console.error('Error fetching tour packages:', error);
     throw error;
@@ -179,3 +188,38 @@ export const createLocation = async (locationData) => {
   }
 };
 
+
+export const getTourPackages = async ({statusFilter, searchQuery, currentPage, itemsPerPage}) => {
+  try {
+    const params = {
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      search: searchQuery,
+      page: currentPage,
+      limit: itemsPerPage
+    };
+
+    const response = await apiClient.get('/tour-packages', {
+      params,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+      console.error('Tour Packages fetching failed:', error);
+      throw error;
+  }
+}
+
+export const deletetempcover = async (key) => {
+  const encodedKey = encodeURIComponent(key);
+  const response = await apiClient.delete(`/storage/temp-cover/${encodedKey}`);
+  return response.data;
+};
+
+export const deletetempmedia = async(key) => {
+  const encodedKey = encodeURIComponent(key);
+  const response = await apiClient.delete(`/storage/temp-cover/${encodedKey}`);
+  return response.data;
+}

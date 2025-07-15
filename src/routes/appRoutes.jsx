@@ -14,8 +14,7 @@ import GuideDashboard from '../pages/Guide/Dashboard';
 import TourCreate from '../pages/Guide/TourCreate';
 import TourDet from '../pages/Guide/TourDetail';
 import TourPackages from '../pages/Guide/TourPackages';
-
-
+import Complaints from '../pages/Guide/Complaints'
 
 import ModeratorLayout from '../layouts/ModeratorLayout';
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
@@ -23,9 +22,8 @@ import TourDetail from '../pages/Moderator/TourDetail';
 
 import VendorDashboard from '../pages/Vendor/Dashboard';
 import VendorLayout from '../layouts/VendorLayout';
-import VendorProfile from '../pages/Vendor/Profile';
 import VendorLocation from '../pages/Vendor/Location';
-import VendorPromotions from '../pages/Vendor/Promotions';
+// import VendorPromotions from '../pages/Vendor/Promotions';
 import VendorSupport from '../pages/Vendor/Support';
 import VendorBilling from '../pages/Vendor/Billing';
 
@@ -50,19 +48,20 @@ const AppRoutes = () => {
             <Route path="/guide/dashboard" element={<GuideDashboard />} />
             <Route path="/guide/tourpackages" element={<TourPackages/>}/>
             <Route path="/guide/tourcreate" element={<TourCreate />} />
+            <Route path="/guide/complaints" element={<Complaints />} />
             <Route path="/guide/tours/view" element={<TourDet/>} />
+            <Route path="/guide/tour/view/:id" element={<TourDet/>} />
           </Route>
 
          <Route element={<ModeratorLayout/>}>
             <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
-            <Route path="/tour/:id" element={<TourDetail/>} />
+            <Route path="/moderator/tour/:id" element={<TourDetail/>} />
           </Route>
 
           <Route element={<VendorLayout />}>
             <Route path="/vendor/dashboard" element={<VendorDashboard />} />
-            <Route path="/vendor/profile" element={<VendorProfile />} />
             <Route path="/vendor/location" element={<VendorLocation />} />
-            <Route path="/vendor/promotions" element={<VendorPromotions />} />
+            {/* <Route path="/vendor/promotions" element={<VendorPromotions />} /> */}
             <Route path="/vendor/support" element={<VendorSupport />} />
             <Route path="/vendor/billing" element={<VendorBilling />} />
           </Route>
