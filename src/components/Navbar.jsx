@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { menuConfig } from '../utils/menuConfig';
 import { FaSignOutAlt } from 'react-icons/fa';
+import { toast } from 'react-hot-toast'; 
 
 const Navbar = ({ userType, user, onLogout }) => {
   const config = menuConfig[userType];

@@ -4,7 +4,148 @@ import { uploadtempcover, viewtempcover, deletetempcover } from '../../api/tour/
 import { useUploadSession } from '../../hooks/useUploadSession';
 import { toast } from 'react-hot-toast';
 
-export const BasicInfoStep = ({ tourData, onUpdate }) => {
+// Constants for better maintainability
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png'];
+
+// Helper components for better organization
+const ImagePreview = ({ 
+  previewImage, 
+  isUploading, 
+  uploadProgress, 
+  uploadError, 
+  isEditable, 
+  onRemove 
+}) => (
+  <div className="relative aspect-w-16 aspect-h-9 group">
+    <img
+      src={previewImage}
+      alt="Tour cover preview"
+      className="object-cover w-full h-full rounded-lg shadow-sm"
+      onError={() => {
+        const errorMessage = 'Failed to load image. Please re-upload.';
+        toast.error(errorMessage);
+        onRemove();
+      }}
+    />
+    <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
+      {isUploading && (
+        <ProgressBar progress={uploadProgress} />
+      )}
+      {uploadError && (
+        <p className="text-sm text-red-300">{uploadError}</p>
+      )}
+    </div>
+    {isEditable && (
+      <RemoveImageButton onClick={onRemove} disabled={isUploading} />
+    )}
+  </div>
+);
+
+const ProgressBar = ({ progress }) => (
+  <div className="w-full h-1.5 mb-2 bg-gray-200 rounded-full">
+    <div 
+      className="h-1.5 bg-blue-600 rounded-full" 
+      style={{ width: `${progress}%` }}
+    />
+  </div>
+);
+
+const RemoveImageButton = ({ onClick, disabled }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="absolute p-2 text-white transition-opacity duration-200 bg-red-500 rounded-full opacity-0 top-2 right-2 group-hover:opacity-100 hover:bg-red-600"
+    aria-label="Remove image"
+    disabled={disabled}
+  >
+    <X size={16} />
+  </button>
+);
+
+const UploadArea = ({ 
+  isDragging, 
+  isUploading, 
+  uploadProgress, 
+  uploadError, 
+  isEditable, 
+  onFileInputChange 
+}) => (
+  <div
+    className={`border-2 border-dashed rounded-lg transition-all aspect-w-16 aspect-h-9 flex items-center justify-center ${
+      isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+    } ${!isEditable ? 'opacity-50 cursor-not-allowed' : ''}`}
+  >
+    <div className="w-full p-6 text-center">
+      <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-teal-100">
+        {isUploading ? (
+          <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+        ) : (
+          <UploadCloud className="w-5 h-5 text-blue-600" />
+        )}
+      </div>
+      <p className="mb-2 text-sm font-medium text-gray-700">
+        {isUploading ? 'Uploading...' : isDragging ? 'Drop your image here' : 'Upload a cover image'}
+      </p>
+      
+      {!isUploading && isEditable && (
+        <>
+          <p className="mb-4 text-xs text-gray-500">or</p>
+          <FileInputButton onChange={onFileInputChange} disabled={isUploading} />
+        </>
+      )}
+      
+      <p className="mt-3 text-xs text-gray-500">PNG, JPG up to 10MB</p>
+      
+      {uploadError && (
+        <p className="mt-2 text-xs text-red-500">{uploadError}</p>
+      )}
+      
+      {isUploading && (
+        <div className="w-1/2 mx-auto mt-3">
+          <ProgressBar progress={uploadProgress} />
+          <p className="mt-1 text-xs text-center text-gray-500">
+            {uploadProgress}% uploaded
+          </p>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+const FileInputButton = ({ onChange, disabled }) => (
+  <label className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors rounded-md cursor-pointer bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
+    <span>Select file</span>
+    <input
+      type="file"
+      className="sr-only"
+      accept="image/*"
+      onChange={onChange}
+      disabled={disabled}
+    />
+  </label>
+);
+
+const BestPracticesList = () => (
+  <ul className="space-y-3">
+    {[
+      "Use a clear, descriptive title with location and activity type",
+      "Start your description with the most exciting aspect",
+      "Include practical details like duration and difficulty level"
+    ].map((tip, index) => (
+      <li key={index} className="flex items-start">
+        <div className="flex-shrink-0 mt-1 mr-3">
+          <div className="flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-600 rounded-full">
+            {index + 1}
+          </div>
+        </div>
+        <p className="text-sm text-gray-700">{tip}</p>
+      </li>
+    ))}
+  </ul>
+);
+
+export const BasicInfoStep = ({ tourData, onUpdate, isEditable }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -12,56 +153,71 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
   const [isUploading, setIsUploading] = useState(false);
   const sessionId = useUploadSession();
 
+  // Initialize preview image based on different scenarios
   useEffect(() => {
-    if (tourData.cover_image_temp?.url) {
-      setPreviewImage(tourData.cover_image_temp.url);
-    } else if (tourData.cover_image_temp?.key) {
-      viewtempcover(tourData.cover_image_temp.key)
-        .then(({ url }) => {
+    const initializePreview = async () => {
+      if (isEditable && tourData.cover_image?.url) {
+        setPreviewImage(tourData.cover_image.url);
+        return;
+      }
+
+      if (tourData.cover_image_temp?.url) {
+        setPreviewImage(tourData.cover_image_temp.url);
+      } else if (tourData.cover_image_temp?.key) {
+        try {
+          const { url } = await viewtempcover(tourData.cover_image_temp.key);
           setPreviewImage(url);
           onUpdate({
             cover_image_temp: {
               ...tourData.cover_image_temp,
-              url: url
+              url
             }
           });
-        })
-        .catch(error => {
-          console.error('Preview setup error:', error);
-          setUploadError('Failed to load image. Please re-upload.');
-          toast.error('Failed to load image. Please re-upload.');
-        });
-    } else if (tourData.cover_image_url) {
-      setPreviewImage(tourData.cover_image_url);
-    }
-  }, [tourData.cover_image_url, tourData.cover_image_temp, onUpdate]);
+        } catch (error) {
+          handleError('Failed to load image. Please re-upload.', error);
+        }
+      } else if (tourData.cover_image_url) {
+        setPreviewImage(tourData.cover_image_url);
+      } else {
+        setPreviewImage(null);
+      }
+    };
 
-  const handleImageUpload = useCallback(async (file) => {
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please upload an image file (JPEG, PNG)');
-      toast.error('Please upload an image file (JPEG, PNG)');
-      return;
+    initializePreview();
+  }, [tourData, onUpdate, isEditable]);
+
+  const handleError = (message, error) => {
+    console.error('Error:', error);
+    setUploadError(message);
+    toast.error(message);
+  };
+
+  const validateFile = (file) => {
+    if (!file.type.startsWith('image/') || !ALLOWED_FILE_TYPES.includes(file.type)) {
+      throw new Error('Please upload an image file (JPEG, PNG)');
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('Image size must be less than 10MB');
-      toast.error('Image size must be less than 10MB');
-      return;
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error('Image size must be less than 10MB');
     }
 
     if (!sessionId) {
-      setUploadError('Upload service is initializing. Please try again in a moment.');
-      toast.error('Upload service is initializing. Please try again in a moment.');
-      return;
+      throw new Error('Upload service is initializing. Please try again in a moment.');
     }
+  };
 
-    const uploadToast = toast.loading('Uploading image...');
+  const handleImageUpload = useCallback(async (file) => {
+    if (!isEditable) return;
     
     try {
+      validateFile(file);
+      
+      const uploadToast = toast.loading('Uploading image...');
       setIsUploading(true);
       setUploadError(null);
       setUploadProgress(0);
       
+      // Set temporary local URL for immediate preview
       const localUrl = URL.createObjectURL(file);
       setPreviewImage(localUrl);
 
@@ -84,11 +240,13 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
         }
       });
 
+      // Get permanent URL from server
       const { url } = await viewtempcover(uploadResponse.key);
 
+      // Update parent component with new image data
       onUpdate({ 
         cover_image_temp: {
-          url: url,
+          url,
           tempId: uploadResponse.tempId,
           key: uploadResponse.key
         },
@@ -96,43 +254,44 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
         cover_image_url: undefined
       });
 
+      // Replace temporary URL with permanent one
       setPreviewImage(url);
       URL.revokeObjectURL(localUrl);
       
       toast.success('Image uploaded successfully!', { id: uploadToast });
     } catch (error) {
-      console.error('Upload error:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Upload failed. Please try again.';
-      setUploadError(errorMessage);
+      handleError(errorMessage, error);
       setPreviewImage(null);
-      toast.error(errorMessage, { id: uploadToast });
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
     }
-  }, [sessionId, onUpdate]);
+  }, [sessionId, onUpdate, isEditable]);
 
   const handleDrop = (e) => {
+    if (!isEditable) return;
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (file?.type.startsWith('image/')) {
       handleImageUpload(file);
     } else {
-      setUploadError('Only image files are allowed');
-      toast.error('Only image files are allowed');
+      handleError('Only image files are allowed');
     }
   };
 
   const handleFileInput = (e) => {
+    if (!isEditable) return;
     const file = e.target.files?.[0];
     if (file) {
       handleImageUpload(file);
-      e.target.value = '';
+      e.target.value = ''; // Reset input to allow selecting the same file again
     }
   };
 
   const removeImage = async () => {
+    if (!isEditable) return;
     const deleteToast = toast.loading('Removing image...');
     try {
       if (tourData.cover_image_temp?.key) {
@@ -150,18 +309,20 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
       
       toast.success('Image removed successfully', { id: deleteToast });
     } catch (error) {
-      console.error('Error deleting image:', error);
-      const errorMessage = 'Failed to delete image. Please try again.';
-      setUploadError(errorMessage);
-      toast.error(errorMessage, { id: deleteToast });
+      handleError('Failed to delete image. Please try again.', error);
     }
   };
 
-  const handleImageError = () => {
-    const errorMessage = 'Failed to load image. Please re-upload.';
-    setUploadError(errorMessage);
-    setPreviewImage(null);
-    toast.error(errorMessage);
+  // Drag and drop handlers
+  const handleDragOver = (e) => {
+    if (!isEditable) return;
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    if (!isEditable) return;
+    setIsDragging(false);
   };
 
   return (
@@ -188,89 +349,26 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
             
             <div className="flex flex-col flex-1 p-5">
               {previewImage ? (
-                <div className="relative aspect-w-16 aspect-h-9 group">
-                  <img
-                    src={previewImage}
-                    alt="Tour cover preview"
-                    className="object-cover w-full h-full rounded-lg shadow-sm"
-                    onError={handleImageError}
-                  />
-                  <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent">
-                    {isUploading && (
-                      <div className="w-full h-1.5 mb-2 bg-gray-200 rounded-full">
-                        <div 
-                          className="h-1.5 bg-blue-600 rounded-full" 
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                      </div>
-                    )}
-                    {uploadError && (
-                      <p className="text-sm text-red-300">{uploadError}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute p-2 text-white transition-opacity duration-200 bg-red-500 rounded-full opacity-0 top-2 right-2 group-hover:opacity-100 hover:bg-red-600"
-                    aria-label="Remove image"
-                    disabled={isUploading}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+                <ImagePreview 
+                  previewImage={previewImage}
+                  isUploading={isUploading}
+                  uploadProgress={uploadProgress}
+                  uploadError={uploadError}
+                  isEditable={isEditable}
+                  onRemove={removeImage}
+                />
               ) : (
-                <div
-                  className={`border-2 border-dashed rounded-lg transition-all aspect-w-16 aspect-h-9 flex items-center justify-center ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDragEnter={() => setIsDragging(true)}
-                  onDragLeave={() => setIsDragging(false)}
+                <UploadArea
+                  isDragging={isDragging}
+                  isUploading={isUploading}
+                  uploadProgress={uploadProgress}
+                  uploadError={uploadError}
+                  isEditable={isEditable}
+                  onFileInputChange={handleFileInput}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                >
-                  <div className="w-full p-6 text-center">
-                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-teal-100">
-                      {isUploading ? (
-                        <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-                      ) : (
-                        <UploadCloud className="w-5 h-5 text-blue-600" />
-                      )}
-                    </div>
-                    <p className="mb-2 text-sm font-medium text-gray-700">
-                      {isUploading ? 'Uploading...' : isDragging ? 'Drop your image here' : 'Upload a cover image'}
-                    </p>
-                    {!isUploading && (
-                      <>
-                        <p className="mb-4 text-xs text-gray-500">or</p>
-                        <label className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors rounded-md cursor-pointer bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700">
-                          <span>Select file</span>
-                          <input
-                            type="file"
-                            className="sr-only"
-                            accept="image/*"
-                            onChange={handleFileInput}
-                            disabled={isUploading}
-                          />
-                        </label>
-                      </>
-                    )}
-                    <p className="mt-3 text-xs text-gray-500">PNG, JPG up to 10MB</p>
-                    {uploadError && (
-                      <p className="mt-2 text-xs text-red-500">{uploadError}</p>
-                    )}
-                    {isUploading && (
-                      <div className="w-1/2 mx-auto mt-3">
-                        <div className="w-full h-1.5 bg-gray-200 rounded-full">
-                          <div 
-                            className="h-1.5 bg-blue-600 rounded-full" 
-                            style={{ width: `${uploadProgress}%` }}
-                          ></div>
-                        </div>
-                        <p className="mt-1 text-xs text-center text-gray-500">
-                          {uploadProgress}% uploaded
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                />
               )}
             </div>
           </section>
@@ -295,13 +393,13 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
                   type="text"
                   id="title"
                   value={tourData.title}
-                  onChange={(e) => onUpdate({ title: e.target.value })}
+                  onChange={(e) => isEditable && onUpdate({ title: e.target.value })}
                   className={`w-full px-4 py-2 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    isUploading ? 'opacity-50 cursor-not-allowed' : ''
+                    isUploading || !isEditable ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   placeholder="e.g. Sunset Beach Walking Tour"
                   required
-                  disabled={isUploading}
+                  disabled={isUploading || !isEditable}
                 />
               </div>
 
@@ -312,13 +410,13 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
                 <textarea
                   id="description"
                   value={tourData.description || ''}
-                  onChange={(e) => onUpdate({ description: e.target.value })}
+                  onChange={(e) => isEditable && onUpdate({ description: e.target.value })}
                   rows={5}
                   className={`w-full px-4 py-2 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    isUploading ? 'opacity-50 cursor-not-allowed' : ''
+                    isUploading || !isEditable ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   placeholder="Describe the highlights and unique aspects of your tour..."
-                  disabled={isUploading}
+                  disabled={isUploading || !isEditable}
                 />
                 <p className="mt-2 text-xs text-gray-500">Recommended length: 150-300 characters</p>
               </div>
@@ -335,26 +433,7 @@ export const BasicInfoStep = ({ tourData, onUpdate }) => {
             </div>
             
             <div className="p-5">
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <div className="flex-shrink-0 mt-1 mr-3">
-                    <div className="flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-600 rounded-full">1</div>
-                  </div>
-                  <p className="text-sm text-gray-700">Use a clear, descriptive title with location and activity type</p>
-                </li>
-                <li className="flex items-start">
-                  <div className="flex-shrink-0 mt-1 mr-3">
-                    <div className="flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-600 rounded-full">2</div>
-                  </div>
-                  <p className="text-sm text-gray-700">Start your description with the most exciting aspect</p>
-                </li>
-                <li className="flex items-start">
-                  <div className="flex-shrink-0 mt-1 mr-3">
-                    <div className="flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-600 rounded-full">3</div>
-                  </div>
-                  <p className="text-sm text-gray-700">Include practical details like duration and difficulty level</p>
-                </li>
-              </ul>
+              <BestPracticesList />
             </div>
           </section>
         </div>

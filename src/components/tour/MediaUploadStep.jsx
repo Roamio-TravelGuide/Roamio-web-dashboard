@@ -1,27 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { MediaUpload } from '../ui/MediaUpload';
-import { AlertTriangle, CheckCircle, Clock, Volume2, Image as ImageIcon, Loader2, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Volume2, Image as ImageIcon, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { useMapbox } from '../../hooks/useMaps';
 import { useUploadSession } from '../../hooks/useUploadSession';
 import { uploadtempmedia, deletetempmedia } from '../../api/tour/tourApi';
 import { toast } from 'react-hot-toast';
 
+// Constants
+const MEDIA_TYPES = {
+  AUDIO: 'audio',
+  IMAGE: 'image'
+};
+
 export const MediaUploadStep = ({
-  stops,
-  onStopsUpdate
+  stops = [],
+  onStopsUpdate,
+  isEditable = true
 }) => {
+  // State
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
   const [validationWarnings, setValidationWarnings] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [editingMediaIndex, setEditingMediaIndex] = useState(null);
+  const [editedMediaDescription, setEditedMediaDescription] = useState('');
+  
+  // Hooks
   const { getDistanceBetweenPoints, getWalkingTime } = useMapbox();
   const sessionId = useUploadSession();
 
+  // Effects
   useEffect(() => {
     validateAudioDurations();
   }, [stops]);
 
-  const validateAudioDurations = () => {
+  // Helper functions
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
+  const getAudioDuration = useCallback((file) => {
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(file);
+      
+      audio.addEventListener('loadedmetadata', () => {
+        const duration = Math.floor(audio.duration);
+        URL.revokeObjectURL(audio.src);
+        resolve(duration);
+      });
+      
+      audio.addEventListener('error', () => {
+        resolve(0);
+      });
+    });
+  }, []);
+
+  // Validation
+  const validateAudioDurations = useCallback(() => {
     const warnings = [];
 
     stops.forEach((stop, index) => {
@@ -38,15 +76,13 @@ export const MediaUploadStep = ({
       const walkingTime = getWalkingTime(distance);
       const minRecommendedAudioTime = Math.floor(walkingTime * 0.8);
 
-      const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
-      const totalAudioDuration = audioFiles.reduce((total, audio) => {
-        return total + (audio.duration_seconds || 0);
-      }, 0);
+      const audioFiles = stop.media?.filter(m => m.media_type === MEDIA_TYPES.AUDIO) || [];
+      const totalAudioDuration = audioFiles.reduce((total, audio) => total + (audio.duration_seconds || 0), 0);
 
       if (totalAudioDuration < minRecommendedAudioTime) {
         warnings.push({
           stopIndex: index,
-          message: `Recommended audio duration is (${formatTime(minRecommendedAudioTime)})`,
+          message: `Recommended audio duration is ${formatTime(minRecommendedAudioTime)}`,
           severity: 'warning'
         });
       }
@@ -61,11 +97,11 @@ export const MediaUploadStep = ({
     });
 
     setValidationWarnings(warnings);
-  };
+  }, [stops, getDistanceBetweenPoints, getWalkingTime]);
 
-  const handleMediaAdd = async (stopIndex, newMedia) => {
-    if (!sessionId) {
-      console.error('No session ID found');
+  // Media handlers
+  const handleMediaAdd = useCallback(async (stopIndex, newMedia) => {
+    if (!isEditable || !sessionId) {
       toast.error('Upload service is initializing. Please try again in a moment.');
       return;
     }
@@ -74,67 +110,60 @@ export const MediaUploadStep = ({
     setIsUploading(true);
     setUploadProgress(0);
     
-    const uploadedKeys = [];
-    
     try {
+      // Optimistic update
       const updatedStops = [...stops];
-      const currentMedia = updatedStops[stopIndex].media || [];
-      
       updatedStops[stopIndex] = {
         ...updatedStops[stopIndex],
         media: [
-          ...currentMedia,
+          ...(updatedStops[stopIndex].media || []),
           ...newMedia.map(file => ({
             ...file,
             isUploading: true,
-            tempUrl: file.format.startsWith('audio/') ? null : URL.createObjectURL(file.file)
+            tempUrl: file.format.startsWith('image/') ? URL.createObjectURL(file.file) : null
           }))
         ]
       };
       onStopsUpdate(updatedStops);
 
-      const uploadPromises = newMedia.map(async (media) => {
-        const formData = new FormData();
-        formData.append('file', media.file);
-        formData.append('type', media.format.startsWith('audio/') ? 'stop_audio' : 'stop_image');
-        formData.append('sessionId', sessionId);
-        formData.append('stopIndex', stopIndex);
+      // Process uploads
+      const uploadedMedia = await Promise.all(
+        newMedia.map(async (media) => {
+          const formData = new FormData();
+          formData.append('file', media.file);
+          formData.append('type', media.format.startsWith('audio/') ? 'stop_audio' : 'stop_image');
+          formData.append('sessionId', sessionId);
+          formData.append('stopIndex', stopIndex);
 
-        const response = await uploadtempmedia(formData, {
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-            setUploadProgress(percentCompleted);
-            toast.loading(`Uploading media files... ${percentCompleted}%`, { id: uploadToast });
-          }
-        });
-        
-        // Store the uploaded key for potential cleanup
-        uploadedKeys.push(response.key);
-        
-        let duration = 0;
-        if (media.format.startsWith('audio/')) {
-          duration = await getAudioDuration(media.file);
-        }
+          const response = await uploadtempmedia(formData, {
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              setUploadProgress(percentCompleted);
+              toast.loading(`Uploading media files... ${percentCompleted}%`, { id: uploadToast });
+            }
+          });
+          
+          const duration = media.format.startsWith('audio/') 
+            ? await getAudioDuration(media.file) 
+            : 0;
 
-        return {
-          ...response,
-          media_type: media.format.startsWith('audio/') ? 'audio' : 'image',
-          duration_seconds: duration,
-          tempUrl: media.format.startsWith('image/') ? URL.createObjectURL(media.file) : null
-        };
-      });
+          return {
+            ...response,
+            media_type: media.format.startsWith('audio/') ? MEDIA_TYPES.AUDIO : MEDIA_TYPES.IMAGE,
+            duration_seconds: duration,
+            tempUrl: media.format.startsWith('image/') ? URL.createObjectURL(media.file) : null
+          };
+        })
+      );
 
-      const uploadedMedia = await Promise.all(uploadPromises);
-
+      // Final update with server response
       const finalUpdatedStops = [...stops];
-      const finalMedia = finalUpdatedStops[stopIndex].media || [];
-      
       finalUpdatedStops[stopIndex] = {
         ...finalUpdatedStops[stopIndex],
         media: [
-          ...finalMedia.filter(m => !m.isUploading),
+          ...(finalUpdatedStops[stopIndex].media || []).filter(m => !m.isUploading),
           ...uploadedMedia
         ]
       };
@@ -143,19 +172,9 @@ export const MediaUploadStep = ({
       toast.success('Media files uploaded successfully!', { id: uploadToast });
     } catch (error) {
       console.error('Upload failed:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Upload failed. Please try again.';
-      toast.error(errorMessage, { id: uploadToast });
+      toast.error(error.response?.data?.error || 'Upload failed. Please try again.', { id: uploadToast });
       
-      // Clean up any successfully uploaded files
-      if (uploadedKeys.length > 0) {
-        try {
-          await Promise.all(uploadedKeys.map(key => deletetempmedia(key)));
-          console.log('Cleaned up uploaded files due to error');
-        } catch (cleanupError) {
-          console.error('Error during cleanup:', cleanupError);
-        }
-      }
-      
+      // Revert on error
       const cleanedStops = [...stops];
       cleanedStops[stopIndex] = {
         ...cleanedStops[stopIndex],
@@ -166,78 +185,88 @@ export const MediaUploadStep = ({
       setIsUploading(false);
       setUploadProgress(0);
     }
-  };
+  }, [isEditable, sessionId, stops, onStopsUpdate, getAudioDuration]);
 
-  const handleMediaRemove = async (stopIndex, mediaIndex) => {
+  const handleMediaRemove = useCallback(async (stopIndex, mediaIndex) => {
+    if (!isEditable) return;
+    
     const deleteToast = toast.loading('Removing media file...');
     const updatedStops = [...stops];
-    const currentMedia = updatedStops[stopIndex].media || [];
-    const removedMedia = currentMedia[mediaIndex];
+    const mediaToRemove = updatedStops[stopIndex].media?.[mediaIndex];
     
     try {
       setIsUploading(true);
       
-      currentMedia.splice(mediaIndex, 1);
-      updatedStops[stopIndex] = {
-        ...updatedStops[stopIndex],
-        media: currentMedia
-      };
+      // Remove from state
+      updatedStops[stopIndex].media.splice(mediaIndex, 1);
       onStopsUpdate(updatedStops);
 
-      if (removedMedia.key) {
-        await deletetempmedia(removedMedia.key);
+      // Delete from server if exists
+      if (mediaToRemove?.key) {
+        await deletetempmedia(mediaToRemove.key);
       }
       
-      if (removedMedia.tempUrl) {
-        URL.revokeObjectURL(removedMedia.tempUrl);
+      // Clean up temp URLs
+      if (mediaToRemove?.tempUrl) {
+        URL.revokeObjectURL(mediaToRemove.tempUrl);
       }
       
       toast.success('Media file removed successfully', { id: deleteToast });
     } catch (error) {
       console.error('Error deleting media:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete media. Please try again.';
-      toast.error(errorMessage, { id: deleteToast });
-      // Revert if deletion fails
-      const originalStops = [...stops];
-      onStopsUpdate(originalStops);
+      toast.error('Failed to delete media. Please try again.', { id: deleteToast });
+      onStopsUpdate([...stops]); // Revert changes
     } finally {
       setIsUploading(false);
     }
-  };
-  const getAudioDuration = (file) => {
-    return new Promise((resolve) => {
-      const audio = new Audio();
-      audio.src = URL.createObjectURL(file);
-      
-      audio.addEventListener('loadedmetadata', () => {
-        const duration = Math.floor(audio.duration);
-        URL.revokeObjectURL(audio.src);
-        resolve(duration);
-      });
-      
-      audio.addEventListener('error', () => {
-        resolve(0);
-      });
-    });
+  }, [isEditable, stops, onStopsUpdate]);
+
+  const handleStartEditing = (mediaIndex) => {
+    if (!isEditable) return;
+    const currentMedia = stops[selectedStopIndex]?.media?.[mediaIndex];
+    setEditingMediaIndex(mediaIndex);
+    setEditedMediaDescription(currentMedia?.description || '');
   };
 
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
+  const handleCancelEditing = () => {
+    setEditingMediaIndex(null);
+    setEditedMediaDescription('');
   };
 
-  const getStopValidation = (stopIndex) => {
-    const stopWarnings = validationWarnings.filter(w => w.stopIndex === stopIndex);
-    const errors = stopWarnings.filter(w => w.severity === 'error');
-    const warnings = stopWarnings.filter(w => w.severity === 'warning');
-
-    return { errors, warnings, hasIssues: stopWarnings.length > 0 };
+  const handleSaveMediaEdit = () => {
+    if (!isEditable || editingMediaIndex === null) return;
+    
+    const updatedStops = [...stops];
+    updatedStops[selectedStopIndex] = {
+      ...updatedStops[selectedStopIndex],
+      media: updatedStops[selectedStopIndex].media.map((media, index) => 
+        index === editingMediaIndex 
+          ? { ...media, description: editedMediaDescription }
+          : media
+      )
+    };
+    
+    onStopsUpdate(updatedStops);
+    setEditingMediaIndex(null);
+    setEditedMediaDescription('');
+    toast.success('Media description updated');
   };
 
-  const getWalkingTimeBetweenStops = (fromIndex, toIndex) => {
-    const fromStop = stops[fromIndex];
-    const toStop = stops[toIndex];
+  const currentStop = stops[selectedStopIndex] || {};
+  const stopValidation = useMemo(() => {
+    const errors = validationWarnings.filter(w => 
+      w.stopIndex === selectedStopIndex && w.severity === 'error'
+    );
+    const warnings = validationWarnings.filter(w => 
+      w.stopIndex === selectedStopIndex && w.severity === 'warning'
+    );
+    return { errors, warnings, hasIssues: errors.length > 0 || warnings.length > 0 };
+  }, [validationWarnings, selectedStopIndex]);
+
+  const walkingTimeToNextStop = useMemo(() => {
+    if (selectedStopIndex >= stops.length - 1) return 0;
+    const fromStop = stops[selectedStopIndex];
+    const toStop = stops[selectedStopIndex + 1];
     
     if (!fromStop.location || !toStop.location) return 0;
     
@@ -247,205 +276,294 @@ export const MediaUploadStep = ({
     );
     
     return getWalkingTime(distance);
-  };
+  }, [selectedStopIndex, stops, getDistanceBetweenPoints, getWalkingTime]);
 
-  const getTotalAudioDuration = (stopIndex) => {
-    const stop = stops[stopIndex];
-    const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
-    return audioFiles.reduce((total, audio) => total + (audio.duration_seconds || 0), 0);
-  };
+  const recommendedAudioTime = useMemo(() => 
+    Math.floor(walkingTimeToNextStop * 0.8),
+    [walkingTimeToNextStop]
+  );
 
-  const getRecommendedAudioTime = (stopIndex) => {
-    if (stopIndex >= stops.length - 1) return null;
-    const walkingTime = getWalkingTimeBetweenStops(stopIndex, stopIndex + 1);
-    return Math.floor(walkingTime * 0.8);
-  };
+  const totalAudioDuration = useMemo(() => 
+    (currentStop.media || [])
+      .filter(m => m.media_type === MEDIA_TYPES.AUDIO)
+      .reduce((total, audio) => total + (audio.duration_seconds || 0), 0),
+    [currentStop]
+  );
 
-  return (
-    <div className={`mx-auto ${isUploading ? 'opacity-75 pointer-events-none' : ''}`}>
-      {/* Header */}
-      <div className="p-6 mb-6 bg-gradient-to-r from-blue-50 to-teal-50 rounded-xl">
-        <h2 className="text-2xl font-bold text-gray-800">Tour Media Content</h2>
-        <p className="mt-2 text-gray-600">Add audio guides and images for each stop of your tour</p>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Left Column - Stop Navigation */}
-        <div className="lg:w-1/4">
-          <div className="overflow-hidden border border-gray-200 rounded-xl">
-            <div className="p-5 bg-gradient-to-r from-blue-50 to-teal-50">
-              <h3 className="font-medium text-gray-800">Tour Stops</h3>
-              <p className="mt-1 text-sm text-gray-600">Select a stop to add media</p>
+  const EnhancedMediaUpload = ({ media, onMediaAdd, onMediaRemove, ...props }) => (
+    <div className="space-y-4">
+      <MediaUpload 
+        media={media}
+        onMediaAdd={onMediaAdd}
+        onMediaRemove={onMediaRemove}
+        {...props}
+      />
+      
+      {media?.map((item, index) => (
+        <div key={item.id || item.key || index} className="p-3 border border-gray-200 rounded-lg">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              {item.media_type === MEDIA_TYPES.AUDIO ? (
+                <div className="flex items-center space-x-2">
+                  <Volume2 size={16} className="text-blue-500" />
+                  <span>Audio: {formatTime(item.duration_seconds || 0)}</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <ImageIcon size={16} className="text-blue-500" />
+                  <span>Image</span>
+                </div>
+              )}
+              
+              {editingMediaIndex === index ? (
+                <div className="mt-2 space-y-2">
+                  <textarea
+                    value={editedMediaDescription}
+                    onChange={(e) => setEditedMediaDescription(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded"
+                    placeholder="Add description for this media"
+                    rows={3}
+                  />
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleSaveMediaEdit}
+                      className="px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancelEditing}
+                      className="px-3 py-1 text-sm text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-1 text-sm text-gray-600">
+                  {item.description || 'No description'}
+                </p>
+              )}
             </div>
             
-            <div className="p-5 space-y-2">
-              {stops.map((stop, index) => {
-                const validation = getStopValidation(index);
-                return (
-                  <button
-                    key={stop.tempId || stop.id}
-                    onClick={() => !isUploading && setSelectedStopIndex(index)}
-                    className={`w-full text-left p-3 rounded-lg transition-all duration-200 relative ${
-                      selectedStopIndex === index
-                        ? 'bg-blue-100 border border-blue-300'
-                        : validation.hasIssues
-                        ? 'bg-red-50 border border-red-200 hover:border-red-300'
-                        : 'border border-gray-200 hover:border-gray-300'
-                    } ${isUploading ? 'cursor-not-allowed' : ''}`}
-                    disabled={isUploading}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center mb-1 space-x-2">
-                          <span className="flex items-center justify-center flex-shrink-0 w-5 h-5 text-xs font-bold text-white bg-blue-500 rounded-full">
-                            {index + 1}
-                          </span>
-                          <span className="font-medium text-gray-900 truncate">
-                            {stop.stop_name}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-3 text-xs text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <Volume2 size={10} />
-                            <span>{stop.media?.filter(m => m.media_type === 'audio').length || 0}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <ImageIcon size={10} />
-                            <span>{stop.media?.filter(m => m.media_type === 'image').length || 0}</span>
-                          </div>
-                        </div>
+            {isEditable && editingMediaIndex !== index && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleStartEditing(index)}
+                  className="p-1 text-gray-500 hover:text-blue-600"
+                  title="Edit description"
+                >
+                  <Pencil size={16} />
+                </button>
+                <button
+                  onClick={() => onMediaRemove(index)}
+                  className="p-1 text-gray-500 hover:text-red-600"
+                  title="Remove media"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderStopNavigation = () => (
+    <div className="lg:w-1/4">
+      <div className="overflow-hidden border border-gray-200 rounded-xl">
+        <div className="p-5 bg-gradient-to-r from-blue-50 to-teal-50">
+          <h3 className="font-medium text-gray-800">Tour Stops</h3>
+          <p className="mt-1 text-sm text-gray-600">
+            Select a stop to {isEditable ? 'add' : 'view'} media
+          </p>
+        </div>
+        
+        <div className="p-5 space-y-2">
+          {stops.map((stop, index) => {
+            const validation = validationWarnings.filter(w => w.stopIndex === index);
+            const hasErrors = validation.some(w => w.severity === 'error');
+            const hasWarnings = validation.some(w => w.severity === 'warning');
+            
+            return (
+              <button
+                key={stop.tempId || stop.id}
+                onClick={() => !isUploading && setSelectedStopIndex(index)}
+                className={`w-full text-left p-3 rounded-lg transition-all duration-200 relative ${
+                  selectedStopIndex === index
+                    ? 'bg-blue-100 border border-blue-300'
+                    : hasErrors
+                    ? 'bg-red-50 border border-red-200 hover:border-red-300'
+                    : hasWarnings
+                    ? 'bg-amber-50 border border-amber-200 hover:border-amber-300'
+                    : 'border border-gray-200 hover:border-gray-300'
+                } ${isUploading ? 'cursor-not-allowed' : ''}`}
+                disabled={isUploading}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center mb-1 space-x-2">
+                      <span className="flex items-center justify-center flex-shrink-0 w-5 h-5 text-xs font-bold text-white bg-blue-500 rounded-full">
+                        {index + 1}
+                      </span>
+                      <span className="font-medium text-gray-900 truncate">
+                        {stop.stop_name}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 text-xs text-gray-500">
+                      <div className="flex items-center space-x-1">
+                        <Volume2 size={10} />
+                        <span>
+                          {stop.media?.filter(m => m.media?.media_type === MEDIA_TYPES.AUDIO).length || 0}
+                        </span>
                       </div>
-                      
-                      <div className="flex-shrink-0 ml-2">
-                        {validation.errors.length > 0 ? (
-                          <AlertTriangle className="text-red-500" size={16} />
-                        ) : validation.warnings.length > 0 ? (
-                          <AlertTriangle className="text-amber-500" size={16} />
-                        ) : stop.media && stop.media.length > 0 ? (
-                          <CheckCircle className="text-green-500" size={16} />
-                        ) : null}
+                      <div className="flex items-center space-x-1">
+                        <ImageIcon size={10} />
+                        <span>{stop.media?.filter(m => m.media?.media_type === MEDIA_TYPES.IMAGE).length || 0}</span>
                       </div>
                     </div>
-                  </button>
-                );
-              })}
+                  </div>
+                  
+                  <div className="flex-shrink-0 ml-2">
+                    {hasErrors ? (
+                      <AlertTriangle className="text-red-500" size={16} />
+                    ) : hasWarnings ? (
+                      <AlertTriangle className="text-amber-500" size={16} />
+                    ) : stop.media?.length > 0 ? (
+                      <CheckCircle className="text-green-500" size={16} />
+                    ) : null}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderMediaUploadArea = () => (
+    <div className="lg:w-3/4">
+      {stops.length === 0 ? (
+        <div className="p-6 text-center border border-gray-200 rounded-xl bg-gray-50">
+          <p className="text-gray-600">No stops available. Please add stops in the previous step.</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden border border-gray-200 rounded-xl">
+          <div className="p-5 bg-gradient-to-r from-blue-50 to-teal-50">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-gray-800">
+                {currentStop.stop_name || `Stop ${selectedStopIndex + 1}`}
+              </h3>
+              <div className="text-sm text-gray-600">
+                Stop {selectedStopIndex + 1} of {stops.length}
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-5 space-y-6">
+            {currentStop.description && (
+              <p className="text-gray-700">{currentStop.description}</p>
+            )}
+
+            {selectedStopIndex < stops.length - 1 && (
+              <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                <div className="flex items-start space-x-2">
+                  <Clock className="text-blue-500 flex-shrink-0 mt-0.5" size={16} />
+                  <div>
+                    <h4 className="font-medium text-blue-900">Audio Duration Guidelines</h4>
+                    <div className="mt-1 space-y-1 text-sm text-blue-800">
+                      <div>Walking time to next stop: {formatTime(walkingTimeToNextStop)}</div>
+                      <div>Recommended min audio: {formatTime(recommendedAudioTime)}</div>
+                      <div>Current audio duration: {formatTime(totalAudioDuration)}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <EnhancedMediaUpload
+              media={currentStop.media || []}
+              onMediaAdd={(newMedia) => handleMediaAdd(selectedStopIndex, newMedia)}
+              onMediaRemove={(mediaIndex) => handleMediaRemove(selectedStopIndex, mediaIndex)}
+              acceptedTypes={['audio/*', 'image/*']}
+              maxFiles={10}
+              isUploading={isUploading}
+              uploadProgress={uploadProgress}
+              isEditable={isEditable}
+            />
+
+            <div className="space-y-2">
+              {stopValidation.errors.map((error, index) => (
+                <div key={index} className="flex items-start p-3 space-x-2 border border-red-200 rounded-lg bg-red-50">
+                  <AlertTriangle className="text-red-500 flex-shrink-0 mt-0.5" size={16} />
+                  <span className="text-sm text-red-700">{error.message}</span>
+                </div>
+              ))}
+              {stopValidation.warnings.map((warning, index) => (
+                <div key={index} className="flex items-start p-3 space-x-2 border rounded-lg bg-amber-50 border-amber-200">
+                  <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={16} />
+                  <span className="text-sm text-amber-700">{warning.message}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
+      )}
 
-        {/* Right Column - Media Upload Area */}
-        <div className="lg:w-3/4">
-          {stops.length === 0 ? (
-            <div className="p-6 text-center border border-gray-200 rounded-xl bg-gray-50">
-              <p className="text-gray-600">No stops available. Please add stops in the previous step.</p>
-            </div>
-          ) : (
-            <div className="overflow-hidden border border-gray-200 rounded-xl">
-              <div className="p-5 bg-gradient-to-r from-blue-50 to-teal-50">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-gray-800">
-                    {stops[selectedStopIndex]?.stop_name || `Stop ${selectedStopIndex + 1}`}
-                  </h3>
-                  <div className="text-sm text-gray-600">
-                    Stop {selectedStopIndex + 1} of {stops.length}
+      {validationWarnings.length > 0 && (
+        <div className="mt-6 overflow-hidden border border-gray-200 rounded-xl">
+          <div className="p-5 bg-gradient-to-r from-blue-50 to-teal-50">
+            <h3 className="font-medium text-gray-800">Validation Summary</h3>
+          </div>
+          
+          <div className="p-5 space-y-4">
+            <div className="space-y-2">
+              {validationWarnings.map((warning, index) => {
+                const stop = stops[warning.stopIndex];
+                return (
+                  <div key={index} className="flex items-start space-x-2 text-sm">
+                    <AlertTriangle 
+                      className={warning.severity === 'error' ? 'text-red-500' : 'text-amber-500'} 
+                      size={14} 
+                    />
+                    <span className="text-gray-700">
+                      <strong>{stop.stop_name}:</strong> {warning.message}
+                    </span>
                   </div>
-                </div>
-              </div>
-              
-              <div className="p-5 space-y-6">
-                {stops[selectedStopIndex]?.description && (
-                  <p className="text-gray-700">
-                    {stops[selectedStopIndex].description}
-                  </p>
-                )}
-
-                {/* Audio Duration Guidelines */}
-                {selectedStopIndex < stops.length - 1 && (
-                  <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
-                    <div className="flex items-start space-x-2">
-                      <Clock className="text-blue-500 flex-shrink-0 mt-0.5" size={16} />
-                      <div>
-                        <h4 className="font-medium text-blue-900">Audio Duration Guidelines</h4>
-                        <div className="mt-1 space-y-1 text-sm text-blue-800">
-                          <div>Walking time to next stop: {formatTime(getWalkingTimeBetweenStops(selectedStopIndex, selectedStopIndex + 1))}</div>
-                          <div>Recommended min audio: {formatTime(getRecommendedAudioTime(selectedStopIndex) || 0)}</div>
-                          <div>Current audio duration: {formatTime(getTotalAudioDuration(selectedStopIndex))}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <MediaUpload
-                  media={stops[selectedStopIndex]?.media || []}
-                  onMediaAdd={(newMedia) => handleMediaAdd(selectedStopIndex, newMedia)}
-                  onMediaRemove={(mediaIndex) => handleMediaRemove(selectedStopIndex, mediaIndex)}
-                  acceptedTypes={['audio/*', 'image/*']}
-                  maxFiles={10}
-                  isUploading={isUploading}
-                  uploadProgress={uploadProgress}
-                />
-
-                {(() => {
-                  const validation = getStopValidation(selectedStopIndex);
-                  return (
-                    <div className="space-y-2">
-                      {validation.errors.map((error, index) => (
-                        <div key={index} className="flex items-start p-3 space-x-2 border border-red-200 rounded-lg bg-red-50">
-                          <AlertTriangle className="text-red-500 flex-shrink-0 mt-0.5" size={16} />
-                          <span className="text-sm text-red-700">{error.message}</span>
-                        </div>
-                      ))}
-                      {validation.warnings.map((warning, index) => (
-                        <div key={index} className="flex items-start p-3 space-x-2 border rounded-lg bg-amber-50 border-amber-200">
-                          <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={16} />
-                          <span className="text-sm text-amber-700">{warning.message}</span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
+                );
+              })}
             </div>
-          )}
-
-          {validationWarnings.length > 0 && (
-            <div className="mt-6 overflow-hidden border border-gray-200 rounded-xl">
-              <div className="p-5 bg-gradient-to-r from-blue-50 to-teal-50">
-                <h3 className="font-medium text-gray-800">Validation Summary</h3>
-              </div>
-              
-              <div className="p-5 space-y-4">
-                <div className="space-y-2">
-                  {validationWarnings.map((warning, index) => {
-                    const stop = stops[warning.stopIndex];
-                    return (
-                      <div key={index} className="flex items-start space-x-2 text-sm">
-                        <AlertTriangle 
-                          className={warning.severity === 'error' ? 'text-red-500' : 'text-amber-500'} 
-                          size={14} 
-                        />
-                        <span className="text-gray-700">
-                          <strong>{stop.stop_name}:</strong> {warning.message}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                <div className="p-4 text-sm border border-gray-200 rounded-lg bg-gray-50">
-                  <h4 className="mb-2 font-medium text-gray-800">Content Guidelines</h4>
-                  <ul className="space-y-1 text-gray-600">
-                    <li>• <strong>Audio Duration Rule:</strong> Keep audio content more than 80% of walking time between stops</li>
-                    <li>• <strong>Content Guidelines:</strong> Each stop should have at least one audio file</li>
-                  </ul>
-                </div>
-              </div>
+            
+            <div className="p-4 text-sm border border-gray-200 rounded-lg bg-gray-50">
+              <h4 className="mb-2 font-medium text-gray-800">Content Guidelines</h4>
+              <ul className="space-y-1 text-gray-600">
+                <li>• <strong>Audio Duration Rule:</strong> Keep audio content more than 80% of walking time between stops</li>
+                <li>• <strong>Content Guidelines:</strong> Each stop should have at least one audio file</li>
+              </ul>
             </div>
-          )}
+          </div>
         </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className={`mx-auto ${isUploading ? 'opacity-75 pointer-events-none' : ''}`}>
+      <div className="p-6 mb-6 bg-gradient-to-r from-blue-50 to-teal-50 rounded-xl">
+        <h2 className="text-2xl font-bold text-gray-800">Tour Media Content</h2>
+        <p className="mt-2 text-gray-600">
+          {isEditable 
+            ? "Add audio guides and images for each stop of your tour"
+            : "View media content for each stop of the tour"}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-6 lg:flex-row">
+        {renderStopNavigation()}
+        {renderMediaUploadArea()}
       </div>
     </div>
   );
