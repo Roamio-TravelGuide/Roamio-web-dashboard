@@ -76,8 +76,15 @@ export const MediaUploadStep = ({
       const walkingTime = getWalkingTime(distance);
       const minRecommendedAudioTime = Math.floor(walkingTime * 0.8);
 
-      const audioFiles = stop.media?.filter(m => m.media_type === MEDIA_TYPES.AUDIO) || [];
-      const totalAudioDuration = audioFiles.reduce((total, audio) => total + (audio.duration_seconds || 0), 0);
+      const audioFiles = stop.media?.filter(m => {
+        const mediaType = m.media?.media_type || m.media_type;
+        return mediaType === MEDIA_TYPES.AUDIO;
+      }) || [];
+      
+      const totalAudioDuration = audioFiles.reduce((total, audio) => {
+        const duration = audio.media?.duration_seconds || audio.duration_seconds || 0;
+        return total + duration;
+      }, 0);
 
       if (totalAudioDuration < minRecommendedAudioTime) {
         warnings.push({
@@ -224,8 +231,9 @@ export const MediaUploadStep = ({
   const handleStartEditing = (mediaIndex) => {
     if (!isEditable) return;
     const currentMedia = stops[selectedStopIndex]?.media?.[mediaIndex];
+    const mediaItem = currentMedia.media || currentMedia;
     setEditingMediaIndex(mediaIndex);
-    setEditedMediaDescription(currentMedia?.description || '');
+    setEditedMediaDescription(mediaItem?.description || '');
   };
 
   const handleCancelEditing = () => {
@@ -241,7 +249,13 @@ export const MediaUploadStep = ({
       ...updatedStops[selectedStopIndex],
       media: updatedStops[selectedStopIndex].media.map((media, index) => 
         index === editingMediaIndex 
-          ? { ...media, description: editedMediaDescription }
+          ? { 
+              ...media,
+              media: {
+                ...(media.media || media),
+                description: editedMediaDescription
+              }
+            }
           : media
       )
     };
@@ -285,8 +299,14 @@ export const MediaUploadStep = ({
 
   const totalAudioDuration = useMemo(() => 
     (currentStop.media || [])
-      .filter(m => m.media_type === MEDIA_TYPES.AUDIO)
-      .reduce((total, audio) => total + (audio.duration_seconds || 0), 0),
+      .filter(m => {
+        const mediaType = m.media?.media_type || m.media_type;
+        return mediaType === MEDIA_TYPES.AUDIO;
+      })
+      .reduce((total, audio) => {
+        const duration = audio.media?.duration_seconds || audio.duration_seconds || 0;
+        return total + duration;
+      }, 0),
     [currentStop]
   );
 
@@ -299,74 +319,78 @@ export const MediaUploadStep = ({
         {...props}
       />
       
-      {media?.map((item, index) => (
-        <div key={item.id || item.key || index} className="p-3 border border-gray-200 rounded-lg">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              {item.media_type === MEDIA_TYPES.AUDIO ? (
-                <div className="flex items-center space-x-2">
-                  <Volume2 size={16} className="text-blue-500" />
-                  <span>Audio: {formatTime(item.duration_seconds || 0)}</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <ImageIcon size={16} className="text-blue-500" />
-                  <span>Image</span>
-                </div>
-              )}
-              
-              {editingMediaIndex === index ? (
-                <div className="mt-2 space-y-2">
-                  <textarea
-                    value={editedMediaDescription}
-                    onChange={(e) => setEditedMediaDescription(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded"
-                    placeholder="Add description for this media"
-                    rows={3}
-                  />
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleSaveMediaEdit}
-                      className="px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={handleCancelEditing}
-                      className="px-3 py-1 text-sm text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
-                    >
-                      Cancel
-                    </button>
+      {media?.map((item, index) => {
+        const mediaItem = item.media || item;
+        
+        return (
+          <div key={mediaItem.id || mediaItem.key || index} className="p-3 border border-gray-200 rounded-lg">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                {mediaItem.media_type === MEDIA_TYPES.AUDIO ? (
+                  <div className="flex items-center space-x-2">
+                    <Volume2 size={16} className="text-blue-500" />
+                    <span>Audio: {formatTime(mediaItem.duration_seconds || 0)}</span>
                   </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <ImageIcon size={16} className="text-blue-500" />
+                    <span>Image</span>
+                  </div>
+                )}
+                
+                {editingMediaIndex === index ? (
+                  <div className="mt-2 space-y-2">
+                    <textarea
+                      value={editedMediaDescription}
+                      onChange={(e) => setEditedMediaDescription(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded"
+                      placeholder="Add description for this media"
+                      rows={3}
+                    />
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleSaveMediaEdit}
+                        className="px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancelEditing}
+                        className="px-3 py-1 text-sm text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-sm text-gray-600">
+                    {mediaItem.description || 'No description'}
+                  </p>
+                )}
+              </div>
+              
+              {isEditable && editingMediaIndex !== index && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleStartEditing(index)}
+                    className="p-1 text-gray-500 hover:text-blue-600"
+                    title="Edit description"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={() => onMediaRemove(index)}
+                    className="p-1 text-gray-500 hover:text-red-600"
+                    title="Remove media"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
-              ) : (
-                <p className="mt-1 text-sm text-gray-600">
-                  {item.description || 'No description'}
-                </p>
               )}
             </div>
-            
-            {isEditable && editingMediaIndex !== index && (
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleStartEditing(index)}
-                  className="p-1 text-gray-500 hover:text-blue-600"
-                  title="Edit description"
-                >
-                  <Pencil size={16} />
-                </button>
-                <button
-                  onClick={() => onMediaRemove(index)}
-                  className="p-1 text-gray-500 hover:text-red-600"
-                  title="Remove media"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
@@ -416,12 +440,20 @@ export const MediaUploadStep = ({
                       <div className="flex items-center space-x-1">
                         <Volume2 size={10} />
                         <span>
-                          {stop.media?.filter(m => m.media?.media_type === MEDIA_TYPES.AUDIO).length || 0}
+                          {stop.media?.filter(m => {
+                            const mediaType = m.media?.media_type || m.media_type;
+                            return mediaType === MEDIA_TYPES.AUDIO;
+                          }).length || 0}
                         </span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <ImageIcon size={10} />
-                        <span>{stop.media?.filter(m => m.media?.media_type === MEDIA_TYPES.IMAGE).length || 0}</span>
+                        <span>
+                          {stop.media?.filter(m => {
+                            const mediaType = m.media?.media_type || m.media_type;
+                            return mediaType === MEDIA_TYPES.IMAGE;
+                          }).length || 0}
+                        </span>
                       </div>
                     </div>
                   </div>
