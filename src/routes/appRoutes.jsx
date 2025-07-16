@@ -14,11 +14,17 @@ import GuideDashboard from '../pages/Guide/Dashboard';
 import TourCreate from '../pages/Guide/TourCreate';
 import TourDet from '../pages/Guide/TourDetail';
 import TourPackages from '../pages/Guide/TourPackages';
-import Complaints from '../pages/Guide/Complaints'
+import Support from '../pages/Guide/Support'
 
 import ModeratorLayout from '../layouts/ModeratorLayout';
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
 import TourDetail from '../pages/Moderator/TourDetail';
+
+import AdminLayout from '../layouts/AdminLayout'
+import Dashboard from '../pages/Admin/Dashboard'
+import Users from '../pages/Admin/Users'
+import Complaints from '../pages/Admin/Complaint';
+
 
 import VendorDashboard from '../pages/Vendor/Dashboard';
 import VendorLayout from '../layouts/VendorLayout';
@@ -48,12 +54,20 @@ const AppRoutes = () => {
             <Route path="/guide/dashboard" element={<GuideDashboard />} />
             <Route path="/guide/tourpackages" element={<TourPackages/>}/>
             <Route path="/guide/tourcreate" element={<TourCreate />} />
-            <Route path="/guide/complaints" element={<Complaints />} />
+            <Route path="/guide/support" element={<Support />} />
             <Route path="/guide/tours/view" element={<TourDet/>} />
             <Route path="/guide/tour/view/:id" element={<TourDet/>} />
           </Route>
 
-         <Route element={<ModeratorLayout/>}>
+          <Route element={<ModeratorLayout/>}>
+              <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
+              <Route path = "/tour/:id" element={<TourDetail/>}> </Route>
+          </Route>
+
+          <Route element={<AdminLayout/>}>
+              <Route path="/admin/dashboard" element={<Dashboard/>} />
+              <Route path="/admin/users" element={<Users/>} />
+              <Route path="/admin/complaints" element={<Complaints/>} />
             <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
             <Route path="/moderator/tour/:id" element={<TourDetail/>} />
           </Route>

@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { supportAPI } from '../../api/support';
+import { useAuth } from '../../contexts/authContext';
 import { 
   FiMessageSquare,
   FiAlertTriangle,
@@ -7,17 +10,19 @@ import {
   FiClock,
   FiCheckCircle,
   FiChevronRight,
+  FiShield,
+  FiUser,
   FiDollarSign,
   FiTool,
-  FiUser,
+  FiBriefcase,
+  FiUsers,
+  FiCalendar,
+  FiBook,
   FiHelpCircle,
   FiLoader
 } from 'react-icons/fi';
-import { supportAPI } from '../../api/support';
-import { useAuth } from '../../contexts/authContext';
-import toast from 'react-hot-toast';
 
-const VendorSupport = () => {
+const Support = () => {
   const [activeTab, setActiveTab] = useState('new');
   const [formData, setFormData] = useState({
     category: '',
@@ -26,7 +31,6 @@ const VendorSupport = () => {
     urgency: 'medium'
   });
   const [tickets, setTickets] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -36,52 +40,6 @@ const VendorSupport = () => {
   });
 
   const { user } = useAuth();
-
-  // Load support categories when component mounts
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const response = await supportAPI.getCategories();
-        setCategories(response.data.categories);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-        toast.error('Failed to load support categories');
-      }
-    };
-
-    loadCategories();
-  }, []);
-
-  // Load user tickets when switching to tickets tab
-  useEffect(() => {
-    if (activeTab === 'my-tickets') {
-      loadUserTickets();
-    }
-  }, [activeTab]);
-
-  const loadUserTickets = async (page = 1) => {
-    setTicketsLoading(true);
-    try {
-      const response = await supportAPI.getUserTickets({
-        page,
-        limit: 10,
-        sortBy: 'created_at',
-        sortOrder: 'desc'
-      });
-      
-      setTickets(response.data.tickets);
-      setPagination({
-        page: response.data.pagination.page,
-        totalPages: response.data.pagination.totalPages,
-        total: response.data.pagination.total
-      });
-    } catch (error) {
-      console.error('Error loading tickets:', error);
-      toast.error('Failed to load support tickets');
-    } finally {
-      setTicketsLoading(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,67 +52,111 @@ const VendorSupport = () => {
 
     try {
       const ticketData = {
-        category: formData.category,
         subject: formData.subject,
         description: formData.description,
+        category: formData.category,
         urgency: formData.urgency
       };
 
-      await supportAPI.createTicket(ticketData);
+      const response = await supportAPI.createTicket(ticketData);
       
-      toast.success('Support ticket created successfully');
-      
-      // Reset form
-      setFormData({
-        category: '',
-        subject: '',
-        description: '',
-        urgency: 'medium'
-      });
-      
-      // Switch to tickets tab and reload
-      setActiveTab('my-tickets');
-      loadUserTickets();
-    } catch (error) {
-      console.error('Error creating ticket:', error);
-      
-      let errorMessage = 'Failed to create support ticket';
-      
-      // Handle validation errors
-      if (error.response?.status === 400 && error.response?.data?.errors) {
-        const validationErrors = error.response.data.errors;
-        errorMessage = validationErrors.map(err => err.message).join('. ');
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      if (response.success) {
+        toast.success('Support ticket created successfully!');
+        setFormData({
+          category: '',
+          subject: '',
+          description: '',
+          urgency: 'medium'
+        });
+        setActiveTab('my-tickets');
+        // Refresh tickets list
+        fetchTickets();
+      } else {
+        toast.error(response.message || 'Failed to create support ticket');
       }
+    } catch (error) {
+      console.error('Error creating support ticket:', error);
       
-      toast.error(errorMessage);
+      if (error.response?.data?.details) {
+        // Handle validation errors
+        const errorDetails = error.response.data.details;
+        const errorMessages = [];
+        
+        if (errorDetails.subject) {
+          errorMessages.push(`Subject: ${errorDetails.subject}`);
+        }
+        if (errorDetails.description) {
+          errorMessages.push(`Description: ${errorDetails.description}`);
+        }
+        if (errorDetails.category) {
+          errorMessages.push(`Category: ${errorDetails.category}`);
+        }
+        
+        if (errorMessages.length > 0) {
+          toast.error(`Please fix the following:\n${errorMessages.join('\n')}`);
+        } else {
+          toast.error(error.response.data.message || 'Validation failed');
+        }
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to create support ticket. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const getTypeIcon = (category) => {
-    switch(category) {
-      case 'account': return <FiUser className="text-blue-600" />;
-      case 'technical': return <FiAlertTriangle className="text-amber-600" />;
-      case 'payment': return <FiDollarSign className="text-green-600" />;
-      case 'billing': return <FiDollarSign className="text-green-600" />;
-      case 'feature_request': return <FiTool className="text-purple-600" />;
-      default: return <FiMessageSquare className="text-indigo-600" />;
+  const fetchTickets = async () => {
+    setTicketsLoading(true);
+    try {
+      const response = await supportAPI.getUserTickets();
+      if (response.success) {
+        setTickets(response.data.tickets || []);
+        setPagination(response.data.pagination || { page: 1, totalPages: 1, total: 0 });
+      } else {
+        toast.error('Failed to fetch support tickets');
+      }
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+      toast.error('Failed to load support tickets');
+    } finally {
+      setTicketsLoading(false);
     }
   };
 
-  const getCategoryLabel = (category) => {
-    const categoryMap = {
-      'account': 'Account Help',
-      'technical': 'Technical Issue',
-      'payment': 'Payment Issues',
-      'billing': 'Billing',
-      'feature_request': 'Feature Request',
-      'other': 'Other'
-    };
-    return categoryMap[category] || category;
+  useEffect(() => {
+    if (activeTab === 'my-tickets') {
+      fetchTickets();
+    }
+  }, [activeTab]);
+
+  const getTypeIcon = (type) => {
+    switch(type) {
+      case 'safety': return <FiShield className="text-red-600" />;
+      case 'harassment': return <FiUser className="text-purple-600" />;
+      case 'workplace': return <FiBriefcase className="text-amber-600" />;
+      case 'payment': return <FiDollarSign className="text-green-600" />;
+      case 'equipment': return <FiTool className="text-blue-600" />;
+      case 'management': return <FiUsers className="text-indigo-600" />;
+      case 'customer': return <FiUser className="text-pink-600" />;
+      case 'scheduling': return <FiCalendar className="text-teal-600" />;
+      case 'training': return <FiBook className="text-orange-600" />;
+      default: return <FiHelpCircle className="text-gray-600" />;
+    }
+  };
+
+  const getTypeLabel = (type) => {
+    switch(type) {
+      case 'safety': return 'Safety Concerns';
+      case 'harassment': return 'Harassment/Discrimination';
+      case 'workplace': return 'Workplace Conditions';
+      case 'payment': return 'Payment Issues';
+      case 'equipment': return 'Equipment/Resources';
+      case 'management': return 'Management Issues';
+      case 'customer': return 'Customer Behavior';
+      case 'scheduling': return 'Scheduling Problems';
+      case 'training': return 'Training Issues';
+      default: return 'Other';
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -189,16 +191,14 @@ const VendorSupport = () => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
   };
 
   return (
     <section className="p-6 bg-white shadow-sm vendor-section rounded-xl">
       <div className="flex flex-col mb-6 md:flex-row md:items-center md:justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">Admin Support</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Guide Support</h2>
         <div className="flex gap-2 mt-4 md:mt-0">
           <button
             onClick={() => setActiveTab('new')}
@@ -210,7 +210,7 @@ const VendorSupport = () => {
             onClick={() => setActiveTab('my-tickets')}
             className={`px-4 py-2 rounded-lg ${activeTab === 'my-tickets' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800'}`}
           >
-            My Tickets {pagination.total > 0 && `(${pagination.total})`}
+            My Tickets ({tickets.length})
           </button>
           <button
             onClick={() => setActiveTab('contact')}
@@ -232,20 +232,19 @@ const VendorSupport = () => {
                 onChange={handleChange}
                 className="w-full p-3 border border-gray-300 rounded-lg"
                 required
-                disabled={loading}
               >
                 <option value="">Select a category</option>
-                {categories.map(cat => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </option>
-                ))}
+                <option value="safety">Safety Concerns</option>
+                <option value="harassment">Harassment/Discrimination</option>
+                <option value="workplace">Workplace Conditions</option>
+                <option value="payment">Payment Issues</option>
+                <option value="equipment">Equipment/Resources</option>
+                <option value="management">Management Issues</option>
+                <option value="customer">Customer Behavior</option>
+                <option value="scheduling">Scheduling Problems</option>
+                <option value="training">Training Issues</option>
+                <option value="other">Other</option>
               </select>
-              {formData.category && (
-                <p className="mt-1 text-xs text-gray-500">
-                  {categories.find(c => c.value === formData.category)?.description}
-                </p>
-              )}
             </div>
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700">Urgency*</label>
@@ -255,12 +254,10 @@ const VendorSupport = () => {
                 onChange={handleChange}
                 className="w-full p-3 border border-gray-300 rounded-lg"
                 required
-                disabled={loading}
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High (Urgent)</option>
-                <option value="critical">Critical</option>
               </select>
             </div>
           </div>
@@ -281,7 +278,7 @@ const VendorSupport = () => {
               required
               disabled={loading}
               minLength={5}
-              maxLength={200}
+              maxLength={100}
             />
             <div className="flex justify-between mt-1">
               <p className={`text-xs ${
@@ -295,7 +292,7 @@ const VendorSupport = () => {
                 }
               </p>
               <p className="text-xs text-gray-500">
-                {formData.subject.length}/200
+                {formData.subject.length}/100
               </p>
             </div>
           </div>
@@ -338,11 +335,9 @@ const VendorSupport = () => {
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
             >
-              {loading && <FiLoader className="animate-spin" />}
-              {loading ? 'Submitting...' : 'Submit Request'}
+              Submit Request
             </button>
           </div>
         </form>
@@ -354,88 +349,62 @@ const VendorSupport = () => {
               <span className="ml-2 text-gray-600">Loading tickets...</span>
             </div>
           ) : tickets.length > 0 ? (
-            <>
-              {tickets.map(ticket => (
-                <div key={ticket.id} className="overflow-hidden border rounded-xl">
-                  <div className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 mt-1 bg-gray-100 rounded-full">
-                          {getTypeIcon(ticket.category)}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-800">{ticket.subject}</h3>
-                          <p className="mt-1 text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
-                          <div className="flex items-center gap-3 mt-3 flex-wrap">
-                            <span className="flex items-center gap-1 text-sm text-gray-500">
-                              <FiClock size={14} /> {formatDate(ticket.created_at)}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              {getCategoryLabel(ticket.category)}
-                            </span>
-                            {getStatusBadge(ticket.status)}
-                            {getUrgencyBadge(ticket.urgency)}
-                          </div>
+            tickets.map(ticket => (
+              <div key={ticket.id} className="overflow-hidden border rounded-xl">
+                <div className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 mt-1 bg-gray-100 rounded-full">
+                        {getTypeIcon(ticket.category)}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-800">{ticket.subject}</h3>
+                        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
+                        <div className="flex items-center gap-3 mt-3 flex-wrap">
+                          <span className="flex items-center gap-1 text-sm text-gray-500">
+                            <FiClock size={14} /> {formatDate(ticket.created_at)}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {getTypeLabel(ticket.category)}
+                          </span>
+                          {getStatusBadge(ticket.status)}
+                          {getUrgencyBadge(ticket.urgency)}
                         </div>
                       </div>
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <FiChevronRight />
-                      </button>
                     </div>
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <FiChevronRight />
+                    </button>
                   </div>
+                </div>
 
-                  {ticket.resolution && (
-                    <div className="p-6 border-t bg-gray-50">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 mt-1 text-blue-600 bg-blue-100 rounded-full">
-                          <FiCheckCircle size={16} />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-gray-800">Admin Response</h4>
-                          <p className="mt-1 text-gray-700">{ticket.resolution}</p>
-                          {ticket.resolved_at && (
-                            <p className="mt-2 text-xs text-gray-500">
-                              Resolved on {formatDate(ticket.resolved_at)}
-                            </p>
-                          )}
-                        </div>
+                {ticket.resolution && (
+                  <div className="p-6 border-t bg-gray-50">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 mt-1 text-blue-600 bg-blue-100 rounded-full">
+                        <FiCheckCircle size={16} />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-800">Admin Response</h4>
+                        <p className="mt-1 text-gray-700">{ticket.resolution}</p>
+                        {ticket.resolved_at && (
+                          <p className="mt-2 text-xs text-gray-500">
+                            Resolved on {formatDate(ticket.resolved_at)}
+                          </p>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
-              
-              {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4">
-                  <p className="text-sm text-gray-600">
-                    Page {pagination.page} of {pagination.totalPages} ({pagination.total} total tickets)
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => loadUserTickets(pagination.page - 1)}
-                      disabled={pagination.page === 1 || ticketsLoading}
-                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => loadUserTickets(pagination.page + 1)}
-                      disabled={pagination.page === pagination.totalPages || ticketsLoading}
-                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
                   </div>
-                </div>
-              )}
-            </>
+                )}
+              </div>
+            ))
           ) : (
             <div className="py-12 text-center bg-gray-50 rounded-xl">
-              <FiMessageSquare className="w-12 h-12 mx-auto text-gray-400" />
-              <p className="mt-2 text-gray-500">You haven't submitted any support tickets yet</p>
-              <button
-                onClick={() => setActiveTab('new')}
-                className="mt-4 px-4 py-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+              <FiMessageSquare className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-500">You haven't submitted any support tickets yet</p>
+              <button 
+                onClick={() => setActiveTab('new')} 
+                className="mt-3 text-indigo-600 hover:text-indigo-800 font-medium"
               >
                 Create your first ticket
               </button>
@@ -445,7 +414,7 @@ const VendorSupport = () => {
       ) : (
         <div className="space-y-6">
           <div className="p-6 bg-blue-50 rounded-xl">
-            <h3 className="mb-3 text-lg font-semibold text-gray-800">Contact Roamio Admin</h3>
+            <h3 className="mb-3 text-lg font-semibold text-gray-800">Contact Support Team</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="p-3 text-blue-600 bg-blue-100 rounded-full">
@@ -453,8 +422,8 @@ const VendorSupport = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Email Address</p>
-                  <a href="mailto:support@roamio.com" className="text-blue-600 hover:underline">
-                    support@roamio.com
+                  <a href="mailto:support@example.com" className="text-blue-600 hover:underline">
+                    support@example.com
                   </a>
                 </div>
               </div>
@@ -476,21 +445,21 @@ const VendorSupport = () => {
             </div>
             <div className="divide-y">
               <div className="p-6">
-                <h4 className="font-medium text-gray-800">How do I update my business location?</h4>
+                <h4 className="font-medium text-gray-800">How quickly are safety concerns addressed?</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Submit a "Location Edit" request through the support form. Include your correct address and any supporting documents.
+                  All safety concerns are prioritized and typically addressed within 24 hours. Emergency situations are handled immediately.
                 </p>
               </div>
               <div className="p-6">
-                <h4 className="font-medium text-gray-800">Why aren't my promotions showing?</h4>
+                <h4 className="font-medium text-gray-800">What payment issues can I report?</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Promotions may take up to 2 hours to appear. If still not visible after this time, submit a technical support ticket.
+                  You can report missing payments, incorrect amounts, or payment delays. Please include invoice numbers and dates for faster resolution.
                 </p>
               </div>
               <div className="p-6">
-                <h4 className="font-medium text-gray-800">How can I improve my recommendations?</h4>
+                <h4 className="font-medium text-gray-800">How are harassment complaints handled?</h4>
                 <p className="mt-2 text-sm text-gray-600">
-                  Ensure your profile is complete with high-quality photos, accurate hours, and detailed descriptions. Respond promptly to reviews.
+                  All harassment complaints are treated with strict confidentiality and investigated promptly by our HR team.
                 </p>
               </div>
             </div>
@@ -501,4 +470,4 @@ const VendorSupport = () => {
   );
 };
 
-export default VendorSupport;
+export default Support;

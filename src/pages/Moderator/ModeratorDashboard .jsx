@@ -1,772 +1,329 @@
-// import React, { useState, useEffect } from 'react';
-// import { Calendar, MapPin, Users, X, Search, Filter, ChevronDown, Check, ChevronLeft, ChevronRight } from 'lucide-react';
-// import axios from 'axios';
-// import { useNavigate } from 'react-router-dom';
 
-// const ModeratorDashboard = () => {
-//   // State management
-//   const [selectedTab, setSelectedTab] = useState('PENDING');
-//   const [showRejectModal, setShowRejectModal] = useState(false);
-//   const [selectedTour, setSelectedTour] = useState(null);
-//   const [rejectReason, setRejectReason] = useState('');
-//   const [dateFrom, setDateFrom] = useState('');
-//   const [dateTo, setDateTo] = useState('');
-//   const [searchQuery, setSearchQuery] = useState('');
-//   const navigate = useNavigate();
-  
-//   // Pagination state
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [totalPages, setTotalPages] = useState(1);
-//   const [totalItems, setTotalItems] = useState(0);
-//   const [itemsPerPage] = useState(3);
-
-//   const [selectedCities, setSelectedCities] = useState({
-//     galle: false,
-//     matara: false,
-//     colombo: false,
-//     jaffna: false,
-//     kandy: false,
-//     rhoafa: false,
-//     food: false
-//   });
-//   const [tours, setTours] = useState([]);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState(null);
-//   const [stats, setStats] = useState({ 
-//     pending: 0, 
-//     published: 0, 
-//     rejected: 0 
-//   });
-
-//   const API_BASE_URL = 'http://localhost:3001/api/v1';
-
-//   // Convert API response to component format
-//   const convertApiResponseToTour = (apiTour) => {
-//     return {
-//       id: apiTour.id,
-//       title: apiTour.title,
-//       description: apiTour.description || '',
-//       duration_minutes: apiTour.duration_minutes,
-//       location: apiTour.title,
-//       guide: {
-//         id: apiTour.guide?.user?.id || apiTour.guide_id,
-//         name: apiTour.guide?.user?.name || 'Unknown Guide',
-//         avatar_url: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-//       },
-//       price: apiTour.price,
-//       status: apiTour.status,
-//       image_url: 'https://images.pexels.com/photos/1320684/pexels-photo-1320684.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
-//       created_at: apiTour.created_at,
-//       tags: [],
-//       rejection_reason: apiTour.rejection_reason
-//     };
-//   };
-
-//   // Fetch tour packages
-//   const fetchTourPackages = async () => {
-//     try {
-//       setIsLoading(true);
-//       setError(null);
-      
-//       const params = {
-//         status: selectedTab.toLowerCase().replace('pending', 'pending_approval'),
-//         search: searchQuery,
-//         page: currentPage,
-//         limit: itemsPerPage
-//       };
-
-//       const selectedCitiesList = Object.keys(selectedCities)
-//         .filter(city => selectedCities[city]);
-//       if (selectedCitiesList.length > 0) {
-//         params.location = selectedCitiesList.join(',');
-//       }
-
-//       if (dateFrom) {
-//         params.dateFrom = dateFrom;
-//       }
-
-//       if (dateTo) {
-//         params.dateTo = dateTo;
-//       }
-
-//       const response = await axios.get(`${API_BASE_URL}/tour-packages`, {
-//         params,
-//         headers: {
-//           'Content-Type': 'application/json'
-//         }
-//       });
-      
-//       const responseData = response.data.data;
-//       const apiTours = responseData?.packages || [];
-//       const convertedTours = apiTours.map(convertApiResponseToTour);
-      
-//       setTours(convertedTours);
-//       setTotalItems(responseData?.total || 0);
-//       setTotalPages(Math.ceil((responseData?.total || 0) / itemsPerPage));
-      
-//     } catch (err) {
-//       setError('Failed to load tours. Please try again.');
-//       console.error('Error fetching tours:', err);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   // Fetch statistics
-//   const fetchStatistics = async () => {
-//     try {
-//       const response = await axios.get(`${API_BASE_URL}/tour-packages/statistics`);
-//       setStats({
-//         pending: response.data.data?.pending || 0,
-//         published: response.data.data?.published || 0,
-//         rejected: response.data.data?.rejected || 0
-//       });
-//     } catch (err) {
-//       console.error('Error fetching statistics:', err);
-//     }
-//   };
-
-//   // Reset to first page when filters change
-//   const resetToFirstPage = () => {
-//     setCurrentPage(1);
-//   };
-
-//   // Initial data fetch
-//   useEffect(() => {
-//     fetchTourPackages();
-//     fetchStatistics();
-//   }, []);
-
-//   // Refetch when filters change (reset to page 1)
-//   useEffect(() => {
-//     resetToFirstPage();
-//   }, [selectedTab, searchQuery, selectedCities, dateFrom, dateTo]);
-
-//   // Refetch when page changes
-//   useEffect(() => {
-//     fetchTourPackages();
-//   }, [currentPage, selectedTab, searchQuery, selectedCities, dateFrom, dateTo]);
-
-//   // Handle tour approval
-//   const handleApprove = async (tourId, event) => {
-//     event.stopPropagation();
-//     try {
-//       await axios.patch(`${API_BASE_URL}/tour-packages/${tourId}/status`, {
-//         status: 'published'
-//       });
-//       fetchTourPackages();
-//       fetchStatistics();
-//     } catch (err) {
-//       setError('Failed to approve tour. Please try again.');
-//       console.error('Error approving tour:', err);
-//     }
-//   };
-
-//   // Handle tour rejection
-//   const handleReject = (tour, event) => {
-//     event.stopPropagation();
-//     setSelectedTour(tour);
-//     setShowRejectModal(true);
-//   };
-
-//   // Confirm rejection
-//   const confirmReject = async () => {
-//     if (!selectedTour || !rejectReason.trim()) return;
-    
-//     try {
-//       await axios.patch(`${API_BASE_URL}/tour-packages/${selectedTour.id}/status`, {
-//         status: 'rejected',
-//         rejection_reason: rejectReason
-//       });
-      
-//       fetchTourPackages();
-//       fetchStatistics();
-//       setShowRejectModal(false);
-//       setRejectReason('');
-//       setSelectedTour(null);
-//     } catch (err) {
-//       setError('Failed to reject tour. Please try again.');
-//       console.error('Error rejecting tour:', err);
-//     }
-//   };
-
-//   const handleView = (tourId, event) => {
-//     event.stopPropagation();
-//     navigate(`/tour/${tourId}`);
-//   };
-
-//   // Toggle city filter
-//   const handleCityToggle = (city) => {
-//     setSelectedCities(prev => ({
-//       ...prev,
-//       [city]: !prev[city]
-//     }));
-//   };
-
-//   // Pagination handlers
-//   const handlePageChange = (page) => {
-//     if (page >= 1 && page <= totalPages) {
-//       setCurrentPage(page);
-//     }
-//   };
-
-//   const handlePrevPage = () => {
-//     if (currentPage > 1) {
-//       setCurrentPage(currentPage - 1);
-//     }
-//   };
-
-//   const handleNextPage = () => {
-//     if (currentPage < totalPages) {
-//       setCurrentPage(currentPage + 1);
-//     }
-//   };
-
-//   // Generate page numbers for pagination
-//   const getPageNumbers = () => {
-//     const pages = [];
-//     const maxVisiblePages = 5;
-    
-//     if (totalPages <= maxVisiblePages) {
-//       for (let i = 1; i <= totalPages; i++) {
-//         pages.push(i);
-//       }
-//     } else {
-//       if (currentPage <= 3) {
-//         for (let i = 1; i <= 5; i++) {
-//           pages.push(i);
-//         }
-//       } else if (currentPage >= totalPages - 2) {
-//         for (let i = totalPages - 4; i <= totalPages; i++) {
-//           pages.push(i);
-//         }
-//       } else {
-//         for (let i = currentPage - 2; i <= currentPage + 2; i++) {
-//           pages.push(i);
-//         }
-//       }
-//     }
-    
-//     return pages;
-//   };
-
-//   // Format duration
-//   const formatDuration = (minutes) => {
-//     const hours = Math.floor(minutes / 60);
-//     const mins = minutes % 60;
-//     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-//   };
-
-//   // Format date
-//   const formatDate = (dateString) => {
-//     return new Date(dateString).toLocaleDateString('en-US', {
-//       year: 'numeric',
-//       month: 'short',
-//       day: 'numeric'
-//     });
-//   };
-
-//   // Get status color
-//   const getStatusColor = (status) => {
-//     switch (status) {
-//       case 'pending_approval': return 'bg-yellow-100 text-yellow-800';
-//       case 'published': return 'bg-green-100 text-green-800';
-//       case 'rejected': return 'bg-red-100 text-red-800';
-//       default: return 'bg-gray-100 text-gray-800';
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gray-50">
-//       <main className="px-4 mx-auto py-8 max-w-[90%] sm:px-6 lg:px-8">
-//         {error && (
-//           <div className="p-4 mb-6 text-red-700 bg-red-100 rounded-lg">
-//             {error}
-//           </div>
-//         )}
-        
-//         <div className="flex flex-col gap-8 lg:flex-row">
-//           {/* Sidebar */}
-//           <aside className="w-full lg:w-72">
-//             <div className="p-6 border shadow-lg bg-white/60 backdrop-blur-md border-white/30 rounded-xl" style={{boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)'}}>
-//               <div className="mb-6">
-//                 <h2 className="text-xl font-semibold text-gray-800">Welcome Back!</h2>
-//                 <p className="mt-1 text-sm text-gray-500">
-//                   {totalItems} {totalItems === 1 ? 'Tour' : 'Tours'} Found
-//                 </p>
-//               </div>
-
-//               {/* Status Tabs */}
-//               <div className="mb-6 space-y-2">
-//                 {[
-//                   { status: 'PENDING', color: 'yellow', count: stats.pending },
-//                   { status: 'PUBLISHED', color: 'green', count: stats.published },
-//                   { status: 'REJECTED', color: 'red', count: stats.rejected }
-//                 ].map((tab) => (
-//                   <button
-//                     key={tab.status}
-//                     onClick={() => setSelectedTab(tab.status)}
-//                     className={`w-full flex justify-between items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${
-//                       selectedTab === tab.status 
-//                         ? `bg-${tab.color}-50 text-${tab.color}-700 border-l-4 border-${tab.color}-500`
-//                         : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-//                     }`}
-//                   >
-//                     <span className="font-medium">{tab.status}</span>
-//                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-//                       selectedTab === tab.status 
-//                         ? `bg-${tab.color}-100 text-${tab.color}-700`
-//                         : 'bg-white text-gray-600'
-//                     }`}>
-//                       {tab.count}
-//                     </span>
-//                   </button>
-//                 ))}
-//               </div>
-
-//               {/* Date Filter */}
-//               <div className="mb-6">
-//                 <h3 className="mb-3 text-sm font-semibold tracking-wider text-gray-700 uppercase">Date Range</h3>
-//                 <div className="space-y-3">
-//                   <div>
-//                     <label className="block mb-1 text-xs font-medium text-gray-500">From</label>
-//                     <div className="relative">
-//                       <Calendar className="absolute w-4 h-4 text-gray-400 left-3 top-3" />
-//                       <input
-//                         type="date"
-//                         value={dateFrom}
-//                         onChange={(e) => setDateFrom(e.target.value)}
-//                         className="w-full py-2 pl-10 pr-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-//                       />
-//                     </div>
-//                   </div>
-//                   <div>
-//                     <label className="block mb-1 text-xs font-medium text-gray-500">To</label>
-//                     <div className="relative">
-//                       <Calendar className="absolute w-4 h-4 text-gray-400 left-3 top-3" />
-//                       <input
-//                         type="date"
-//                         value={dateTo}
-//                         onChange={(e) => setDateTo(e.target.value)}
-//                         className="w-full py-2 pl-10 pr-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-//                       />
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-
-//               {/* Cities Filter */}
-//               <div>
-//                 <div className="flex items-center justify-between mb-3">
-//                   <h3 className="text-sm font-semibold tracking-wider text-gray-700 uppercase">Locations</h3>
-//                   <div className="p-1 bg-gray-100 rounded-md">
-//                     <Filter className="w-4 h-4 text-gray-500" />
-//                   </div>
-//                 </div>
-//                 <div className="grid grid-cols-2 gap-2">
-//                   {Object.entries(selectedCities).map(([city, checked]) => (
-//                     <label 
-//                       key={city}
-//                       className={`flex items-center space-x-2 text-sm p-2 rounded-md cursor-pointer transition-colors ${
-//                         checked 
-//                           ? 'bg-blue-50 text-blue-700 border border-blue-200'
-//                           : 'hover:bg-gray-50'
-//                       }`}
-//                     >
-//                       <input
-//                         type="checkbox"
-//                         checked={checked}
-//                         onChange={() => handleCityToggle(city)}
-//                         className={`w-4 h-4 rounded ${
-//                           checked ? 'text-blue-600 border-blue-300' : 'text-gray-400 border-gray-300'
-//                         } focus:ring-blue-500`}
-//                       />
-//                       <span className="capitalize">{city}</span>
-//                     </label>
-//                   ))}
-//                 </div>
-//               </div>
-//             </div>
-//           </aside>
-
-//           {/* Main Content */}
-//           <div className="flex-1">
-//             {/* Search */}
-//             <div className="mb-6">
-//               <div className="relative max-w-md">
-//                 <Search className="absolute w-4 h-4 text-gray-400 left-3 top-3" />
-//                 <input
-//                   type="text"
-//                   placeholder="Search tours..."
-//                   value={searchQuery}
-//                   onChange={(e) => setSearchQuery(e.target.value)}
-//                   className="w-full py-2 pl-10 pr-4 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-//                 />
-//               </div>
-//             </div>
-
-//             {/* Loading State */}
-//             {isLoading ? (
-//               <div className="flex items-center justify-center p-12">
-//                 <div className="w-8 h-8 border-4 border-teal-500 rounded-full border-t-transparent animate-spin"></div>
-//               </div>
-//             ) : (
-//               <>
-//                 {/* Tour Cards */}
-//                 <div className="space-y-6">
-//                   {tours.length > 0 ? (
-//                     tours.map((tour) => (
-//                       <div 
-//                         key={tour.id}
-//                         className="overflow-hidden bg-white/60 backdrop-blur-md rounded-lg shadow-lg transition-transform hover:shadow-xl hover:-translate-y-0.5 cursor-pointer border border-white/30" style={{boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)'}}>
-//                         <div className="flex flex-col md:flex-row">
-//                           <div className="flex-shrink-0 w-full h-48 md:w-64 md:h-auto">
-//                             <img 
-//                               src={tour.image_url} 
-//                               alt={tour.title} 
-//                               className="object-cover w-full h-full"
-//                               loading="lazy"
-//                             />
-//                           </div>
-//                           <div className="flex-1 p-6">
-//                             <div className="flex flex-col justify-between mb-4 space-y-3 sm:flex-row sm:space-y-0">
-//                               <div>
-//                                 <h3 className="text-xl font-semibold text-gray-900">{tour.title}</h3>
-//                                 <div className="flex flex-wrap gap-2 mt-2">
-//                                   {tour.tags?.map(tag => (
-//                                     <span key={tag} className="px-2 py-1 text-xs text-teal-800 bg-teal-100 rounded-full">
-//                                       {tag}
-//                                     </span>
-//                                   ))}
-//                                 </div>
-//                               </div>
-//                               <div className="flex items-start space-x-3">
-//                                 <img 
-//                                   src={tour.guide.avatar_url} 
-//                                   alt={tour.guide.name} 
-//                                   className="w-10 h-10 rounded-full"
-//                                   loading="lazy"
-//                                 />
-//                                 <div className="text-right">
-//                                   <span className="block text-sm font-medium">{tour.guide.name}</span>
-//                                   <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(tour.status)}`}>
-//                                     {tour.status.toUpperCase().replace('_', ' ')}
-//                                   </span>
-//                                 </div>
-//                               </div>
-//                             </div>
-
-//                             <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-gray-600">
-//                               <div className="flex items-center">
-//                                 <Calendar className="w-4 h-4 mr-1.5" />
-//                                 <span>{formatDuration(tour.duration_minutes)}</span>
-//                               </div>
-//                               <div className="flex items-center">
-//                                 <MapPin className="w-4 h-4 mr-1.5" />
-//                                 <span>{tour.location}</span>
-//                               </div>
-//                               <div className="flex items-center">
-//                                 <span className="text-xs text-gray-500">Posted: {formatDate(tour.created_at)}</span>
-//                               </div>
-//                             </div>
-
-//                             <p className="mb-4 text-sm text-gray-600 line-clamp-2">{tour.description}</p>
-
-//                             {tour.rejection_reason && (
-//                               <div className="p-3 mb-4 border border-red-200 rounded-lg bg-red-50">
-//                                 <p className="text-sm text-red-700">
-//                                   <strong>Rejection Reason:</strong> {tour.rejection_reason}
-//                                 </p>
-//                               </div>
-//                             )}
-
-//                             <div className="flex flex-col justify-between space-y-4 sm:flex-row sm:space-y-0 sm:items-center">
-//                               <div className="text-xl font-bold text-teal-600">${tour.price.toFixed(2)}</div>
-                              
-//                               <div className="flex space-x-3">
-//                                 <button
-//                                   onClick={(e) => handleView(tour.id, e)}
-//                                   className="px-6 py-2 text-sm font-medium text-white bg-teal-500 rounded-lg hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-//                                 >
-//                                   View
-//                                 </button>
-//                                 {selectedTab === 'PENDING' && (
-//                                   <>
-//                                     <button
-//                                       onClick={(e) => handleApprove(tour.id, e)}
-//                                       className="px-6 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-//                                     >
-//                                       Approve
-//                                     </button>
-//                                     <button
-//                                       onClick={(e) => handleReject(tour, e)}
-//                                       className="px-6 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-//                                     >
-//                                       Reject
-//                                     </button>
-//                                   </>
-//                                 )}
-//                               </div>
-//                             </div>
-//                           </div>
-//                         </div>
-//                       </div>
-//                     ))
-//                   ) : (
-//                     <div className="p-12 text-center bg-white rounded-lg shadow-sm">
-//                       <div className="max-w-md mx-auto">
-//                         <Search className="w-12 h-12 mx-auto text-gray-400" />
-//                         <h3 className="mt-4 text-lg font-medium text-gray-900">No tours found</h3>
-//                         <p className="mt-2 text-sm text-gray-500">
-//                           {searchQuery 
-//                             ? `No tours match your search for "${searchQuery}". Try a different search term.`
-//                             : 'There are no tours matching your current filters.'}
-//                         </p>
-//                         <button 
-//                           onClick={() => {
-//                             setSearchQuery('');
-//                             setSelectedCities({
-//                               galle: false,
-//                               matara: false,
-//                               colombo: false,
-//                               jaffna: false,
-//                               kandy: false,
-//                               rhoafa: false,
-//                               food: false
-//                             });
-//                             setDateFrom('');
-//                             setDateTo('');
-//                           }}
-//                           className="px-4 py-2 mt-4 text-sm font-medium text-teal-600 rounded-lg bg-teal-50 hover:bg-teal-100"
-//                         >
-//                           Reset all filters
-//                         </button>
-//                       </div>
-//                     </div>
-//                   )}
-//                 </div>
-                
-//                 {/* Pagination */}
-//                 {totalPages > 1 && (
-//                   <div className="flex flex-col items-center justify-between mt-8 space-y-4 sm:flex-row sm:space-y-0">
-//                     {/* Results info */}
-//                     <div className="text-sm text-gray-600">
-//                       Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} results
-//                     </div>
-                    
-//                     {/* Pagination controls */}
-//                     <div className="flex items-center space-x-2">
-//                       {/* Previous button */}
-//                       <button
-//                         onClick={handlePrevPage}
-//                         disabled={currentPage === 1}
-//                         className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-//                           currentPage === 1
-//                             ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-//                             : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-//                         }`}
-//                       >
-//                         <ChevronLeft className="w-4 h-4 mr-1" />
-//                         Previous
-//                       </button>
-                      
-//                       {/* Page numbers */}
-//                       <div className="flex items-center space-x-1">
-//                         {getPageNumbers().map((pageNum) => (
-//                           <button
-//                             key={pageNum}
-//                             onClick={() => handlePageChange(pageNum)}
-//                             className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-//                               currentPage === pageNum
-//                                 ? 'text-white bg-teal-600 hover:bg-teal-700'
-//                                 : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-//                             }`}
-//                           >
-//                             {pageNum}
-//                           </button>
-//                         ))}
-                        
-//                         {/* Show ellipsis and last page if needed */}
-//                         {totalPages > 5 && currentPage < totalPages - 2 && (
-//                           <>
-//                             <span className="px-2 text-gray-500">...</span>
-//                             <button
-//                               onClick={() => handlePageChange(totalPages)}
-//                               className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-//                             >
-//                               {totalPages}
-//                             </button>
-//                           </>
-//                         )}
-//                       </div>
-                      
-//                       {/* Next button */}
-//                       <button
-//                         onClick={handleNextPage}
-//                         disabled={currentPage === totalPages}
-//                         className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-//                           currentPage === totalPages
-//                             ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-//                             : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-//                         }`}
-//                       >
-//                         Next
-//                         <ChevronRight className="w-4 h-4 ml-1" />
-//                       </button>
-//                     </div>
-//                   </div>
-//                 )}
-//               </>
-//             )}
-//           </div>
-//         </div>
-//       </main>
-
-//       {/* Reject Modal */}
-//       {showRejectModal && selectedTour && (
-//         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-//           <div className="w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-xl">
-//             <div className="flex items-center justify-between mb-4">
-//               <h3 className="text-lg font-semibold text-gray-900">Reject Tour</h3>
-//               <button
-//                 onClick={() => {
-//                   setShowRejectModal(false);
-//                   setRejectReason('');
-//                 }}
-//                 className="text-gray-400 rounded-md hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
-//               >
-//                 <X className="w-5 h-5" />
-//               </button>
-//             </div>
-            
-//             <p className="mb-4 text-gray-600">
-//               Please provide a reason for rejecting <span className="font-medium">"{selectedTour.title}"</span>
-//             </p>
-            
-//             <textarea
-//               value={rejectReason}
-//               onChange={(e) => setRejectReason(e.target.value)}
-//               placeholder="Enter rejection reason (required)..."
-//               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-//               rows={4}
-//               autoFocus
-//             />
-            
-//             <div className="flex justify-end mt-6 space-x-3">
-//               <button
-//                 onClick={() => {
-//                   setShowRejectModal(false);
-//                   setRejectReason('');
-//                 }}
-//                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 onClick={confirmReject}
-//                 disabled={!rejectReason.trim()}
-//                 className={`px-6 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 ${
-//                   rejectReason.trim() ? 'bg-red-500 hover:bg-red-600' : 'bg-red-300 cursor-not-allowed'
-//                 }`}
-//               >
-//                 Confirm Reject
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default ModeratorDashboard;
 
 import React, { useState, useEffect } from 'react';
 import { 
-  FaMapMarkerAlt, FaStar, FaCheckCircle, FaTimesCircle, 
-  FaEye, FaSearch, FaChevronDown, FaShieldAlt, 
-  FaChartLine, FaUsers, FaFileAlt, FaClock, FaCalendarAlt
+  FaMapMarkerAlt, FaStar, FaEye, FaSearch, FaChevronDown, 
+  FaChartLine, FaUsers, FaFileAlt, FaClock, FaCalendarAlt,
+  FaFilter, FaSort, FaHeart, FaShareAlt, FaChevronLeft, FaChevronRight
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const ModeratorDashboard = () => {
-  const [statusFilter, setStatusFilter] = useState('pending_approval');
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [selectedTour, setSelectedTour] = useState(null);
-  const [rejectReason, setRejectReason] = useState('');
+  // Component for pagination
+  const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+    if (totalPages <= 1) return null;
+
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+        <div className="flex justify-between flex-1 sm:hidden">
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+        
+        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-gray-700">
+              Showing page <span className="font-medium">{currentPage}</span> of{' '}
+              <span className="font-medium">{totalPages}</span>
+            </p>
+          </div>
+          <div>
+            <nav className="relative z-0 inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+              <button
+                onClick={() => onPageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaChevronLeft className="w-3 h-3" />
+              </button>
+              
+              {startPage > 1 && (
+                <>
+                  <button
+                    onClick={() => onPageChange(1)}
+                    className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                  >
+                    1
+                  </button>
+                  {startPage > 2 && (
+                    <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300">
+                      ...
+                    </span>
+                  )}
+                </>
+              )}
+              
+              {pageNumbers.map((number) => (
+                <button
+                  key={number}
+                  onClick={() => onPageChange(number)}
+                  className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border ${
+                    currentPage === number
+                      ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {number}
+                </button>
+              ))}
+              
+              {endPage < totalPages && (
+                <>
+                  {endPage < totalPages - 1 && (
+                    <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300">
+                      ...
+                    </span>
+                  )}
+                  <button
+                    onClick={() => onPageChange(totalPages)}
+                    className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+              
+              <button
+                onClick={() => onPageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaChevronRight className="w-3 h-3" />
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  const [activeTab, setActiveTab] = useState('pending_approval');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [selectedLocation, setSelectedLocation] = useState('all');
   const navigate = useNavigate();
   
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage] = useState(8);
-  
+  const [currentPages, setCurrentPages] = useState({
+    pending_approval: 1,
+    published: 1,
+    rejected: 1
+  });
+  const [totalPages, setTotalPages] = useState({
+    pending_approval: 1,
+    published: 1,
+    rejected: 1
+  });
+  const [totalItems, setTotalItems] = useState({
+    pending_approval: 0,
+    published: 0,
+    rejected: 0
+  });
+  const [itemsPerPage] = useState(5);
 
-  const [tours, setTours] = useState([]);
+  const [toursByStatus, setToursByStatus] = useState({
+    pending_approval: [],
+    published: [],
+    rejected: []
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({ 
     pending: 0, 
     published: 0, 
-    rejected: 0 
+    rejected: 0,
+    total: 0
   });
 
   const API_BASE_URL = 'http://localhost:3001/api/v1';
 
-  const statusOptions = [
-    { value: 'pending_approval', label: 'Pending Review', icon: FaShieldAlt },
-    { value: 'published', label: 'Published', icon: FaCheckCircle },
-    { value: 'rejected', label: 'Rejected', icon: FaTimesCircle },
-    { value: 'all', label: 'All Tours', icon: FaMapMarkerAlt }
+  const statusTabs = [
+    { 
+      key: 'pending_approval', 
+      label: 'Pending Review', 
+      count: stats.pending,
+      color: 'orange',
+      description: 'Tours awaiting moderation approval'
+    },
+    { 
+      key: 'published', 
+      label: 'Published Tours', 
+      count: stats.published,
+      color: 'green',
+      description: 'Live tours available to users'
+    },
+    { 
+      key: 'rejected', 
+      label: 'Rejected Tours', 
+      count: stats.rejected,
+      color: 'red',
+      description: 'Tours that need revision'
+    }
+  ];
+
+  const sortOptions = [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'price_low', label: 'Price: Low to High' },
+    { value: 'price_high', label: 'Price: High to Low' },
+    { value: 'rating', label: 'Highest Rated' }
+  ];
+
+  const locationOptions = [
+    { value: 'all', label: 'All Locations' },
+    { value: 'colombo', label: 'Colombo' },
+    { value: 'kandy', label: 'Kandy' },
+    { value: 'galle', label: 'Galle' },
+    { value: 'ella', label: 'Ella' },
+    { value: 'sigiriya', label: 'Sigiriya' }
   ];
 
   const convertApiResponseToTour = (apiTour) => {
+    // Debug log to see what we're getting from the API
+    console.log('API Tour Data:', {
+      id: apiTour.id,
+      title: apiTour.title,
+      cover_image_url: apiTour.cover_image_url
+    });
+
     return {
       id: apiTour.id,
       title: apiTour.title,
-      description: apiTour.description || 'No description provided',
+      description: apiTour.description || 'Experience the beauty and culture of this amazing destination...',
       duration: apiTour.duration_minutes,
       location: apiTour.location || 'Multiple locations',
       guide: {
-        name: apiTour.guide?.user?.name || 'Unknown Guide',
+        name: apiTour.guide?.user?.name || 'Expert Guide',
         avatar: apiTour.guide?.user?.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg',
-        experience: apiTour.guide?.years_of_experience || 0
+        experience: apiTour.guide?.years_of_experience || Math.floor(Math.random() * 10) + 1,
+        rating: 4.2 + Math.random() * 0.8 // Random rating between 4.2-5.0
       },
       price: apiTour.price,
+      originalPrice: apiTour.price * 1.2, // Show discount
       status: apiTour.status,
-      image: apiTour.cover_image_url || 'https://source.unsplash.com/random/600x400/?travel',
+      image: apiTour.cover_image_url, // Use actual S3 cover image URL
+      images: [
+        apiTour.cover_image_url
+      ].filter(Boolean), // Remove null/undefined values
       createdAt: apiTour.created_at,
-      rejectionReason: apiTour.rejection_reason
+      rating: 4.1 + Math.random() * 0.9,
+      reviewCount: Math.floor(Math.random() * 500) + 50,
+      availability: 'Available',
     };
   };
 
-  const fetchTourPackages = async () => {
+  const fetchTourPackages = async (statusToFetch = null) => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const params = {
-        status: statusFilter === 'all' ? undefined : statusFilter,
-        search: searchQuery,
-        page: currentPage,
-        limit: itemsPerPage
-      };
+      // Determine which statuses to fetch
+      const statuses = statusToFetch ? [statusToFetch] : ['pending_approval', 'published', 'rejected'];
+      
+      const tourPromises = statuses.map(async (status) => {
+        const currentPage = currentPages[status] || 1;
+        const params = {
+          status,
+          search: searchQuery,
+          page: currentPage,
+          limit: itemsPerPage
+        };
 
-      const response = await axios.get(`${API_BASE_URL}/tour-packages`, {
-        params,
-        headers: {
-          'Content-Type': 'application/json'
+        if (selectedLocation !== 'all') {
+          params.location = selectedLocation;
         }
+
+        const response = await axios.get(`${API_BASE_URL}/tour-packages`, {
+          params,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const responseData = response.data.data;
+        const convertedTours = (responseData?.packages || []).map(convertApiResponseToTour);
+        const total = responseData?.total || 0;
+        const pages = Math.ceil(total / itemsPerPage);
+        
+        return { 
+          status, 
+          tours: convertedTours, 
+          total,
+          pages
+        };
       });
+
+      const results = await Promise.all(tourPromises);
       
-      const responseData = response.data.data;
-      const convertedTours = (responseData?.packages || []).map(convertApiResponseToTour);
-      
-      setTours(convertedTours);
-      setTotalItems(responseData?.total || 0);
-      setTotalPages(Math.ceil((responseData?.total || 0) / itemsPerPage));
+      // Update state based on what was fetched
+      if (statusToFetch) {
+        // Update only specific status
+        const result = results[0];
+        setToursByStatus(prev => ({
+          ...prev,
+          [result.status]: result.tours
+        }));
+        setTotalPages(prev => ({
+          ...prev,
+          [result.status]: result.pages
+        }));
+        setTotalItems(prev => ({
+          ...prev,
+          [result.status]: result.total
+        }));
+      } else {
+        // Update all statuses
+        const organizedTours = {
+          pending_approval: [],
+          published: [],
+          rejected: []
+        };
+        const newTotalPages = {
+          pending_approval: 1,
+          published: 1,
+          rejected: 1
+        };
+        const newTotalItems = {
+          pending_approval: 0,
+          published: 0,
+          rejected: 0
+        };
+        
+        results.forEach(result => {
+          organizedTours[result.status] = result.tours;
+          newTotalPages[result.status] = result.pages;
+          newTotalItems[result.status] = result.total;
+        });
+        
+        setToursByStatus(organizedTours);
+        setTotalPages(newTotalPages);
+        setTotalItems(newTotalItems);
+      }
       
     } catch (err) {
       setError('Failed to load tours. Please try again.');
@@ -779,10 +336,12 @@ const ModeratorDashboard = () => {
   const fetchStatistics = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/tour-packages/statistics`);
+      const data = response.data.data;
       setStats({
-        pending: response.data.data?.pending || 0,
-        published: response.data.data?.published || 0,
-        rejected: response.data.data?.rejected || 0
+        pending: data?.pending || 0,
+        published: data?.published || 0,
+        rejected: data?.rejected || 0,
+        total: (data?.pending || 0) + (data?.published || 0) + (data?.rejected || 0)
       });
     } catch (err) {
       console.error('Error fetching statistics:', err);
@@ -795,53 +354,53 @@ const ModeratorDashboard = () => {
   }, []);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, searchQuery]);
-
-  useEffect(() => {
     fetchTourPackages();
-  }, [currentPage, statusFilter, searchQuery]);
+  }, [searchQuery, selectedLocation]);
 
-  const handleApprove = async (tourId) => {
-    try {
-      await axios.patch(`${API_BASE_URL}/tour-packages/${tourId}/status`, {
-        status: 'published'
-      });
-      fetchTourPackages();
-      fetchStatistics();
-    } catch (err) {
-      setError('Failed to approve tour. Please try again.');
-      console.error('Error approving tour:', err);
-    }
-  };
+  // Fetch specific status when page changes
+  useEffect(() => {
+    fetchTourPackages(activeTab);
+  }, [currentPages]);
 
-  const handleReject = (tour) => {
-    setSelectedTour(tour);
-    setShowRejectModal(true);
-  };
+  // Reset to page 1 when changing tabs
+  useEffect(() => {
+    setCurrentPages(prev => ({
+      ...prev,
+      [activeTab]: 1
+    }));
+  }, [activeTab]);
 
-  const confirmReject = async () => {
-    if (!selectedTour || !rejectReason.trim()) return;
-    
-    try {
-      await axios.patch(`${API_BASE_URL}/tour-packages/${selectedTour.id}/status`, {
-        status: 'rejected',
-        rejection_reason: rejectReason
-      });
-      
-      fetchTourPackages();
-      fetchStatistics();
-      setShowRejectModal(false);
-      setRejectReason('');
-      setSelectedTour(null);
-    } catch (err) {
-      setError('Failed to reject tour. Please try again.');
-      console.error('Error rejecting tour:', err);
-    }
+  const handlePageChange = (page) => {
+    setCurrentPages(prev => ({
+      ...prev,
+      [activeTab]: page
+    }));
   };
 
   const handleView = (tourId) => {
     navigate(`/moderator/tour/${tourId}`);
+  };
+
+  // Get current tours based on active tab
+  const getCurrentTours = () => {
+    return toursByStatus[activeTab] || [];
+  };
+
+  const getCurrentStats = () => {
+    const currentTab = statusTabs.find(tab => tab.key === activeTab);
+    const currentPageNum = currentPages[activeTab];
+    const totalPagesNum = totalPages[activeTab];
+    const totalItemsNum = totalItems[activeTab];
+    
+    return {
+      count: currentTab?.count || 0,
+      label: currentTab?.label || '',
+      description: currentTab?.description || '',
+      currentPage: currentPageNum,
+      totalPages: totalPagesNum,
+      totalItems: totalItemsNum,
+      itemsPerPage
+    };
   };
 
   const formatDuration = (minutes) => {
@@ -860,362 +419,290 @@ const ModeratorDashboard = () => {
 
   const getStatusBadge = (status) => {
     const config = {
-      pending_approval: { bg: 'bg-amber-100', text: 'text-amber-800', icon: FaShieldAlt },
-      published: { bg: 'bg-teal-100', text: 'text-teal-800', icon: FaCheckCircle },
-      rejected: { bg: 'bg-red-100', text: 'text-red-800', icon: FaTimesCircle }
-    }[status] || { bg: 'bg-slate-100', text: 'text-slate-800', icon: FaFileAlt };
+      pending_approval: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Pending' },
+      published: { bg: 'bg-green-100', text: 'text-green-800', label: 'Published' },
+      rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' }
+    }[status] || { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Unknown' };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ${config.bg} ${config.text}`}>
-        <config.icon className="w-3 h-3 mr-1" />
-        {status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+      <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${config.bg} ${config.text}`}>
+        {config.label}
       </span>
     );
   };
 
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0
+    }).format(price);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="px-6 py-8 bg-gradient-to-r from-slate-900 to-blue-900">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col max-w-2xl gap-2">
-            <span className="text-sm font-medium tracking-wide text-teal-400">TOUR MODERATION</span>
-            <h1 className="text-3xl font-light leading-tight text-white">Tour Review Dashboard</h1>
-            <p className="text-slate-300">Review and approve tour submissions from guides</p>
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">Tour Moderation Dashboard</h1>
+              <p className="text-sm text-gray-600">Review and manage tour submissions</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-500">
+                {Object.values(totalItems).reduce((sum, count) => sum + count, 0)} total tours
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="pb-12 mt-5">
-        <div className="mx-auto sm:px-6 lg:px-12">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-4">
-            {statusOptions.map((option) => (
-              <div 
-                key={option.value}
-                onClick={() => setStatusFilter(option.value)}
-                className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                  statusFilter === option.value 
-                    ? 'border-teal-300 bg-teal-50 shadow-sm' 
-                    : 'bg-white border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center">
-                  <option.icon className={`w-5 h-5 mr-2 ${
-                    option.value === 'pending_approval' ? 'text-amber-500' :
-                    option.value === 'published' ? 'text-teal-500' :
-                    option.value === 'rejected' ? 'text-red-500' : 'text-blue-500'
-                  }`} />
-                  <h3 className="text-sm font-medium text-slate-700">{option.label}</h3>
-                </div>
-                <p className="mt-2 text-2xl font-semibold text-slate-900">
-                  {option.value === 'pending_approval' ? stats.pending :
-                   option.value === 'published' ? stats.published :
-                   option.value === 'rejected' ? stats.rejected : 
-                   stats.pending + stats.published + stats.rejected}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Action Bar */}
-          <div className="flex flex-col items-start justify-between gap-4 mb-8 md:flex-row md:items-center">
-            <div className="flex items-center w-full gap-3 md:w-auto">
-              <div className="relative flex-1 md:flex-none md:w-48">
-                <input
-                  type="text"
-                  placeholder="Search tours..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-700"
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <FaSearch className="w-4 h-4 text-slate-400" />
-                </div>
-              </div>
-              <div className="relative flex-shrink-0">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-700"
-                >
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <FaChevronDown className="w-3 h-3 text-slate-400" />
-                </div>
-              </div>
-            </div>
-            <div className="text-sm text-slate-500">
-              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} tours
-            </div>
-          </div>
-
-          {/* Tours Grid */}
-          {isLoading ? (
-            <div className="flex items-center justify-center p-12">
-              <div className="w-8 h-8 border-4 border-teal-500 rounded-full border-t-transparent animate-spin"></div>
-            </div>
-          ) : tours.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {tours.map((tour) => (
-                  <div key={tour.id} className="overflow-hidden transition-all duration-300 bg-white shadow-sm rounded-xl hover:shadow-md group">
-                    {/* Tour Image */}
-                    <div className="relative w-full h-48">
-                      <img 
-                        src={tour.image} 
-                        alt={tour.title} 
-                        className="object-cover w-full h-full"
-                        loading="lazy"
-                      />
-                      <div className="absolute top-3 left-3">
-                        {getStatusBadge(tour.status)}
-                      </div>
-                    </div>
-                    
-                    {/* Tour Details */}
-                    <div className="p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="text-lg font-semibold text-slate-800">{tour.title}</h3>
-                          <div className="flex items-center mt-1 text-sm text-slate-500">
-                            <FaMapMarkerAlt className="w-3 h-3 mr-1" />
-                            <span>{tour.location}</span>
-                          </div>
-                        </div>
-                        <div className="text-lg font-medium text-slate-900">${tour.price.toFixed(2)}</div>
-                      </div>
-                      
-                      {/* Guide Info */}
-                      <div className="flex items-center mb-4">
-                        <img 
-                          src={tour.guide.avatar} 
-                          alt={tour.guide.name} 
-                          className="w-8 h-8 mr-3 rounded-full"
-                        />
-                        <div>
-                          <p className="text-sm font-medium text-slate-800">{tour.guide.name}</p>
-                          {tour.guide.experience > 0 && (
-                            <p className="text-xs text-slate-500">{tour.guide.experience} years experience</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Tour Meta */}
-                      <div className="flex flex-wrap items-center gap-3 mb-4 text-xs text-slate-600">
-                        <div className="flex items-center">
-                          <FaClock className="w-3 h-3 mr-1 text-slate-400" />
-                          <span>{formatDuration(tour.duration)}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <FaCalendarAlt className="w-3 h-3 mr-1 text-slate-400" />
-                          <span>{formatDate(tour.createdAt)}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Rejection Reason */}
-                      {tour.rejectionReason && (
-                        <div className="p-3 mb-4 text-xs text-red-700 rounded-lg bg-red-50">
-                          <p className="font-medium">Rejection Reason:</p>
-                          <p className="line-clamp-2">{tour.rejectionReason}</p>
-                        </div>
-                      )}
-                      
-                      {/* Actions */}
-                      <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
-                        <button
-                          onClick={() => handleView(tour.id)}
-                          className="flex items-center px-3 py-1.5 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          <FaEye className="w-3 h-3 mr-1.5" />
-                          View
-                        </button>
-                        
-                        {tour.status === 'pending_approval' && (
-                          <>
-                            <button
-                              onClick={() => handleApprove(tour.id)}
-                              className="flex items-center px-3 py-1.5 text-sm text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors"
-                            >
-                              <FaCheckCircle className="w-3 h-3 mr-1.5" />
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleReject(tour)}
-                              className="flex items-center px-3 py-1.5 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-                            >
-                              <FaTimesCircle className="w-3 h-3 mr-1.5" />
-                              Reject
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-8">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg border ${
-                      currentPage === 1 
-                        ? 'text-slate-400 bg-slate-100 cursor-not-allowed' 
-                        : 'text-slate-700 bg-white border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    Previous
-                  </button>
-                  
-                  <div className="hidden sm:flex sm:space-x-2">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-                      
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                            currentPage === pageNum
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                    
-                    {totalPages > 5 && currentPage < totalPages - 2 && (
-                      <>
-                        <span className="px-2 py-2">...</span>
-                        <button
-                          onClick={() => setCurrentPage(totalPages)}
-                          className="px-4 py-2 text-sm font-medium bg-white border rounded-lg text-slate-700 border-slate-300 hover:bg-slate-50"
-                        >
-                          {totalPages}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                  
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg border ${
-                      currentPage === totalPages
-                        ? 'text-slate-400 bg-slate-100 cursor-not-allowed'
-                        : 'text-slate-700 bg-white border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="p-12 text-center bg-white shadow-sm rounded-xl">
-              <FaSearch className="w-12 h-12 mx-auto text-slate-400" />
-              <h3 className="mt-4 text-lg font-medium text-slate-800">No tours found</h3>
-              <p className="mt-2 text-sm text-slate-500">
-                {searchQuery 
-                  ? `No tours match your search for "${searchQuery}"`
-                  : 'There are no tours matching your current filters'}
-              </p>
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setStatusFilter('pending_approval');
-                }}
-                className="px-4 py-2 mt-4 text-sm font-medium text-blue-600 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
-              >
-                Reset filters
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Reject Modal */}
-      {showRejectModal && selectedTour && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md bg-white shadow-xl rounded-xl">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-slate-800">Reject Tour Submission</h3>
+      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        {/* Status Tabs */}
+        <div className="py-6">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8">
+              {statusTabs.map((tab) => (
                 <button
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setRejectReason('');
-                  }}
-                  className="transition-colors text-slate-400 hover:text-slate-500"
-                >
-                  <FaTimesCircle className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="mb-4">
-                <p className="text-sm text-slate-600">
-                  You are about to reject: <span className="font-medium text-slate-800">"{selectedTour.title}"</span>
-                </p>
-                <p className="mt-2 text-sm text-slate-600">
-                  Please provide constructive feedback that will help the guide improve their submission.
-                </p>
-              </div>
-              
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Example: The audio quality needs improvement, images should be higher resolution, historical facts need verification..."
-                className="w-full p-3 text-sm border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={4}
-                autoFocus
-              />
-              
-              <div className="flex justify-end mt-6 space-x-3">
-                <button
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setRejectReason('');
-                  }}
-                  className="px-4 py-2 text-sm font-medium transition-colors bg-white border rounded-lg text-slate-700 border-slate-300 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmReject}
-                  disabled={!rejectReason.trim()}
-                  className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
-                    rejectReason.trim() 
-                      ? 'bg-red-600 hover:bg-red-700' 
-                      : 'bg-red-300 cursor-not-allowed'
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === tab.key
+                      ? `border-${tab.color}-500 text-${tab.color}-600`
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  Confirm Rejection
+                  {tab.label}
+                  <span className={`ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    activeTab === tab.key
+                      ? `bg-${tab.color}-100 text-${tab.color}-800`
+                      : 'bg-gray-100 text-gray-900'
+                  }`}>
+                    {tab.count}
+                  </span>
                 </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Current Tab Info */}
+        <div className="mb-6">
+          <div className="p-6 bg-white border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">{getCurrentStats().label}</h2>
+                <p className="mt-1 text-gray-600">{getCurrentStats().description}</p>
+                <div className="flex items-center mt-2 space-x-4 text-sm text-gray-500">
+                  <span>{getCurrentTours().length} tours on this page</span>
+                  <span>•</span>
+                  <span>{getCurrentStats().totalItems} total in category</span>
+                  {getCurrentStats().totalPages > 1 && (
+                    <>
+                      <span>•</span>
+                      <span>Page {getCurrentStats().currentPage} of {getCurrentStats().totalPages}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              {/* Filters for current tab */}
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <FaSearch className="absolute w-4 h-4 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search tours..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-64 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  {locationOptions.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  {sortOptions.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Tours Grid */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-8 h-8 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+          </div>
+        ) : getCurrentTours().length > 0 ? (
+          <div className="pb-8">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {getCurrentTours().map((tour) => (
+                <div key={tour.id} className="overflow-hidden transition-all duration-300 bg-white border border-gray-200 cursor-pointer rounded-xl hover:shadow-lg group">
+                  {/* ...existing tour card content... */}
+                  <div className="relative">
+                    {tour.image ? (
+                      <img 
+                        src={tour.image} 
+                        alt={tour.title}
+                        className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          console.log('Image failed to load:', tour.image);
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                        loading="lazy"
+                      />
+                    ) : null}
+                    
+                    {/* Fallback when no image */}
+                    <div 
+                      className={`w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ${tour.image ? 'hidden' : 'flex'}`}
+                      style={{ display: tour.image ? 'none' : 'flex' }}
+                    >
+                      <div className="text-center">
+                        <svg className="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-xs text-gray-500">No Image</p>
+                      </div>
+                    </div>
+
+                    <div className="absolute top-3 left-3">
+                      {getStatusBadge(tour.status)}
+                    </div>
+                    <div className="absolute flex space-x-1 top-3 right-3">
+                      <button className="p-1.5 bg-white/80 rounded-full hover:bg-white transition-colors">
+                        <FaHeart className="w-4 h-4 text-gray-600" />
+                      </button>
+                      <button className="p-1.5 bg-white/80 rounded-full hover:bg-white transition-colors">
+                        <FaShareAlt className="w-4 h-4 text-gray-600" />
+                      </button>
+                    </div>
+                   
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4">
+                    {/* Location & Rating */}
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <FaMapMarkerAlt className="w-3 h-3 mr-1" />
+                        <span>{tour.location}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <FaStar className="w-3 h-3 mr-1 text-yellow-400" />
+                        <span className="text-sm font-medium">{tour.rating.toFixed(1)}</span>
+                        <span className="ml-1 text-xs text-gray-500">({tour.reviewCount})</span>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="mb-2 font-semibold text-gray-900 transition-colors line-clamp-2 group-hover:text-blue-600">
+                      {tour.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="mb-3 text-sm text-gray-600 line-clamp-2">
+                      {tour.description}
+                    </p>
+
+                   
+
+                    {/* Guide Info */}
+                    <div className="flex items-center mb-3">
+                      <img 
+                        src={tour.guide.avatar} 
+                        alt={tour.guide.name}
+                        className="w-6 h-6 mr-2 rounded-full"
+                      />
+                      <span className="text-sm text-gray-600">{tour.guide.name}</span>
+                      <span className="ml-auto text-xs text-gray-500">
+                        {tour.guide.experience}y exp
+                      </span>
+                    </div>
+
+                    {/* Duration & Price */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <FaClock className="w-3 h-3 mr-1" />
+                        <span>{formatDuration(tour.duration)}</span>
+                      </div>
+                      <div className="text-right">
+                        {tour.originalPrice > tour.price && (
+                          <span className="text-xs text-gray-500 line-through">
+                            {formatPrice(tour.originalPrice)}
+                          </span>
+                        )}
+                        <div className="font-semibold text-gray-900">
+                          {formatPrice(tour.price)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      onClick={() => handleView(tour.id)}
+                      className="w-full py-2 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Pagination */}
+            <div className="mt-6 bg-white border border-gray-200 rounded-lg">
+              <Pagination
+                currentPage={getCurrentStats().currentPage}
+                totalPages={getCurrentStats().totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="py-12 text-center">
+            <FaSearch className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="mb-2 text-lg font-medium text-gray-900">No tours found</h3>
+            <p className="mb-4 text-gray-600">
+              {searchQuery 
+                ? `No tours match your search for "${searchQuery}" in ${getCurrentStats().label.toLowerCase()}`
+                : `No tours in ${getCurrentStats().label.toLowerCase()} category`}
+            </p>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedLocation('all');
+                setSortBy('newest');
+                setCurrentPages({
+                  pending_approval: 1,
+                  published: 1,
+                  rejected: 1
+                });
+              }}
+              className="px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

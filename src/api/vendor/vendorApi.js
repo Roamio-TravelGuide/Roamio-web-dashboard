@@ -1,6 +1,8 @@
+import { data } from 'react-router-dom';
 import apiClient from '../apiClient';
 
 export const getVendorProfile = async () => {
+ 
   try {
     const response = await apiClient.get('/vendor');
     
@@ -8,7 +10,7 @@ export const getVendorProfile = async () => {
       throw new Error(response.data.message || 'Failed to fetch profile');
     }
     
-    return response.data.data;
+    return response.data;
   } catch (error) {
     // Handle specific error cases
     if (error.response) {
@@ -23,7 +25,7 @@ export const getVendorProfile = async () => {
           throw new Error(error.response.data?.message || 'Failed to fetch vendor profile');
       }
     } else {
-      throw new Error('Network error. Please check your connection.');
+      throw new Error(error);
     }
   }
 };

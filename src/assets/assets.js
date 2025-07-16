@@ -29,7 +29,9 @@ import Train from './Landing/train.jpg';
 import Lake from './Landing/PanoramicRiver.jpg';
 import Church from './Landing/Church.jpg';
 import Kovil from './Landing/Kovil.jpg';
-import TourCreate from './Tour/view-travel-adventure-essentials.jpg'
+import TourCreate from './Tour/view-travel-adventure-essentials.jpg';
+import Sigiriya from './Landing/sigiria.jpg';
+
 
 
 
@@ -61,6 +63,7 @@ export const images = {
   Mosque,
   Evening,
   Train,
+  Sigiriya,
   Lake,
   Church,
   Kovil,

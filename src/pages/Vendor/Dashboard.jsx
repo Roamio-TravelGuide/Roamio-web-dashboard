@@ -1,11 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FiEdit, FiUpload, FiCheckCircle, FiXCircle, FiCamera, FiImage, FiAlertCircle } from "react-icons/fi";
+import {
+  FiEdit,
+  FiUpload,
+  FiCheckCircle,
+  FiXCircle,
+  FiCamera,
+  FiImage,
+  FiAlertCircle,
+} from "react-icons/fi";
 import { toast } from "react-toastify";
-import { 
-  getVendorProfile, 
-  updateVendorProfile, 
-  uploadVendorLogo, 
-  uploadVendorCover 
+import {
+  getVendorProfile,
+  updateVendorProfile,
+  uploadVendorLogo,
+  uploadVendorCover,
 } from "../../api/vendor/vendorApi";
 
 const VendorDashboard = () => {
@@ -27,8 +35,8 @@ const VendorDashboard = () => {
     socialMedia: {
       instagram: "",
       facebook: "",
-      website: ""
-    }
+      website: "",
+    },
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -41,12 +49,12 @@ const VendorDashboard = () => {
 
   // Fetch vendor profile on component mount
   useEffect(() => {
-   // if (!isToken) return;
+    // if (!isToken) return;
     const fetchVendorProfile = async () => {
       try {
         setLoading(true);
         const response = await getVendorProfile();
-        const data = response.data.data;
+        const data = response.data;
 
         setVendorData(data);
         setFormData({
@@ -58,8 +66,8 @@ const VendorDashboard = () => {
           socialMedia: data.socialMedia || {
             instagram: "",
             facebook: "",
-            website: ""
-          }
+            website: "",
+          },
         });
 
         if (data.logoUrl) setLogo(data.logoUrl);
@@ -74,12 +82,14 @@ const VendorDashboard = () => {
           socialMedia: data.socialMedia || {
             instagram: "",
             facebook: "",
-            website: ""
-          }
+            website: "",
+          },
         });
       } catch (err) {
         console.error("Error fetching vendor profile:", err);
-        setError(err.response?.data?.message || "Failed to load vendor profile");
+        setError(
+          err.response?.data?.message || "Failed to load vendor profile"
+        );
       } finally {
         setLoading(false);
       }
@@ -91,15 +101,15 @@ const VendorDashboard = () => {
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handle social media input changes
   const handleSocialChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      socialMedia: { ...prev.socialMedia, [name]: value }
+      socialMedia: { ...prev.socialMedia, [name]: value },
     }));
   };
 
@@ -109,21 +119,24 @@ const VendorDashboard = () => {
     if (!file) return;
 
     try {
-      setUploading(prev => ({ ...prev, logo: true }));
-      setErrors(prev => ({ ...prev, logo: null }));
-      
+      setUploading((prev) => ({ ...prev, logo: true }));
+      setErrors((prev) => ({ ...prev, logo: null }));
+
       const response = await uploadVendorLogo(file);
       setLogo(response.data.logoUrl);
       toast.success("Logo uploaded successfully");
     } catch (err) {
       console.error("Error uploading logo:", err);
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        logo: err.response?.data?.message || err.message || "Failed to upload logo"
+        logo:
+          err.response?.data?.message || err.message || "Failed to upload logo",
       }));
-      toast.error(err.response?.data?.message || err.message || "Failed to upload logo");
+      toast.error(
+        err.response?.data?.message || err.message || "Failed to upload logo"
+      );
     } finally {
-      setUploading(prev => ({ ...prev, logo: false }));
+      setUploading((prev) => ({ ...prev, logo: false }));
     }
   };
 
@@ -133,21 +146,26 @@ const VendorDashboard = () => {
     if (!file) return;
 
     try {
-      setUploading(prev => ({ ...prev, cover: true }));
-      setErrors(prev => ({ ...prev, cover: null }));
-      
+      setUploading((prev) => ({ ...prev, cover: true }));
+      setErrors((prev) => ({ ...prev, cover: null }));
+
       const response = await uploadVendorCover(file);
       setCoverPhoto(response.data.coverUrl);
       toast.success("Cover image uploaded successfully");
     } catch (err) {
       console.error("Error uploading cover:", err);
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        cover: err.response?.data?.message || err.message || "Failed to upload cover"
+        cover:
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to upload cover",
       }));
-      toast.error(err.response?.data?.message || err.message || "Failed to upload cover");
+      toast.error(
+        err.response?.data?.message || err.message || "Failed to upload cover"
+      );
     } finally {
-      setUploading(prev => ({ ...prev, cover: false }));
+      setUploading((prev) => ({ ...prev, cover: false }));
     }
   };
 
@@ -191,18 +209,18 @@ const VendorDashboard = () => {
 
     try {
       const response = await updateVendorProfile(formData);
-      const updatedData = response.data.data;
+      const updatedData = response.data;
 
       // Update all relevant states
-      setVendorData(prev => ({
+      setVendorData((prev) => ({
         ...prev,
         businessName: updatedData.businessName,
         description: updatedData.description,
         email: updatedData.user?.email || formData.email,
         phone: updatedData.user?.phone_no || formData.phone,
-        socialMedia: updatedData.social_media_links
+        socialMedia: updatedData.social_media_links,
       }));
-      
+
       setOriginalData(formData);
       setIsEditing(false);
       setErrors({});
@@ -212,7 +230,7 @@ const VendorDashboard = () => {
       console.error("Error updating profile:", err);
       setErrors({
         ...errors,
-        form: err.response?.data?.message || "Failed to update profile"
+        form: err.response?.data?.message || "Failed to update profile",
       });
       toast.error(err.response?.data?.message || "Failed to update profile");
     }
@@ -294,7 +312,7 @@ const VendorDashboard = () => {
               <FiImage size={48} />
             </div>
           )}
-          
+
           {/* Cover Photo Upload Button */}
           <div className="absolute top-4 right-4">
             <button
@@ -343,7 +361,7 @@ const VendorDashboard = () => {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Logo Upload Button */}
                 <button
                   onClick={() => logoInputRef.current?.click()}
@@ -353,7 +371,10 @@ const VendorDashboard = () => {
                   {uploading.logo ? (
                     <div className="w-6 h-6 border-2 border-white rounded-full border-t-transparent animate-spin"></div>
                   ) : (
-                    <FiCamera size={20} className="text-white opacity-0 group-hover:opacity-100" />
+                    <FiCamera
+                      size={20}
+                      className="text-white opacity-0 group-hover:opacity-100"
+                    />
                   )}
                 </button>
                 <input
@@ -388,8 +409,12 @@ const VendorDashboard = () => {
         <section className="p-8 bg-white border border-gray-100 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Business Profile</h2>
-              <p className="mt-1 text-gray-600">Manage your business information</p>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Business Profile
+              </h2>
+              <p className="mt-1 text-gray-600">
+                Manage your business information
+              </p>
             </div>
             {!isEditing ? (
               <button
@@ -434,7 +459,9 @@ const VendorDashboard = () => {
                       value={formData.businessName}
                       onChange={handleChange}
                       className={`w-full p-4 border rounded-xl ${
-                        errors.businessName ? "border-red-500 bg-red-50" : "border-gray-300"
+                        errors.businessName
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300"
                       }`}
                       placeholder="Enter your business name"
                     />
@@ -454,7 +481,9 @@ const VendorDashboard = () => {
                       value={formData.email}
                       onChange={handleChange}
                       className={`w-full p-4 border rounded-xl ${
-                        errors.email ? "border-red-500 bg-red-50" : "border-gray-300"
+                        errors.email
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300"
                       }`}
                       placeholder="your@email.com"
                     />
@@ -493,6 +522,56 @@ const VendorDashboard = () => {
                 </div>
               </div>
 
+              {/* Media Upload Section */}
+              <div className="p-6 space-y-6 bg-gray-50 rounded-xl">
+                <h3 className="pb-2 text-lg font-semibold text-gray-900 border-b border-gray-200">
+                  Business Media
+                </h3>
+
+                {/* Logo Upload */}
+                <div>
+                  <label className="block mb-3 text-sm font-medium text-gray-700">
+                    Business Logo
+                  </label>
+                  <div className="flex items-center gap-6">
+                    <div className="relative">
+                      <div className="w-24 h-24 overflow-hidden bg-gray-200 border-2 border-gray-300 border-dashed rounded-xl">
+                        {logo ? (
+                          <img
+                            src={logo}
+                            alt="Business Logo"
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center w-full h-full text-gray-400">
+                            <FiImage size={20} />
+                            <span className="mt-1 text-xs">No Logo</span>
+                          </div>
+                        )}
+                      </div>
+                      {uploading.logo && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+                          <div className="w-6 h-6 border-2 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={uploading.logo}
+                        className="flex items-center gap-2 px-4 py-2 text-indigo-600 transition-all border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50"
+                      >
+                        <FiUpload size={16} />
+                        {uploading.logo ? "Uploading..." : "Upload Logo"}
+                      </button>
+                      <p className="text-xs text-gray-500">
+                        Recommended: Square image, max 5MB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
               {/* Social Media Links */}
               <div className="p-6 space-y-6 bg-gray-50 rounded-xl">
                 <h3 className="pb-2 text-lg font-semibold text-gray-900 border-b border-gray-200">
@@ -535,7 +614,9 @@ const VendorDashboard = () => {
                       value={formData.socialMedia.website}
                       onChange={handleSocialChange}
                       className={`flex-1 p-3 border rounded-lg ${
-                        errors.website ? "border-red-500 bg-red-50" : "border-gray-300"
+                        errors.website
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300"
                       }`}
                       placeholder="https://yourwebsite.com"
                     />

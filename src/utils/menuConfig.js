@@ -1,15 +1,19 @@
+// src/utils/menuConfig.ts
 import {
   FaUsers,
   FaChartLine,
   FaCog,
+  FaUser,
+  FaUserTie,
+  FaUserShield,
+  FaStore,
   FaMapMarkedAlt,
-  FaCalendarAlt,
   FaWallet,
+  FaCalendarAlt,
   FaBullhorn,
   FaRegClock,
   FaRegStar,
   FaRegQuestionCircle,
-  
 } from "react-icons/fa";
 import React from "react";
 
@@ -40,10 +44,10 @@ export const menuConfig = {
         path: "/guide/earnings",
         icon: createIcon(FaWallet),
       },
-            {
-        title: "Complaints",
-        path: "/guide/complaints",
-        icon: createIcon(FaWallet),
+      {
+        title: "Support",
+        path: "/guide/support",
+        icon: createIcon(FaRegQuestionCircle),
       },
       {
         title: "Settings",
@@ -58,6 +62,25 @@ export const menuConfig = {
         title: "Profile",
         path: "/moderator/dashboard",
         icon: createIcon(FaCog),
+      },
+    ],
+  },
+  admin: {
+    navItems: [
+      {
+        title: "Dashboard",
+        path: "/admin/dashboard",
+        icon: createIcon(FaChartLine),
+      },
+      {
+        title: "Users",
+        path: "/admin/users",
+        icon: createIcon(FaUsers),
+      },
+      {
+        title: "Complaints",
+        path: "/admin/complaints",
+        icon: createIcon(FaUsers),
       },
     ],
   },
