@@ -216,23 +216,23 @@
                           </div>
                         </div>
 
-                        {/* Card body with enhanced typography and spacing */}
-                        <div className="flex flex-col flex-grow p-5">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <h3 className="text-lg font-semibold transition-colors duration-200 text-slate-800 group-hover:text-blue-600">
-                                {tour.title}
-                              </h3>
-                              <div className="flex items-center mt-1 text-sm transition-colors duration-200 text-slate-500 group-hover:text-slate-600">
-                                <FaMapMarkerAlt className="flex-shrink-0 w-3 h-3 mr-1" />
-                                <span className="truncate">{tour.tour_stops?.[0]?.location?.city || 'No location specified'}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center px-2 py-1 transition-colors duration-200 rounded-full bg-slate-100 group-hover:bg-slate-200">
-                              <FaStar className="flex-shrink-0 w-3 h-3 mr-1 text-amber-400" />
-                              <span className="text-xs font-medium">{tour.rating || '0'}</span>
+                      {/* Card body with enhanced typography and spacing */}
+                      <div className="flex flex-col flex-grow p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="text-lg font-semibold transition-colors duration-200 text-slate-800 group-hover:text-blue-600">
+                              {tour.title}
+                            </h3>
+                            <div className="flex items-center mt-1 text-sm transition-colors duration-200 text-slate-500 group-hover:text-slate-600">
+                              <FaMapMarkerAlt className="flex-shrink-0 w-3 h-3 mr-1" />
+                              <span className="truncate">{tour.tour_stops?.[0]?.location?.city || 'No location specified'}</span>
                             </div>
                           </div>
+                          <div className="flex items-center px-2 py-1 transition-colors duration-200 rounded-full bg-slate-100 group-hover:bg-slate-200">
+                            <FaStar className="flex-shrink-0 w-3 h-3 mr-1 text-amber-400" />
+                            <span className="text-xs font-medium">{tour.rating || '0'}</span>
+                          </div>
+                        </div>
 
                           {/* Details with subtle hover enhancements */}
                           <div className="flex-grow mb-4 space-y-2">
@@ -255,6 +255,27 @@
                               </span>
                             </div>
                           </div>
+                        {/* Details with subtle hover enhancements */}
+                        <div className="flex-grow mb-4 space-y-2">
+                          <div className="flex items-center">
+                            <FaCheckCircle className="flex-shrink-0 w-3 h-3 mr-2 text-teal-500" />
+                            <span className="text-xs transition-colors duration-200 text-slate-600 group-hover:text-slate-700">
+                              Created: {formatDate(tour.created_at)}
+                            </span>
+                          </div>
+                          <div className="flex items-center">
+                            <FaCheckCircle className="flex-shrink-0 w-3 h-3 mr-2 text-teal-500" />
+                            <span className="text-xs transition-colors duration-200 text-slate-600 group-hover:text-slate-700">
+                              Duration: {tour.duration_minutes ? Math.round(tour.duration_minutes / 60) + ' mins' : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex items-center">
+                            <FaCheckCircle className="flex-shrink-0 w-3 h-3 mr-2 text-teal-500" />
+                            <span className="text-xs transition-colors duration-200 text-slate-600 group-hover:text-slate-700">
+                              Price: LKR {Math.round(tour.price) || '0'}
+                            </span>
+                          </div>
+                        </div>
 
                           {/* Footer with action buttons - appears on hover */}
                           <div className="pt-3 mt-auto border-t border-slate-100">

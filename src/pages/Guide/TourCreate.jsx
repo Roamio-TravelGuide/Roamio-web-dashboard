@@ -253,11 +253,12 @@ export const TourCreate = () => {
       onUpdate: handleTourDataUpdate,
       stops: tourData.tour_stops,
       onStopsUpdate: handleStopsUpdate,
-      validationWarnings
+      validationWarnings,
+      isEditable: true
     };
 
     switch (currentStep) {
-      case 1: return <BasicInfoStep {...commonProps} />;
+      case 1: return <BasicInfoStep {...commonProps}/>;
       case 2: return <RouteMapStep {...commonProps} />;
       case 3: return <MediaUploadStep {...commonProps} />;
       case 4: return <ReviewStep {...commonProps} onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
