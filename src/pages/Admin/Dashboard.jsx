@@ -19,9 +19,80 @@ import {
   Medal,
   Zap
 } from 'lucide-react';
+import  {getUserStatistics} from '../../api/admin/adminApi';
 
-// StatsCard Component
-const StatsCard = ({
+const Dashboard = () => {
+  const [revenueTimeFilter, setRevenueTimeFilter] = useState('monthly');
+  const [salesTimeFilter, setSalesTimeFilter] = useState('monthly');
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    activeUsers: 0,
+    activeTourGuides: 0,
+    activeTourists: 0,
+    activeVendors: 0,
+    totalRevenue: 0,
+    totalPackagesSold: 0,
+    topTourGuide: null,
+    mostSoldPackage: null
+  });
+  
+ useEffect(() => {
+  const fetchActiveUsers = async () => {
+    try {
+      setLoading(true);
+      const stats = await getUserStatistics(); // No .data here - it's already unwrapped
+      
+      setDashboardData(prevData => ({
+        ...prevData,
+        activeUsers: stats.active,
+        travelers:stats.travelers,
+        tourGuides:stats.tourGuides,
+        vendors:stats.vendors,
+      }));
+      
+    } catch (error) {
+      console.log("Failed to fetch users count:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchActiveUsers();
+}, []);
+
+
+
+  const timeFilterOptions = [
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' },
+    { value: 'yearly', label: 'Yearly' }
+  ];
+
+  const TimeFilterButtons = ({ timeFilter, setTimeFilter, variant = 'default' }) => (
+    <div className={`flex rounded-lg p-1 ${
+      variant === 'revenue' 
+        ? 'bg-blue-50 border border-blue-200' 
+        : 'bg-green-50 border border-green-200'
+    }`}>
+      {timeFilterOptions.map((option) => (
+        <button
+          key={option.value}
+          onClick={() => setTimeFilter(option.value)}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+            timeFilter === option.value
+              ? variant === 'revenue'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-green-600 text-white shadow-lg'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const StatsCard = ({
   title,
   value,
   subtitle,
@@ -96,34 +167,31 @@ const QuickStats = ({ data, loading }) => {
       icon: Users,
       gradient: 'from-blue-50 to-blue-500',
       bgGradient: 'from-blue-50 to-blue-600',
-      trend: { value: 8.2, isPositive: true }
+      
     },
     {
       title: 'Tour Guides',
-      value: data.activeTourGuides,
+      value: data.tourGuides,
       subtitle: 'Active guides',
       icon: UserCheck,
       gradient: 'from-green-50 to-green-600',
       bgGradient: 'from-green-50 to-green-600',
-      trend: { value: 3.1, isPositive: true }
     },
     {
-      title: 'Tourists',
-      value: data.activeTourists,
+      title: 'Traveler',
+      value: data.travelers,
       subtitle: 'Active tourists',
       icon: MapPin,
       gradient: 'from-purple-50 to-purple-600',
       bgGradient: 'from-purple-50 to-purple-600',
-      trend: { value: 12.5, isPositive: true }
     },
     {
       title: 'Vendors',
-      value: data.activeVendors,
+      value: data.vendors,
       subtitle: 'Active vendors',
       icon: Store,
       gradient: 'from-orange-50 to-orange-600',
       bgGradient: 'from-orange-50 to-orange-600',
-      trend: { value: -2.3, isPositive: false }
     }
   ];
 
@@ -650,90 +718,6 @@ const TopPerformers = ({ data, loading }) => {
   );
 };
 
-// Main Dashboard Component
-const Dashboard = () => {
-  const [revenueTimeFilter, setRevenueTimeFilter] = useState('monthly');
-  const [salesTimeFilter, setSalesTimeFilter] = useState('monthly');
-  const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState({
-    activeUsers: 0,
-    activeTourGuides: 0,
-    activeTourists: 0,
-    activeVendors: 0,
-    totalRevenue: 0,
-    totalPackagesSold: 0,
-    topTourGuide: null,
-    mostSoldPackage: null
-  });
-
-  useEffect(() => {
-    // Simulate API call
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setDashboardData({
-          activeUsers: 2847,
-          activeTourGuides: 156,
-          activeTourists: 1891,
-          activeVendors: 89,
-          totalRevenue: 284750,
-          totalPackagesSold: 1432,
-          topTourGuide: {
-            name: 'Sarah Johnson',
-            tours: 89,
-            rating: 4.9,
-            revenue: 15420,
-            avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
-          },
-          mostSoldPackage: {
-            name: 'Historic City Tour',
-            sold: 234,
-            revenue: 23400,
-            growth: 15.2
-          }
-        });
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
-
-  const timeFilterOptions = [
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'yearly', label: 'Yearly' }
-  ];
-
-  const TimeFilterButtons = ({ timeFilter, setTimeFilter, variant = 'default' }) => (
-    <div className={`flex rounded-lg p-1 ${
-      variant === 'revenue' 
-        ? 'bg-blue-50 border border-blue-200' 
-        : 'bg-green-50 border border-green-200'
-    }`}>
-      {timeFilterOptions.map((option) => (
-        <button
-          key={option.value}
-          onClick={() => setTimeFilter(option.value)}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-            timeFilter === option.value
-              ? variant === 'revenue'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-green-600 text-white shadow-lg'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -888,8 +872,4 @@ const Dashboard = () => {
   );
 };
 
-function App() {
-  return <Dashboard />;
-}
-
-export default App;
+export default Dashboard;
