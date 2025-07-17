@@ -77,6 +77,37 @@ export const supportAPI = {
       return response.data;
     },
 
+    //add comment to the complaint
+
+    // addTicketComment: async (ticketID, commentData) => {
+    //   try {
+    //     const response = await apiClient.put(
+    //       `/support/tickets/${ticketID}/comments`,
+    //       commentData, // Should contain { comment: "text", author: "userID" } etc.
+    //       {
+    //         headers: {
+    //           "Content-Type": "application/json",
+    //         },
+    //       }
+    //     );
+    //     return response.data;
+    //   } catch (error) {
+    //     console.error("Error adding comment:", error);
+    //     throw error; // Re-throw to handle in the component
+    //   }
+    // },
+
+    // Add solution to the ticket
+    addSolutionToTicket: async (ticketId, solutionData) => {
+      const response = await apiClient.put(
+        `/support/admin/tickets/${ticketId}/resolution`,
+        solutionData
+      );
+      return response.data;
+    },
+
+   
+
     // Get support ticket statistics (admin only)
     getTicketStats: async (userType = null) => {
       const queryParams = userType ? `?user_type=${userType}` : "";
