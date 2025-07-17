@@ -9,10 +9,11 @@ function formatDate(date) {
   return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 }
 
-export const getAllUsers = async () => {
+export const getAllUsers = async (filters = {}) => {
   try {
-    const response = await apiClient.get('/users/getAllUsers');
-    
+
+    console.log("hi")
+    const response = await apiClient.get('users/getAllUsers');
     // Transform the data to match frontend expectations
     return {
       data: response.data.users.map(user => ({
