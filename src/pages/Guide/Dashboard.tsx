@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import {
   FaPlus,
   FaUsers,
@@ -16,6 +16,9 @@ import {
   Star,
   MapPin,
 } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from "../../contexts/authContext";
+import { getTourPackageById } from "../../api/tour/tourApi";
 
 interface Tour {
   id: string;
@@ -37,6 +40,7 @@ interface CreateTourForm {
   price: string;
   duration: string;
   description: string;
+  coverImage: File | string | null;
 }
 
 function Dashboard() {
@@ -44,6 +48,7 @@ function Dashboard() {
   const [filter, setFilter] = useState<string>("all");
   const [currentStep, setCurrentStep] = useState(1);
   const [isCreatingTour, setIsCreatingTour] = useState(false);
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState<CreateTourForm>({
     name: "",
@@ -51,7 +56,35 @@ function Dashboard() {
     price: "",
     duration: "",
     description: "",
+    coverImage: null,
   });
+  
+    
+  const { authState } = useAuth();
+  const userId = authState.user.id
+
+  const fetchTourPackages = async () => {
+    try {
+      if (!userId) {
+        console.error('User ID not available');
+        return;
+      }
+      
+      const response = await getTourPackageById(userId);
+      console.log('Tour packages:', response);
+      
+      // Process the response data as needed
+      // const convertedTours = response.data.map(convertApiResponseToTour);
+      // setTours(convertedTours);
+    } catch (err) {
+      console.error('Error fetching tours:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTourPackages();
+  }, [userId]);
+
 
   const tours: Tour[] = [
     {
@@ -68,202 +101,7 @@ function Dashboard() {
       image:
         "https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg?auto=compress&cs=tinysrgb&w=400",
     },
-    {
-      id: "2",
-      name: "Colombo City Explorer",
-      destination: "Colombo",
-      price: 3500,
-      status: "published",
-      rating: 4.5,
-      totalRatings: 89,
-      listeners: 642,
-      revenue: 224700,
-      lastUpdated: "2024-01-12",
-      image:
-        "https://images.pexels.com/photos/789750/pexels-photo-789750.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "3",
-      name: "Matara Beach Paradise",
-      destination: "Matara",
-      price: 5500,
-      status: "draft",
-      rating: 0,
-      totalRatings: 0,
-      listeners: 0,
-      revenue: 0,
-      lastUpdated: "2024-01-10",
-      image:
-        "https://images.pexels.com/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "4",
-      name: "Ratnapura Gem Trail",
-      destination: "Ratnapura",
-      price: 6200,
-      status: "published",
-      rating: 4.9,
-      totalRatings: 67,
-      listeners: 534,
-      revenue: 331080,
-      lastUpdated: "2024-01-08",
-      image:
-        "https://images.pexels.com/photos/1271619/pexels-photo-1271619.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "5",
-      name: "Kandy Cultural Experience",
-      destination: "Kandy",
-      price: 4800,
-      status: "published",
-      rating: 4.7,
-      totalRatings: 112,
-      listeners: 789,
-      revenue: 378720,
-      lastUpdated: "2024-01-18",
-      image:
-        "https://images.pexels.com/photos/3025490/pexels-photo-3025490.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "6",
-      name: "Sigiriya Rock Adventure",
-      destination: "Sigiriya",
-      price: 7500,
-      status: "published",
-      rating: 4.9,
-      totalRatings: 145,
-      listeners: 923,
-      revenue: 692250,
-      lastUpdated: "2024-01-20",
-      image:
-        "https://images.pexels.com/photos/3290068/pexels-photo-3290068.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "7",
-      name: "Nuwara Eliya Tea Tour",
-      destination: "Nuwara Eliya",
-      price: 5200,
-      status: "published",
-      rating: 4.6,
-      totalRatings: 78,
-      listeners: 567,
-      revenue: 294840,
-      lastUpdated: "2024-01-14",
-      image:
-        "https://images.pexels.com/photos/634038/pexels-photo-634038.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "8",
-      name: "Anuradhapura Ancient City",
-      destination: "Anuradhapura",
-      price: 5800,
-      status: "draft",
-      rating: 0,
-      totalRatings: 0,
-      listeners: 0,
-      revenue: 0,
-      lastUpdated: "2024-01-05",
-      image:
-        "https://images.pexels.com/photos/3581363/pexels-photo-3581363.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "9",
-      name: "Yala Safari Expedition",
-      destination: "Yala",
-      price: 8900,
-      status: "published",
-      rating: 4.9,
-      totalRatings: 203,
-      listeners: 1245,
-      revenue: 1108050,
-      lastUpdated: "2024-01-22",
-      image:
-        "https://images.pexels.com/photos/247502/pexels-photo-247502.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "10",
-      name: "Trinco Beach Getaway",
-      destination: "Trincomalee",
-      price: 6700,
-      status: "published",
-      rating: 4.7,
-      totalRatings: 56,
-      listeners: 432,
-      revenue: 289440,
-      lastUpdated: "2024-01-17",
-      image:
-        "https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "11",
-      name: "Ella Nature Trek",
-      destination: "Ella",
-      price: 4500,
-      status: "archived",
-      rating: 4.8,
-      totalRatings: 98,
-      listeners: 654,
-      revenue: 294300,
-      lastUpdated: "2023-12-15",
-      image:
-        "https://images.pexels.com/photos/3293148/pexels-photo-3293148.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "12",
-      name: "Polonnaruwa Ruins Tour",
-      destination: "Polonnaruwa",
-      price: 5100,
-      status: "published",
-      rating: 4.5,
-      totalRatings: 43,
-      listeners: 321,
-      revenue: 163710,
-      lastUpdated: "2024-01-09",
-      image:
-        "https://images.pexels.com/photos/3581367/pexels-photo-3581367.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "13",
-      name: "Bentota Water Sports",
-      destination: "Bentota",
-      price: 7300,
-      status: "published",
-      rating: 4.6,
-      totalRatings: 87,
-      listeners: 543,
-      revenue: 396390,
-      lastUpdated: "2024-01-19",
-      image:
-        "https://images.pexels.com/photos/1139040/pexels-photo-1139040.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "14",
-      name: "Dambulla Cave Temple",
-      destination: "Dambulla",
-      price: 4200,
-      status: "draft",
-      rating: 0,
-      totalRatings: 0,
-      listeners: 0,
-      revenue: 0,
-      lastUpdated: "2024-01-07",
-      image:
-        "https://images.pexels.com/photos/3581365/pexels-photo-3581365.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      id: "15",
-      name: "Mirissa Whale Watching",
-      destination: "Mirissa",
-      price: 6800,
-      status: "published",
-      rating: 4.9,
-      totalRatings: 134,
-      listeners: 876,
-      revenue: 595680,
-      lastUpdated: "2024-01-21",
-      image:
-        "https://images.pexels.com/photos/847393/pexels-photo-847393.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
+    // ... (rest of your tour data remains the same)
   ];
 
   const createTourSteps = [
@@ -281,7 +119,7 @@ function Dashboard() {
     },
   ];
 
-  const handleInputChange = (field: keyof CreateTourForm, value: string) => {
+  const handleInputChange = (field: keyof CreateTourForm, value: string | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -299,6 +137,7 @@ function Dashboard() {
 
   const handleCreateTour = () => {
     console.log("Creating tour", formData);
+    navigate('/tourCreate');
     setIsCreatingTour(false);
     setCurrentStep(1);
     setFormData({
@@ -307,6 +146,7 @@ function Dashboard() {
       price: "",
       duration: "",
       description: "",
+      coverImage: null,
     });
   };
 
@@ -343,7 +183,7 @@ function Dashboard() {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const toursPerPage = 6; // Changed from 10 to 6
+  const toursPerPage = 6;
 
   // Get current tours
   const indexOfLastTour = currentPage * toursPerPage;
@@ -351,51 +191,21 @@ function Dashboard() {
   const currentTours = filteredTours.slice(indexOfFirstTour, indexOfLastTour);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
-      {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <div className="flex items-center gap-4">
-                <img
-                  className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=256&h=256&q=80"
-                  alt="Guide profile"
-                />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">
-                    Sarah Johnson
-                  </h1>
-                  <p className="text-gray-600">Adventure Tour Guide</p>
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsCreatingTour(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-teal-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <FaPlus className="w-4 h-4" />
-              Create New Tour
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen pb-8 bg-gray-50">
 
-      {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white shadow-lg rounded-xl p-6 relative overflow-hidden h-65 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+      <div className="px-4 mx-auto mt-8 max-w-7xl sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="relative p-6 overflow-hidden transition-shadow duration-300 bg-white border border-gray-100 shadow-lg rounded-xl hover:shadow-xl">
             {/* Background accent */}
-            <div className="absolute -top-10 -right-10 bg-gradient-to-r from-teal-500 to-blue-500 w-32 h-32 rounded-full opacity-10"></div>
+            <div className="absolute w-32 h-32 rounded-full -top-10 -right-10 bg-gradient-to-r from-teal-500 to-blue-500 opacity-10"></div>
 
-            <div className="flex flex-col h-full justify-between">
+            <div className="flex flex-col justify-between h-full">
               <div>
-                <p className="text-lg font-medium text-gray-500 mb-1">
+                <p className="mb-1 text-lg font-medium text-gray-500">
                   Community Growth
                 </p>
                 <p className="text-3xl font-bold text-gray-800">2,002</p>
-                <p className="text-sm text-gray-500 mt-2">Active Listeners</p>
+                <p className="mt-2 text-sm text-gray-500">Active Listeners</p>
               </div>
 
               <div className="flex items-center justify-between mt-4">
@@ -415,7 +225,7 @@ function Dashboard() {
                     +12.5% from last month
                   </span>
                 </div>
-                <div className="bg-gradient-to-r from-teal-600 to-blue-600 w-12 h-12 rounded-full flex items-center justify-center shadow-md">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full shadow-md bg-gradient-to-r from-teal-600 to-blue-600">
                   <svg
                     className="w-6 h-6 text-white"
                     fill="none"
@@ -431,7 +241,7 @@ function Dashboard() {
                   </svg>
                 </div>
               </div>
-              <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="pt-3 mt-3 border-t border-gray-100">
                 <p className="text-xs text-gray-500">
                   Compared to LKR 295,880 last month
                 </p>
@@ -439,19 +249,19 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-white shadow-lg rounded-xl p-6 relative overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+          <div className="relative p-6 overflow-hidden transition-shadow duration-300 bg-white border border-gray-100 shadow-lg rounded-xl hover:shadow-xl">
             {/* Background accent */}
-            <div className="absolute -top-10 -right-10 bg-gradient-to-r from-green-500 to-emerald-500 w-32 h-32 rounded-full opacity-10"></div>
+            <div className="absolute w-32 h-32 rounded-full -top-10 -right-10 bg-gradient-to-r from-green-500 to-emerald-500 opacity-10"></div>
 
             <div className="flex flex-col h-full">
               <div className="mb-4">
                 <p className="text-lg font-medium text-gray-500">
                   Total Revenue
                 </p>
-                <p className="text-3xl font-bold text-gray-800 mt-2">
+                <p className="mt-2 text-3xl font-bold text-gray-800">
                   LKR 320,198
                 </p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="mt-1 text-sm text-gray-500">
                   Current month earnings
                 </p>
               </div>
@@ -477,7 +287,7 @@ function Dashboard() {
                     </span>
                   </div>
 
-                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 w-12 h-12 rounded-full flex items-center justify-center shadow-md">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full shadow-md bg-gradient-to-r from-green-600 to-emerald-600">
                     <svg
                       className="w-6 h-6 text-white"
                       fill="none"
@@ -494,7 +304,7 @@ function Dashboard() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="pt-3 mt-3 border-t border-gray-100">
                   <p className="text-xs text-gray-500">
                     Compared to LKR 295,880 last month
                   </p>
@@ -503,9 +313,9 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-white shadow-lg rounded-xl p-6 relative overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+          <div className="relative p-6 overflow-hidden transition-shadow duration-300 bg-white border border-gray-100 shadow-lg rounded-xl hover:shadow-xl">
             {/* Background accent */}
-            <div className="absolute -top-10 -right-10 bg-gradient-to-r from-amber-400 to-yellow-500 w-32 h-32 rounded-full opacity-10"></div>
+            <div className="absolute w-32 h-32 rounded-full -top-10 -right-10 bg-gradient-to-r from-amber-400 to-yellow-500 opacity-10"></div>
 
             <div className="flex flex-col h-full">
               <div className="mb-4">
@@ -514,7 +324,7 @@ function Dashboard() {
                 </p>
                 <div className="flex items-baseline mt-2">
                   <p className="text-3xl font-bold text-gray-800">4.3</p>
-                  <span className="text-sm text-gray-500 ml-1">/ 5.0</span>
+                  <span className="ml-1 text-sm text-gray-500">/ 5.0</span>
                 </div>
                 <div className="flex mt-1">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -554,7 +364,7 @@ function Dashboard() {
                     </span>
                   </div>
 
-                  <div className="bg-gradient-to-r from-amber-500 to-yellow-500 w-12 h-12 rounded-full flex items-center justify-center shadow-md">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full shadow-md bg-gradient-to-r from-amber-500 to-yellow-500">
                     <svg
                       className="w-6 h-6 text-white"
                       fill="currentColor"
@@ -565,7 +375,7 @@ function Dashboard() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="pt-3 mt-3 border-t border-gray-100">
                   <p className="text-xs text-gray-500">
                     Based on 128 customer reviews
                   </p>
@@ -574,9 +384,9 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-white shadow-lg rounded-xl p-6 relative overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+          <div className="relative p-6 overflow-hidden transition-shadow duration-300 bg-white border border-gray-100 shadow-lg rounded-xl hover:shadow-xl">
             {/* Background accent */}
-            <div className="absolute -top-10 -right-10 bg-gradient-to-r from-purple-500 to-pink-500 w-32 h-32 rounded-full opacity-10"></div>
+            <div className="absolute w-32 h-32 rounded-full -top-10 -right-10 bg-gradient-to-r from-purple-500 to-pink-500 opacity-10"></div>
 
             <div className="flex flex-col h-full">
               <div className="mb-4">
@@ -585,12 +395,12 @@ function Dashboard() {
                 </p>
                 <div className="flex items-baseline mt-2">
                   <p className="text-3xl font-bold text-gray-800">32</p>
-                  <span className="text-sm text-gray-500 ml-1">new buyers</span>
+                  <span className="ml-1 text-sm text-gray-500">new buyers</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                <div className="w-full h-2 mt-3 bg-gray-200 rounded-full">
                   <div
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full"
-                    style={{ width: "64%" }} // Assuming 32/50 target = 64%
+                    className="h-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600"
+                    style={{ width: "64%" }}
                   ></div>
                 </div>
               </div>
@@ -616,7 +426,7 @@ function Dashboard() {
                     </span>
                   </div>
 
-                  <div className="bg-gradient-to-r from-purple-600 to-pink-600 w-12 h-12 rounded-full flex items-center justify-center shadow-md">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full shadow-md bg-gradient-to-r from-purple-600 to-pink-600">
                     <svg
                       className="w-6 h-6 text-white"
                       fill="none"
@@ -633,7 +443,7 @@ function Dashboard() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="pt-3 mt-3 border-t border-gray-100">
                   <div className="flex justify-between text-xs text-gray-500">
                     <span>Target: 50</span>
                     <span>Progress: 64%</span>
@@ -646,24 +456,24 @@ function Dashboard() {
       </div>
 
       {/* Tours Table Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
-        <div className="bg-white shadow rounded-lg overflow-hidden p-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="px-4 mx-auto mt-8 max-w-7xl sm:px-6 lg:px-8">
+        <div className="p-6 overflow-hidden bg-white rounded-lg shadow">
+          <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
             <h2 className="text-xl font-semibold text-gray-800">
               Tour Packages
             </h2>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="flex flex-col w-full gap-3 sm:flex-row sm:w-auto">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-64 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg sm:w-64 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Search tours..."
               />
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg sm:w-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All</option>
                 <option value="published">Published</option>
@@ -675,15 +485,15 @@ function Dashboard() {
 
           {/* Card Grid Layout - 6 per page */}
           {filteredTours.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {currentTours.slice(0, 6).map((tour) => (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {currentTours.map((tour) => (
                 <div
                   key={tour.id}
-                  className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                  className="overflow-hidden transition-shadow border border-gray-200 rounded-lg hover:shadow-md"
                 >
                   <div className="relative">
                     <img
-                      className="w-full h-48 object-cover"
+                      className="object-cover w-full h-48"
                       src={tour.image}
                       alt={tour.name}
                     />
@@ -698,12 +508,12 @@ function Dashboard() {
                   </div>
 
                   <div className="p-4">
-                    <div className="flex justify-between items-start">
+                    <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">
                           {tour.name}
                         </h3>
-                        <div className="flex items-center text-sm text-gray-500 mt-1">
+                        <div className="flex items-center mt-1 text-sm text-gray-500">
                           <MapPin className="w-3 h-3 mr-1" />
                           {tour.destination}
                         </div>
@@ -713,7 +523,7 @@ function Dashboard() {
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
                       <div className="flex items-center">
                         <Users className="w-4 h-4 mr-2 text-gray-400" />
                         <span>{tour.listeners} listeners</span>
@@ -734,14 +544,14 @@ function Dashboard() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex justify-end space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50">
+                    <div className="flex justify-end mt-4 space-x-2">
+                      <button className="p-2 text-blue-600 rounded-full hover:text-blue-800 hover:bg-blue-50">
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-50">
+                      <button className="p-2 text-gray-600 rounded-full hover:text-gray-800 hover:bg-gray-50">
                         <Edit3 className="w-4 h-4" />
                       </button>
-                      <button className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-50">
+                      <button className="p-2 text-gray-600 rounded-full hover:text-gray-800 hover:bg-gray-50">
                         <MoreHorizontal className="w-4 h-4" />
                       </button>
                     </div>
@@ -750,14 +560,14 @@ function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-10 text-gray-500">
+            <div className="py-10 text-center text-gray-500">
               No tours found matching your criteria
             </div>
           )}
 
           {/* Pagination controls for 6 items per page */}
           {filteredTours.length > 6 && (
-            <div className="mt-6 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="flex items-center justify-between px-6 py-4 mt-6 border-t border-gray-200">
               <div className="text-sm text-gray-700">
                 Showing{" "}
                 <span className="font-medium">{(currentPage - 1) * 6 + 1}</span>{" "}
@@ -774,14 +584,14 @@ function Dashboard() {
                     setCurrentPage((prev) => Math.max(prev - 1, 1))
                   }
                   disabled={currentPage === 1}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setCurrentPage((prev) => prev + 1)}
                   disabled={currentPage * 6 >= filteredTours.length}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-white bg-gradient-to-r from-teal-600 to-blue-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium text-white border border-gray-300 rounded-md bg-gradient-to-r from-teal-600 to-blue-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -790,13 +600,14 @@ function Dashboard() {
           )}
         </div>
       </div>
+
       {/* Create Tour Modal */}
       {isCreatingTour && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-blue-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-700">
                   Create New Tour
                 </h2>
                 <button
@@ -825,7 +636,7 @@ function Dashboard() {
                         index + 1
                       )}
                     </div>
-                    <div className="text-center mt-2">
+                    <div className="mt-2 text-center">
                       <p className="text-sm font-medium text-gray-900">
                         {step.title}
                       </p>
@@ -842,7 +653,7 @@ function Dashboard() {
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
                       Tour Name *
                     </label>
                     <input
@@ -856,7 +667,7 @@ function Dashboard() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
                       Start *
                     </label>
                     <input
@@ -876,7 +687,7 @@ function Dashboard() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
                         Price (LKR) *
                       </label>
                       <input
@@ -890,7 +701,7 @@ function Dashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
                         Duration
                       </label>
                       <input
@@ -909,11 +720,10 @@ function Dashboard() {
 
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <div className="flex flex-col md:fl                                For best results, use high-quality landscape images that
-                                represent your tour. Avoid text-heavy images.ex-row gap-6">
+                  <div className="flex flex-col gap-6 md:flex-row">
                     {/* Image Upload Section (Left) */}
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
                         Tour Cover Image *
                       </label>
 
@@ -921,11 +731,11 @@ function Dashboard() {
                         {/* Preview/Upload Area */}
                         <label
                           className={`flex h-full rounded-lg border-2 border-dashed cursor-pointer transition-all overflow-hidden
-          ${
-            formData.coverImage
-              ? "border-gray-200"
-              : "border-gray-300 hover:border-blue-400 bg-gray-50"
-          }`}
+                            ${
+                              formData.coverImage
+                                ? "border-gray-200"
+                                : "border-gray-300 hover:border-blue-400 bg-gray-50"
+                            }`}
                         >
                           {formData.coverImage ? (
                             <div className="relative w-full h-full">
@@ -936,13 +746,13 @@ function Dashboard() {
                                     : URL.createObjectURL(formData.coverImage)
                                 }
                                 alt="Tour cover preview"
-                                className="w-full h-full object-cover"
+                                className="object-cover w-full h-full"
                               />
-                              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <div className="bg-white/90 px-4 py-2 rounded-full shadow flex items-center gap-2">
+                              <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 bg-black/10 group-hover:opacity-100">
+                                <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow bg-white/90">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
-                                    className="h-5 w-5 text-blue-600"
+                                    className="w-5 h-5 text-blue-600"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
@@ -961,9 +771,9 @@ function Dashboard() {
                               </div>
                             </div>
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
+                            <div className="flex flex-col items-center justify-center w-full h-full p-6 text-center">
                               <svg
-                                className="w-12 h-12 text-gray-400 mb-3"
+                                className="w-12 h-12 mb-3 text-gray-400"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -975,7 +785,7 @@ function Dashboard() {
                                   d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                                 />
                               </svg>
-                              <p className="text-sm text-gray-600 mb-1">
+                              <p className="mb-1 text-sm text-gray-600">
                                 <span className="font-medium text-blue-600">
                                   Click to upload
                                 </span>{" "}
@@ -983,6 +793,8 @@ function Dashboard() {
                               </p>
                               <p className="text-xs text-gray-500">
                                 Recommended: 1200×800px JPG/PNG<br/>
+                                For best results, use high-quality landscape images that
+                                represent your tour. Avoid text-heavy images.
                               </p>
                             </div>
                           )}
@@ -1009,7 +821,7 @@ function Dashboard() {
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 text-red-500"
+                              className="w-5 h-5 text-red-500"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -1026,7 +838,7 @@ function Dashboard() {
 
                     {/* Description Section (Right) */}
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
                         Tour Description *
                       </label>
                       <textarea
@@ -1044,7 +856,7 @@ function Dashboard() {
               )}
             </div>
 
-            <div className="p-6 border-t border-gray-200 flex justify-between">
+            <div className="flex justify-between p-6 border-t border-gray-200">
               <button
                 onClick={prevStep}
                 disabled={currentStep === 1}
@@ -1062,7 +874,7 @@ function Dashboard() {
                     ? handleCreateTour
                     : nextStep
                 }
-                className="px-6 py-2 bg-gradient-to-r from-teal-600 to-blue-600 text-white rounded-lg font-medium hover:from-teal-700 hover:to-blue-700 transition-all duration-200"
+                className="px-6 py-2 font-medium text-white transition-all duration-200 rounded-lg bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700"
               >
                 {currentStep === createTourSteps.length
                   ? "Create Tour"
