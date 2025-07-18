@@ -34,7 +34,6 @@ import Sigiriya from './Landing/sigiria.jpg';
 
 
 
-
 export const images = {
   lightLogo,
   darkLogo,
