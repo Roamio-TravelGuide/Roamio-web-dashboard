@@ -873,7 +873,7 @@ const Dashboard = () => {
                   {/* Tour Packages Button */}
                   <button 
                     className="group bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-xl p-4 border border-emerald-400 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
-                    onClick={() => console.log('Navigate to tour packages')}
+                    onClick={() => window.location.href = '/admin/tourpackage'}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <Package className="w-5 h-5 text-white" />
