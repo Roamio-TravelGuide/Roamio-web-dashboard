@@ -30,21 +30,21 @@ const Users = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({
-  total: 0,
-  active: 0,
-  pending: 0,
-  blocked: 0
-});   
-
-useEffect(() => {
-  // When you get your users data:
-  setStats({
-    total: users.length,
-    active: users.filter(u => u.status === 'active').length,
-    pending: users.filter(u => u.status === 'pending').length,
-    blocked: users.filter(u => u.status === 'blocked').length
+    total: 0,
+    active: 0,
+    pending: 0,
+    blocked: 0,
   });
-}, [users]);
+
+  useEffect(() => {
+    // When you get your users data:
+    setStats({
+      total: users.length,
+      active: users.filter((u) => u.status === "active").length,
+      pending: users.filter((u) => u.status === "pending").length,
+      blocked: users.filter((u) => u.status === "blocked").length,
+    });
+  }, [users]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -263,70 +263,78 @@ useEffect(() => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  {/* Total Users Card */}
-  <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-500 text-sm font-medium">Total Users</p>
-        <p className="text-2xl font-bold text-gray-800">
-          {stats.total || <span className="text-gray-400">Loading...</span>}
-        </p>
-        <p className="text-xs text-gray-400 mt-1">All platform users</p>
-      </div>
-      <div className="p-3 rounded-full bg-blue-50 text-blue-600">
-        <FaUser className="w-5 h-5" />
-      </div>
-    </div>
-  </div>
+        {/* Total Users Card */}
+        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm font-medium">Total Users</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {stats.total || (
+                  <span className="text-gray-400">Loading...</span>
+                )}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">All platform users</p>
+            </div>
+            <div className="p-3 rounded-full bg-blue-50 text-blue-600">
+              <FaUser className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
 
-  {/* Active Users Card */}
-  <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-500 text-sm font-medium">Active Users</p>
-        <p className="text-2xl font-bold text-green-600">
-          {stats.active || <span className="text-gray-400">Loading...</span>}
-        </p>
-        <p className="text-xs text-gray-400 mt-1">Currently active</p>
-      </div>
-      <div className="p-3 rounded-full bg-green-50 text-green-600">
-        <FaUser className="w-5 h-5" />
-      </div>
-    </div>
-  </div>
+        {/* Active Users Card */}
+        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm font-medium">Active Users</p>
+              <p className="text-2xl font-bold text-green-600">
+                {stats.active || (
+                  <span className="text-gray-400">Loading...</span>
+                )}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Currently active</p>
+            </div>
+            <div className="p-3 rounded-full bg-green-50 text-green-600">
+              <FaUser className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
 
-  {/* Pending Users Card */}
-  <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-500 text-sm font-medium">Pending Users</p>
-        <p className="text-2xl font-bold text-yellow-600">
-          {stats.pending || <span className="text-gray-400">Loading...</span>}
-        </p>
-        <p className="text-xs text-gray-400 mt-1">Awaiting approval</p>
-      </div>
-      <div className="p-3 rounded-full bg-yellow-50 text-yellow-600">
-        <FaUser className="w-5 h-5" />
-      </div>
-    </div>
-  </div>
+        {/* Pending Users Card */}
+        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm font-medium">Pending Users</p>
+              <p className="text-2xl font-bold text-yellow-600">
+                {stats.pending || (
+                  <span className="text-gray-400">Loading...</span>
+                )}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Awaiting approval</p>
+            </div>
+            <div className="p-3 rounded-full bg-yellow-50 text-yellow-600">
+              <FaUser className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
 
-  {/* Blocked Users Card */}
-  <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-gray-500 text-sm font-medium">Blocked Users</p>
-        <p className="text-2xl font-bold text-red-600">
-          {stats.blocked || <span className="text-gray-400">Loading...</span>}
-        </p>
-        <p className="text-xs text-gray-400 mt-1">Restricted access</p>
+        {/* Blocked Users Card */}
+        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-500 text-sm font-medium">Blocked Users</p>
+              <p className="text-2xl font-bold text-red-600">
+                {stats.blocked || (
+                  <span className="text-gray-400">Loading...</span>
+                )}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Restricted access</p>
+            </div>
+            <div className="p-3 rounded-full bg-red-50 text-red-600">
+              <FaUser className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="p-3 rounded-full bg-red-50 text-red-600">
-        <FaUser className="w-5 h-5" />
-      </div>
-    </div>
-  </div>
-</div>
       {/* Loading State */}
       {isLoading && (
         <div className="flex justify-center items-center h-64">
