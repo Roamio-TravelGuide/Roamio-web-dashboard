@@ -1,52 +1,55 @@
 // src/api/admin/adminApi.js
-import apiClient from '../apiClient';
-import axios from 'axios';
+import apiClient from "../apiClient";
+import axios from "axios";
 
 // Helper function to format dates consistently
 function formatDate(date) {
   if (date instanceof Date) return date.toISOString();
   const parsed = new Date(date);
-  return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+  return isNaN(parsed.getTime())
+    ? new Date().toISOString()
+    : parsed.toISOString();
 }
 
 export const getAllUsers = async (filters = {}) => {
   try {
+    const response = await apiClient.get("/users/");
+    // Check if response has the expected structure
+    const users = response.data.data || [];
 
-    console.log("hi")
-    const response = await apiClient.get('/users/');
     // Transform the data to match frontend expectations
     return {
-      data: response.data.users.map(user => ({
+      data: users.map((user) => ({
         id: user.id.toString(),
         name: user.name,
         email: user.email,
         phone: user.phone_no,
         status: user.status.toLowerCase(),
         role: user.role,
-        avatar: user.profile_picture_url || '/default-avatar.png',
+        avatar: user.profile_picture_url || "/default-avatar.png",
         registeredDate: formatDate(user.registered_date),
         lastLogin: user.last_login ? formatDate(user.last_login) : null,
         bio: user.bio,
         totalBookings: user.traveler_count || 0,
         totalReviews: user.report_count || 0,
-        ...(user.role !== 'traveler' && { averageRating: user.average_rating || 0 }),
+        ...(user.role !== "traveler" && {
+          averageRating: user.average_rating || 0,
+        }),
       })),
-      message: response.data.message,
+      message: response.data.message || "Users fetched successfully",
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw error.response?.data?.message || 'Fetching users failed';
+      throw error.response?.data?.message || "Fetching users failed";
     }
-    throw new Error('An unexpected error occurred');
+    throw new Error("An unexpected error occurred");
   }
 };
 
 export const getUserStatistics = async () => {
   try {
-
-    console.log("hi")
     const response = await apiClient.get('/users/');
-    const users = response.data.data;
+    const users = response.data.data || [];
 
     // Calculate statistics from the user data
     return {
@@ -61,24 +64,26 @@ export const getUserStatistics = async () => {
       lastUpdated: new Date().toISOString()
     };
   } catch (error) {
+    console.error("Error in getUserStatistics:", error);
     if (axios.isAxiosError(error)) {
-      throw error.response?.data?.message || 'Fetching statistics failed';
+      console.error("Response data:", error.response?.data);
+      throw error.response?.data?.message || "Fetching statistics failed";
     }
-    throw new Error('An unexpected error occurred while fetching statistics');
+    throw new Error("An unexpected error occurred while fetching statistics");
   }
 };
 
 export const updateUserStatus = async (userId, newStatus) => {
   try {
     const response = await apiClient.patch(`/users/${userId}/status`, {
-      status: newStatus
+      status: newStatus,
     });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw error.response?.data?.message || 'Updating user status failed';
+      throw error.response?.data?.message || "Updating user status failed";
     }
-    throw new Error('An unexpected error occurred while updating status');
+    throw new Error("An unexpected error occurred while updating status");
   }
 };
 
