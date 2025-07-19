@@ -40,6 +40,8 @@ const Users = () => {
     pending: 0,
     blocked: 0
   });   
+    blocked: 0,
+  });
 
   useEffect(() => {
     // When you get your users data:
@@ -48,6 +50,9 @@ const Users = () => {
       active: users.filter(u => u.status === 'active').length,
       pending: users.filter(u => u.status === 'pending').length,
       blocked: users.filter(u => u.status === 'blocked').length
+      active: users.filter((u) => u.status === "active").length,
+      pending: users.filter((u) => u.status === "pending").length,
+      blocked: users.filter((u) => u.status === "blocked").length,
     });
   }, [users]);
 
@@ -310,6 +315,10 @@ const Users = () => {
               <p className="text-gray-500 text-sm font-medium">Total Users</p>
               <p className="text-2xl font-bold text-gray-800">
                 {stats.total || <span className="text-gray-400">Loading...</span>}
+
+                {stats.total || (
+                  <span className="text-gray-400">Loading...</span>
+                )}
               </p>
               <p className="text-xs text-gray-400 mt-1">All platform users</p>
             </div>
@@ -326,6 +335,9 @@ const Users = () => {
               <p className="text-gray-500 text-sm font-medium">Active Users</p>
               <p className="text-2xl font-bold text-green-600">
                 {stats.active || <span className="text-gray-400">Loading...</span>}
+                {stats.active || (
+                  <span className="text-gray-400">Loading...</span>
+                )}
               </p>
               <p className="text-xs text-gray-400 mt-1">Currently active</p>
             </div>
@@ -342,6 +354,9 @@ const Users = () => {
               <p className="text-gray-500 text-sm font-medium">Pending Users</p>
               <p className="text-2xl font-bold text-yellow-600">
                 {stats.pending || <span className="text-gray-400">Loading...</span>}
+                {stats.pending || (
+                  <span className="text-gray-400">Loading...</span>
+                )}
               </p>
               <p className="text-xs text-gray-400 mt-1">Awaiting approval</p>
             </div>
@@ -358,6 +373,9 @@ const Users = () => {
               <p className="text-gray-500 text-sm font-medium">Blocked Users</p>
               <p className="text-2xl font-bold text-red-600">
                 {stats.blocked || <span className="text-gray-400">Loading...</span>}
+                {stats.blocked || (
+                  <span className="text-gray-400">Loading...</span>
+                )}
               </p>
               <p className="text-xs text-gray-400 mt-1">Restricted access</p>
             </div>
