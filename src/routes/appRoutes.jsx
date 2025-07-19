@@ -15,17 +15,19 @@ import TourCreate from '../pages/Guide/TourCreate';
 import TourDet from '../pages/Guide/TourDetail';
 import TourPackages from '../pages/Guide/TourPackages';
 import Support from '../pages/Guide/Support'
-import TourEarnings from '../pages/Guide/TourEarnings'
+// import TourEditPage from '../components/tour/';
+// import TourEarnings from '../pages/Guide/TourEarnings'
 
-import ModeratorLayout from '../layouts/ModeratorLayout';
+import ModeratorLayout from '../layouts/ModeratorLayout';     
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
 import TourDetail from '../pages/Moderator/TourDetail';
-import { TourEditPage } from '../components/tour/TourEditPage';
+import {TourEditPage}  from '../components/tour/TourEditPage';
 
 import AdminLayout from '../layouts/AdminLayout'
 import Dashboard from '../pages/Admin/Dashboard'
 import Users from '../pages/Admin/Users'
 import Complaints from '../pages/Admin/Complaint';
+import Tourpackage from '../pages/Admin/Tourpackage';
 
 
 import VendorDashboard from '../pages/Vendor/Dashboard';
@@ -60,7 +62,7 @@ const AppRoutes = () => {
             <Route path="/guide/tours/view" element={<TourDet/>} />
             <Route path="/guide/tour/view/:id" element={<TourDet/>} />
             <Route path="/guide/tour/edit/:id" element={<TourEditPage/>} />
-            <Route path="/guide/earnings" element={<TourEarnings/>} />
+            {/* <Route path="/guide/earnings" element={<TourEarnings/>} /> */}
           </Route>
 
           <Route element={<ModeratorLayout/>}>
@@ -72,6 +74,7 @@ const AppRoutes = () => {
               <Route path="/admin/dashboard" element={<Dashboard/>} />
               <Route path="/admin/users" element={<Users/>} />
               <Route path="/admin/complaints" element={<Complaints/>} />
+              <Route path="/admin/tourpackage" element={<Tourpackage/>} />
             <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
             <Route path="/moderator/tour/:id" element={<TourDetail/>} />
           </Route>

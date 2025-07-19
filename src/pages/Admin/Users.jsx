@@ -12,11 +12,16 @@ import {
   FaStar,
   FaBook,
   FaComment,
+  FaEye,
+  FaEdit,
+  FaTrash,
+  FaCheck,
+  FaBan,
 } from "react-icons/fa";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import axios from "axios";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 10;
 const API_BASE_URL = "http://localhost:3001/api/v1";
 
 const Users = () => {
@@ -33,13 +38,16 @@ const Users = () => {
     total: 0,
     active: 0,
     pending: 0,
-    blocked: 0,
+    blocked: 0
   });
 
   useEffect(() => {
     // When you get your users data:
     setStats({
       total: users.length,
+      active: users.filter(u => u.status === 'active').length,
+      pending: users.filter(u => u.status === 'pending').length,
+      blocked: users.filter(u => u.status === 'blocked').length,
       active: users.filter((u) => u.status === "active").length,
       pending: users.filter((u) => u.status === "pending").length,
       blocked: users.filter((u) => u.status === "blocked").length,
@@ -122,6 +130,24 @@ const Users = () => {
     );
   };
 
+  const getRoleBadge = (role) => {
+    const colorClasses = {
+      traveler: "bg-purple-100 text-purple-800",
+      tour_guide: "bg-blue-100 text-blue-800",
+      moderator: "bg-orange-100 text-orange-800",
+      vendor: "bg-green-100 text-green-800",
+    };
+    return (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+          colorClasses[role] || "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {role.replace("_", " ")}
+      </span>
+    );
+  };
+
   const openUserModal = (user) => {
     setSelectedUser(user);
     setIsModalOpen(true);
@@ -149,6 +175,23 @@ const Users = () => {
         ...selectedUser,
         status: newStatus,
       });
+    } catch (err) {
+      console.error("Error updating user status:", err);
+      setError("Failed to update user status");
+    }
+  };
+
+  const quickStatusUpdate = async (userId, newStatus) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/users/${userId}/status`, {
+        status: newStatus,
+      });
+
+      const updatedUsers = users.map((u) =>
+        u.id === userId ? { ...u, status: newStatus } : u
+      );
+
+      setUsers(updatedUsers);
     } catch (err) {
       console.error("Error updating user status:", err);
       setError("Failed to update user status");
@@ -269,6 +312,8 @@ const Users = () => {
             <div>
               <p className="text-gray-500 text-sm font-medium">Total Users</p>
               <p className="text-2xl font-bold text-gray-800">
+                {stats.total || <span className="text-gray-400">Loading...</span>}
+
                 {stats.total || (
                   <span className="text-gray-400">Loading...</span>
                 )}
@@ -287,6 +332,7 @@ const Users = () => {
             <div>
               <p className="text-gray-500 text-sm font-medium">Active Users</p>
               <p className="text-2xl font-bold text-green-600">
+                {stats.active || <span className="text-gray-400">Loading...</span>}
                 {stats.active || (
                   <span className="text-gray-400">Loading...</span>
                 )}
@@ -305,6 +351,7 @@ const Users = () => {
             <div>
               <p className="text-gray-500 text-sm font-medium">Pending Users</p>
               <p className="text-2xl font-bold text-yellow-600">
+                {stats.pending || <span className="text-gray-400">Loading...</span>}
                 {stats.pending || (
                   <span className="text-gray-400">Loading...</span>
                 )}
@@ -323,6 +370,7 @@ const Users = () => {
             <div>
               <p className="text-gray-500 text-sm font-medium">Blocked Users</p>
               <p className="text-2xl font-bold text-red-600">
+                {stats.blocked || <span className="text-gray-400">Loading...</span>}
                 {stats.blocked || (
                   <span className="text-gray-400">Loading...</span>
                 )}
@@ -335,6 +383,7 @@ const Users = () => {
           </div>
         </div>
       </div>
+
       {/* Loading State */}
       {isLoading && (
         <div className="flex justify-center items-center h-64">
@@ -362,112 +411,182 @@ const Users = () => {
         </div>
       )}
 
-      {/* User Cards */}
+      {/* Users Table */}
       {!isLoading && !error && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {users.length > 0 ? (
-              users.map((user) => (
-                <div
-                  key={user.id}
-                  className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer hover:border-blue-200"
-                  onClick={() => openUserModal(user)}
-                >
-                  <div className="p-5">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
-                          onError={(e) => {
-                            e.target.src = "/default-avatar.png";
-                          }}
-                        />
-                        <span
-                          className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                            user.status === "active"
-                              ? "bg-green-500"
-                              : user.status === "blocked"
-                              ? "bg-red-500"
-                              : user.status === "pending"
-                              ? "bg-yellow-500"
-                              : "bg-gray-500"
-                          }`}
-                        ></span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-lg truncate">
-                          {user.name}
-                        </h4>
-                        <p className="text-gray-600 text-sm truncate">
-                          {user.email}
-                        </p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span
-                            className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                              user.role === "traveler"
-                                ? "bg-purple-100 text-purple-800"
-                                : user.role === "tour_guide"
-                                ? "bg-blue-100 text-blue-800"
-                                : user.role === "moderator"
-                                ? "bg-orange-100 text-orange-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {user.role.replace("_", " ")}
-                          </span>
+          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Registered
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Activity
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {users.length > 0 ? (
+                    users.map((user) => (
+                      <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="relative">
+                              <img
+                                src={user.avatar}
+                                alt={user.name}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-white shadow"
+                                onError={(e) => {
+                                  e.target.src = "/default-avatar.png";
+                                }}
+                              />
+                              <span
+                                className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+                                  user.status === "active"
+                                    ? "bg-green-500"
+                                    : user.status === "blocked"
+                                    ? "bg-red-500"
+                                    : user.status === "pending"
+                                    ? "bg-yellow-500"
+                                    : "bg-gray-500"
+                                }`}
+                              ></span>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {user.name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                ID: {user.id}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getRoleBadge(user.role)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           {getStatusBadge(user.status)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <FaCalendarAlt className="mr-1.5" />
-                        <span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{user.email}</div>
+                          {user.phone && (
+                            <div className="text-sm text-gray-500">{user.phone}</div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(user.registeredDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <button
-                        className="text-blue-500 hover:text-blue-700 text-sm font-medium"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openUserModal(user);
-                        }}
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full bg-white rounded-xl shadow-md p-8 text-center">
-                <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <FaUser className="text-gray-400 text-3xl" />
-                </div>
-                <h4 className="text-lg font-medium text-gray-700">
-                  No users found
-                </h4>
-                <p className="text-gray-500 mt-2">
-                  Try adjusting your search or filter criteria
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedUserType("all");
-                  }}
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  Reset Filters
-                </button>
-              </div>
-            )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <div className="flex items-center">
+                              <FaBook className="w-3 h-3 mr-1" />
+                              {user.totalBookings}
+                            </div>
+                            <div className="flex items-center">
+                              <FaComment className="w-3 h-3 mr-1" />
+                              {user.totalReviews}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => openUserModal(user)}
+                              className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                              title="View Details"
+                            >
+                              <FaEye className="w-4 h-4" />
+                            </button>
+                            
+                            {user.status === "pending" && (
+                              <button
+                                onClick={() => quickStatusUpdate(user.id, "active")}
+                                className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                                title="Approve User"
+                              >
+                                <FaCheck className="w-4 h-4" />
+                              </button>
+                            )}
+                            
+                            {user.status !== "pending" && (
+                              <button
+                                onClick={() => 
+                                  quickStatusUpdate(
+                                    user.id, 
+                                    user.status === "blocked" ? "active" : "blocked"
+                                  )
+                                }
+                                className={`p-1 rounded transition-colors ${
+                                  user.status === "blocked"
+                                    ? "text-green-600 hover:text-green-900 hover:bg-green-50"
+                                    : "text-red-600 hover:text-red-900 hover:bg-red-50"
+                                }`}
+                                title={user.status === "blocked" ? "Unblock User" : "Block User"}
+                              >
+                                {user.status === "blocked" ? (
+                                  <FaCheck className="w-4 h-4" />
+                                ) : (
+                                  <FaBan className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="px-6 py-12 text-center">
+                        <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                          <FaUser className="text-gray-400 text-3xl" />
+                        </div>
+                        <h4 className="text-lg font-medium text-gray-700">
+                          No users found
+                        </h4>
+                        <p className="text-gray-500 mt-2">
+                          Try adjusting your search or filter criteria
+                        </p>
+                        <button
+                          onClick={() => {
+                            setSearchTerm("");
+                            setSelectedUserType("all");
+                          }}
+                          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          Reset Filters
+                        </button>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Pagination */}
           {users.length > 0 && (
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-between items-center mt-6">
+              <div className="text-sm text-gray-700">
+                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, users.length)} of {users.length} users
+              </div>
               <nav className="inline-flex rounded-md shadow-sm">
                 <button
                   onClick={() =>
@@ -494,11 +613,11 @@ const Users = () => {
         </>
       )}
 
-      {/* User Details Modal */}
+      {/* User Details Modal - Keep the existing modal code */}
       {isModalOpen && selectedUser && (
         <div
           className="fixed inset-0 flex items-center justify-center p-4 z-50"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }} // Changed to transparent background
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
           onClick={closeUserModal}
         >
           <div
@@ -513,19 +632,7 @@ const Users = () => {
                     {selectedUser.name}
                   </h3>
                   <div className="flex items-center mt-1 gap-2">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                        selectedUser.role === "traveler"
-                          ? "bg-purple-100 text-purple-800"
-                          : selectedUser.role === "tour_guide"
-                          ? "bg-blue-100 text-blue-800"
-                          : selectedUser.role === "moderator"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {selectedUser.role.replace("_", " ")}
-                    </span>
+                    {getRoleBadge(selectedUser.role)}
                     {getStatusBadge(selectedUser.status)}
                   </div>
                 </div>

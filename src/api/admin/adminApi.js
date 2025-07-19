@@ -48,23 +48,22 @@ export const getAllUsers = async (filters = {}) => {
 
 export const getUserStatistics = async () => {
   try {
-    const response = await apiClient.get("/users/");
-    const users = response.data.data || response.data.users || [];
+
+    console.log("hi")
+    const response = await apiClient.get('/users/');
+    const users = response.data.data;
 
     // Calculate statistics from the user data
     return {
       total: users.length,
-      active: users.filter((user) => user.status.toLowerCase() === "active")
-        .length,
-      pending: users.filter((user) => user.status.toLowerCase() === "pending")
-        .length,
-      blocked: users.filter((user) => user.status.toLowerCase() === "blocked")
-        .length,
-      travelers: users.filter((user) => user.role === "traveler").length,
-      tourGuides: users.filter((user) => user.role === "tour_guide").length,
-      moderators: users.filter((user) => user.role === "moderator").length,
-      vendors: users.filter((user) => user.role === "vendor").length,
-      lastUpdated: new Date().toISOString(),
+      active: users.filter(user => user.status.toLowerCase() === 'active').length,
+      pending: users.filter(user => user.status.toLowerCase() === 'pending').length,
+      blocked: users.filter(user => user.status.toLowerCase() === 'blocked').length,
+      travelers: users.filter(user => user.role === 'traveler').length,
+      tourGuides: users.filter(user => user.role === 'travel_guide').length,
+      moderators: users.filter(user => user.role === 'moderator').length,
+      vendors: users.filter(user => user.role === 'vendor').length,
+      lastUpdated: new Date().toISOString()
     };
   } catch (error) {
     console.error("Error in getUserStatistics:", error);
@@ -89,3 +88,4 @@ export const updateUserStatus = async (userId, newStatus) => {
     throw new Error("An unexpected error occurred while updating status");
   }
 };
+
