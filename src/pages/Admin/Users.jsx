@@ -39,8 +39,6 @@ const Users = () => {
     active: 0,
     pending: 0,
     blocked: 0
-  });   
-    blocked: 0,
   });
 
   useEffect(() => {
@@ -49,7 +47,7 @@ const Users = () => {
       total: users.length,
       active: users.filter(u => u.status === 'active').length,
       pending: users.filter(u => u.status === 'pending').length,
-      blocked: users.filter(u => u.status === 'blocked').length
+      blocked: users.filter(u => u.status === 'blocked').length,
       active: users.filter((u) => u.status === "active").length,
       pending: users.filter((u) => u.status === "pending").length,
       blocked: users.filter((u) => u.status === "blocked").length,
