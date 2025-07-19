@@ -15,7 +15,7 @@ export const getAllUsers = async (filters = {}) => {
   try {
     const response = await apiClient.get("/users/");
     // Check if response has the expected structure
-    const users = response.data.data || response.data.users || [];
+    const users = response.data.data || [];
 
     // Transform the data to match frontend expectations
     return {
@@ -48,10 +48,8 @@ export const getAllUsers = async (filters = {}) => {
 
 export const getUserStatistics = async () => {
   try {
-
-    console.log("hi")
     const response = await apiClient.get('/users/');
-    const users = response.data.data;
+    const users = response.data.data || [];
 
     // Calculate statistics from the user data
     return {
