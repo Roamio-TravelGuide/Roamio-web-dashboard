@@ -49,11 +49,11 @@ export const menuConfig = {
         path: "/guide/support",
         icon: createIcon(FaRegQuestionCircle),
       },
-      {
-        title: "Settings",
-        path: "/guide/settings",
-        icon: createIcon(FaCog),
-      },
+      // {
+      //   title: "Settings",
+      //   path: "/guide/settings",
+      //   icon: createIcon(FaCog),
+      // },
     ],
   },
   moderator: {
@@ -80,7 +80,7 @@ export const menuConfig = {
       {
         title: "Complaints",
         path: "/admin/complaints",
-        icon: createIcon(FaUsers),
+        icon: createIcon(FaRegQuestionCircle),
       },
     ],
   },
