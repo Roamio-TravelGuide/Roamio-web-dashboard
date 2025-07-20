@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useRef, useEffect } from "react";
 import {
   FiEdit,
@@ -15,6 +16,24 @@ import {
   uploadVendorLogo,
   uploadVendorCover,
 } from "../../api/vendor/vendorApi";
+=======
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  FiTrendingUp, 
+  FiMapPin, 
+  FiStar,
+  FiEdit, 
+  FiUpload, 
+  FiLink, 
+  FiCheckCircle, 
+  FiXCircle,
+  FiCamera,
+  FiImage,
+  FiLoader
+} from 'react-icons/fi';
+import VendorService from '../../api/vendor/vendorService.js';
+import { Toast } from '../../components/Toast.jsx';
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
 
 const VendorDashboard = () => {
   const logoInputRef = useRef(null);
@@ -23,6 +42,7 @@ const VendorDashboard = () => {
   // State for vendor data
   const [vendorData, setVendorData] = useState(null);
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
   const [error, setError] = useState(null);
 
   // Form state
@@ -40,11 +60,26 @@ const VendorDashboard = () => {
   };
 
   const [formData, setFormData] = useState(initialFormState);
+=======
+  const [formData, setFormData] = useState({
+    businessName: '',
+    description: '',
+    email: '',
+    phone: '',
+    socialMedia: {
+      instagram: '',
+      facebook: '',
+      website: ''
+    }
+  });
+
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
   const [logo, setLogo] = useState(null);
   const [coverPhoto, setCoverPhoto] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState({});
   const [uploading, setUploading] = useState({ logo: false, cover: false });
+<<<<<<< HEAD
   const [originalData, setOriginalData] = useState(null);
 
   // Fetch vendor profile on component mount
@@ -137,12 +172,129 @@ const VendorDashboard = () => {
       );
     } finally {
       setUploading((prev) => ({ ...prev, logo: false }));
+=======
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  // Show toast message
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 5000);
+  };
+
+  // Mock stats data (you can move this to API later)
+  const mockStats = [
+    { title: "Monthly Views", value: "1,240", change: "+12%", icon: <FiTrendingUp /> },
+    { title: "Recommendations", value: "89", change: "+8%", icon: <FiMapPin /> },
+    { title: "Avg. Rating", value: "4.7", change: "+0.2", icon: <FiStar /> }
+  ];
+
+  // Load vendor data on component mount
+  useEffect(() => {
+    loadVendorData();
+  }, []);
+
+  const loadVendorData = async () => {
+    try {
+      setLoading(true);
+      setErrors({});
+      const response = await VendorService.getVendorProfile();
+      
+      if (response.success) {
+        const data = response.data;
+        setVendorData(data);
+        setFormData({
+          businessName: data.businessName || '',
+          description: data.description || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          socialMedia: data.socialMedia || {
+            instagram: '',
+            facebook: '',
+            website: ''
+          }
+        });
+        setLogo(data.logoUrl);
+        setCoverPhoto(data.coverPhotoUrl);
+      } else {
+        // Handle case where vendor profile doesn't exist
+        setErrors({ 
+          general: response.message || 'Vendor profile not found. Please contact admin to set up your profile.' 
+        });
+      }
+    } catch (error) {
+      console.error('Error loading vendor data:', error);
+      
+      // Handle different error types
+      if (error.status === 404) {
+        setErrors({ 
+          general: 'Vendor profile not found. Please contact admin to set up your profile.' 
+        });
+      } else if (error.status === 401) {
+        setErrors({ 
+          general: 'Authentication failed. Please log in again.' 
+        });
+      } else {
+        setErrors({ 
+          general: error.message || 'Failed to load vendor data. Please try again.' 
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+    // Handle form input changes
+    const handleChange = (e) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+    };
+  
+    // Handle social media input changes
+    const handleSocialChange = (e) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({
+        ...prev,
+        socialMedia: { ...prev.socialMedia, [name]: value }
+      }));
+    };
+  
+  // Handle logo upload
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.match('image.*')) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setErrors({ ...errors, logo: 'Logo file size must be less than 5MB' });
+        return;
+      }
+      
+      try {
+        setUploading({ ...uploading, logo: true });
+        setErrors({ ...errors, logo: null });
+
+        const response = await VendorService.uploadVendorLogo(file);
+        
+        if (response.success) {
+          setLogo(response.data.logoUrl);
+          // Update vendor data
+          setVendorData(prev => ({ ...prev, logoUrl: response.data.logoUrl }));
+        } else {
+          setErrors({ ...errors, logo: response.message || 'Failed to upload logo' });
+        }
+      } catch (error) {
+        console.error('Error uploading logo:', error);
+        setErrors({ ...errors, logo: error.message || 'Failed to upload logo' });
+      } finally {
+        setUploading({ ...uploading, logo: false });
+      }
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
     }
   };
 
   // Handle cover photo upload
   const handleCoverUpload = async (e) => {
     const file = e.target.files[0];
+<<<<<<< HEAD
     if (!file) return;
 
     try {
@@ -224,6 +376,88 @@ const VendorDashboard = () => {
       setOriginalData(formData);
       setIsEditing(false);
       setErrors({});
+=======
+    if (file && file.type.match('image.*')) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setErrors({ ...errors, cover: 'Cover image file size must be less than 10MB' });
+        return;
+      }
+      
+      try {
+        setUploading({ ...uploading, cover: true });
+        setErrors({ ...errors, cover: null });
+
+        const response = await VendorService.uploadVendorCover(file);
+        
+        if (response.success) {
+          setCoverPhoto(response.data.coverUrl);
+          // Update vendor data
+          setVendorData(prev => ({ ...prev, coverPhotoUrl: response.data.coverUrl }));
+        } else {
+          setErrors({ ...errors, cover: response.message || 'Failed to upload cover image' });
+        }
+      } catch (error) {
+        console.error('Error uploading cover:', error);
+        setErrors({ ...errors, cover: error.message || 'Failed to upload cover image' });
+      } finally {
+        setUploading({ ...uploading, cover: false });
+      }
+    }
+  };
+  
+    // Form validation
+    const validateForm = () => {
+      const newErrors = {};
+      if (!formData.businessName) newErrors.businessName = 'Business name is required';
+      if (!formData.email.includes('@')) newErrors.email = 'Invalid email address';
+      return newErrors;
+    };
+  
+    // Handle form submission
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      const validationErrors = validateForm();
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+
+      try {
+        setSaving(true);
+        setErrors({});
+
+        const response = await VendorService.updateVendorProfile(formData);
+        
+        if (response.success) {
+          // Update local state with response data
+          setVendorData(response.data);
+          setIsEditing(false);
+          showToast('Profile updated successfully!', 'success');
+        } else {
+          setErrors({ general: response.message || 'Failed to update profile' });
+          showToast(response.message || 'Failed to update profile', 'error');
+        }
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        
+        // Handle validation errors
+        if (error.status === 400 && error.details?.errors) {
+          const validationErrors = {};
+          error.details.errors.forEach(err => {
+            validationErrors[err.field] = err.message;
+          });
+          setErrors(validationErrors);
+          showToast('Please fix the validation errors', 'error');
+        } else {
+          const errorMessage = error.message || 'Failed to update profile. Please try again.';
+          setErrors({ general: errorMessage });
+          showToast(errorMessage, 'error');
+        }
+      } finally {
+        setSaving(false);
+      }
+    };
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
 
       toast.success("Profile updated successfully");
     } catch (err) {
@@ -287,6 +521,7 @@ const VendorDashboard = () => {
 
   // Main render
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-gray-50">
       {/* Error message for form-level errors */}
       {errors.form && (
@@ -300,6 +535,45 @@ const VendorDashboard = () => {
 
       {/* Cover Photo Section */}
       <div className="relative w-full h-80 md:h-96">
+=======
+    <div className="min-h-screen vendor-dashboard bg-gray-50">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <Toast 
+            message={toast.message} 
+            type={toast.type} 
+            onClose={() => setToast(null)} 
+          />
+        </div>
+      )}
+      
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <FiLoader className="w-8 h-8 mx-auto mb-4 text-indigo-600 animate-spin" />
+            <p className="text-gray-600">Loading vendor profile...</p>
+          </div>
+        </div>
+      ) : errors.general ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="p-6 text-center bg-white border border-red-200 rounded-lg shadow-sm">
+            <FiXCircle className="w-8 h-8 mx-auto mb-4 text-red-500" />
+            <p className="mb-4 text-red-600">{errors.general}</p>
+            <button
+              onClick={loadVendorData}
+              className="px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Hero Section with Cover Photo */}
+          <div className="relative w-full h-80 md:h-96">
+        {/* Cover Photo */}
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
         <div className="relative w-full h-full overflow-hidden bg-gray-200">
           {coverPhoto ? (
             <img
@@ -390,12 +664,43 @@ const VendorDashboard = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                   <div>
+<<<<<<< HEAD
                     <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
                       {formData.businessName}
+=======
+                    <h1 className="text-2xl font-bold leading-tight text-gray-900 md:text-3xl">
+                      {vendorData?.businessName || 'Business Name'}
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
                     </h1>
                     <p className="mt-2 text-gray-600 line-clamp-2">
-                      {formData.description}
+                      {vendorData?.description || 'Business description not available.'}
                     </p>
+<<<<<<< HEAD
+=======
+                    <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <FiMapPin size={14} />
+                        <span>Business Location</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className={`w-2 h-2 rounded-full ${vendorData?.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        <span>{vendorData?.isActive ? 'Active' : 'Inactive'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Quick Stats */}
+                  <div className="flex gap-6">
+                    {mockStats.slice(0, 2).map((stat, index) => (
+                      <div key={index} className="text-center">
+                        <div className="flex items-center justify-center w-8 h-8 mb-1 text-indigo-600 bg-indigo-100 rounded-full">
+                          {stat.icon}
+                        </div>
+                        <div className="text-lg font-bold text-gray-900">{stat.value}</div>
+                        <div className="text-xs text-gray-500">{stat.title}</div>
+                      </div>
+                    ))}
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
                   </div>
                 </div>
               </div>
@@ -427,13 +732,51 @@ const VendorDashboard = () => {
               <div className="flex gap-3">
                 <button
                   onClick={handleSubmit}
+<<<<<<< HEAD
                   className="flex items-center gap-2 px-6 py-3 text-white transition-all bg-green-600 rounded-lg hover:bg-green-700"
+=======
+                  disabled={saving}
+                  className="flex items-center gap-2 px-6 py-3 text-white transition-all bg-green-600 rounded-lg hover:bg-green-700 hover:shadow-md focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
                 >
-                  <FiCheckCircle size={18} /> Save Changes
+                  {saving ? (
+                    <>
+                      <FiLoader size={18} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <FiCheckCircle size={18} />
+                      Save Changes
+                    </>
+                  )}
                 </button>
                 <button
+<<<<<<< HEAD
                   onClick={handleCancel}
                   className="flex items-center gap-2 px-6 py-3 text-gray-700 transition-all bg-gray-100 rounded-lg hover:bg-gray-200"
+=======
+                  onClick={() => {
+                    setIsEditing(false);
+                    setErrors({});
+                    // Reset form data to original vendor data
+                    if (vendorData) {
+                      setFormData({
+                        businessName: vendorData.businessName || '',
+                        description: vendorData.description || '',
+                        email: vendorData.email || '',
+                        phone: vendorData.phone || '',
+                        socialMedia: vendorData.socialMedia || {
+                          instagram: '',
+                          facebook: '',
+                          website: ''
+                        }
+                      });
+                    }
+                  }}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-6 py-3 text-gray-700 transition-all bg-gray-100 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
                 >
                   <FiXCircle size={18} /> Cancel
                 </button>
@@ -441,6 +784,7 @@ const VendorDashboard = () => {
             )}
           </div>
 
+<<<<<<< HEAD
           {isEditing ? (
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Basic Information */}
@@ -468,6 +812,95 @@ const VendorDashboard = () => {
                     {errors.businessName && (
                       <p className="mt-2 text-sm text-red-600">
                         {errors.businessName}
+=======
+          {/* General Error Display */}
+          {errors.general && (
+            <div className="p-4 mb-6 text-red-700 bg-red-100 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <FiXCircle size={16} />
+                <span>{errors.general}</span>
+              </div>
+            </div>
+          )}
+      
+            {isEditing ? (
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Basic Information */}
+                <div className="p-6 space-y-6 bg-gray-50 rounded-xl">
+                  <h3 className="pb-2 text-lg font-semibold text-gray-900 border-b border-gray-200">
+                    Basic Information
+                  </h3>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Business Name*
+                      </label>
+                      <input
+                        type="text"
+                        name="businessName"
+                        value={formData.businessName}
+                        onChange={handleChange}
+                        className={`w-full p-4 border rounded-xl transition-colors focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                          errors.businessName ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                        }`}
+                        placeholder="Enter your business name"
+                      />
+                      {errors.businessName && (
+                        <p className="flex items-center gap-1 mt-2 text-sm text-red-600">
+                          <FiXCircle size={14} />
+                          {errors.businessName}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Contact Email*
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={`w-full p-4 border rounded-xl transition-colors focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                          errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                        }`}
+                        placeholder="your@email.com"
+                      />
+                      {errors.email && (
+                        <p className="flex items-center gap-1 mt-2 text-sm text-red-600">
+                          <FiXCircle size={14} />
+                          {errors.email}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="w-full p-4 transition-colors border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="+1 (555) 123-4567"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Business Address
+                      </label>
+                      <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        className="w-full p-4 text-gray-600 bg-gray-100 border border-gray-300 rounded-xl"
+                        disabled
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Address verification is handled by our admin team
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
                       </p>
                     )}
                   </div>
@@ -671,6 +1104,7 @@ const VendorDashboard = () => {
                 </div>
               </div>
 
+<<<<<<< HEAD
               {/* Social Media Links Display */}
               <div className="p-6 bg-gray-50 rounded-xl">
                 <h3 className="pb-2 mb-6 text-lg font-semibold text-gray-900 border-b border-gray-200">
@@ -727,6 +1161,26 @@ const VendorDashboard = () => {
           )}
         </section>
       </div>
+=======
+        {/* Custom scrollbar styling */}
+        <style jsx>{`
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+        `}</style>
+        </>
+      )}
+>>>>>>> d454e127d8318ff3ee6e9d4e3b18713919fbe9f0
     </div>
   );
 };

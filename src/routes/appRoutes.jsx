@@ -27,6 +27,7 @@ import AdminLayout from '../layouts/AdminLayout'
 import Dashboard from '../pages/Admin/Dashboard'
 import Users from '../pages/Admin/Users'
 import Complaints from '../pages/Admin/Complaint';
+import Tourpackage from '../pages/Admin/Tourpackage';
 
 
 import VendorDashboard from '../pages/Vendor/Dashboard';
@@ -73,6 +74,7 @@ const AppRoutes = () => {
               <Route path="/admin/dashboard" element={<Dashboard/>} />
               <Route path="/admin/users" element={<Users/>} />
               <Route path="/admin/complaints" element={<Complaints/>} />
+              <Route path="/admin/tourpackage" element={<Tourpackage/>} />
             <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
             <Route path="/moderator/tour/:id" element={<TourDetail/>} />
           </Route>
