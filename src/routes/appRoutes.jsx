@@ -21,7 +21,7 @@ import Support from '../pages/Guide/Support'
 import ModeratorLayout from '../layouts/ModeratorLayout';     
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
 import TourDetail from '../pages/Moderator/TourDetail';
-import {TourEditPage}  from '../components/tour/TourEditPage';
+import TourEditPage from '../pages/Guide/TourEdit';
 
 import AdminLayout from '../layouts/AdminLayout'
 import Dashboard from '../pages/Admin/Dashboard'

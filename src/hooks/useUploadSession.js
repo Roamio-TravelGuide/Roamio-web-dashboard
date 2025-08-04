@@ -21,7 +21,6 @@ export function useUploadSession() {
     }
 
     return () => {
-      // Optional: Clear session if form is completed
     };
   }, []);
 
