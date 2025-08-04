@@ -34,28 +34,28 @@ const StatsCard = ({
 }) => {
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-lg">
+      <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
         <div className="flex items-center justify-between">
-          <div className="space-y-3 flex-1">
+          <div className="flex-1 space-y-3">
             <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-8 bg-gray-200 rounded animate-pulse w-3/4"></div>
-            <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
+            <div className="w-3/4 h-8 bg-gray-200 rounded animate-pulse"></div>
+            <div className="w-1/2 h-3 bg-gray-200 rounded animate-pulse"></div>
           </div>
-          <div className="w-14 h-14 bg-gray-200 rounded-xl animate-pulse"></div>
+          <div className="bg-gray-200 w-14 h-14 rounded-xl animate-pulse"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-lg hover:shadow-xl transition-all duration-300 group">
+    <div className="p-6 transition-all duration-300 bg-white border border-gray-200 shadow-lg rounded-2xl hover:shadow-xl group">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mb-1 group-hover:scale-105 transition-transform duration-200">
+          <p className="mb-2 text-sm font-medium text-gray-600">{title}</p>
+          <p className="mb-1 text-3xl font-bold text-gray-900 transition-transform duration-200 group-hover:scale-105">
             {typeof value === "number" ? value.toLocaleString() : value}
           </p>
-          {subtitle && <p className="text-xs text-gray-500 mb-2">{subtitle}</p>}
+          {subtitle && <p className="mb-2 text-xs text-gray-500">{subtitle}</p>}
           {trend && (
             <div className="flex items-center gap-1">
               <div
@@ -83,7 +83,7 @@ const StatsCard = ({
           <div
             className={`relative w-14 h-14 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200`}
           >
-            <Icon className="w-7 h-7 text-white" />
+            <Icon className="text-white w-7 h-7" />
           </div>
         </div>
       </div>
@@ -133,7 +133,7 @@ const QuickStats = ({ data, loading }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat, index) => (
         <div key={index}>
           <StatsCard
@@ -244,31 +244,31 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-lg">
+      <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="h-6 bg-gray-200 rounded animate-pulse w-32 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+            <div className="w-32 h-6 mb-2 bg-gray-200 rounded animate-pulse"></div>
+            <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
           </div>
-          <div className="h-8 bg-gray-200 rounded animate-pulse w-24"></div>
+          <div className="w-24 h-8 bg-gray-200 rounded animate-pulse"></div>
         </div>
-        <div className="h-80 bg-gray-100 rounded-lg animate-pulse"></div>
+        <div className="bg-gray-100 rounded-lg h-80 animate-pulse"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-lg overflow-hidden">
+    <div className="p-6 overflow-hidden bg-white border border-gray-200 shadow-lg rounded-2xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+          <h3 className="flex items-center gap-3 text-xl font-bold text-gray-900">
+            <div className="flex items-center justify-center w-10 h-10 bg-white rounded-xl">
               <TrendingUp className="w-5 h-5 text-blue-500" />
             </div>
             Revenue Overview
           </h3>
-          <p className="text-sm text-gray-600 capitalize mt-1">
+          <p className="mt-1 text-sm text-gray-600 capitalize">
             {timeFilter} performance analytics
           </p>
         </div>
@@ -280,9 +280,9 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
                 ${data.total.toLocaleString()}
               </p>
             </div>
-            <div className="flex items-center gap-1 justify-end">
+            <div className="flex items-center justify-end gap-1">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <p className="text-sm text-green-600 font-medium">
+              <p className="text-sm font-medium text-green-600">
                 +12.5% growth
               </p>
             </div>
@@ -292,7 +292,7 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
       </div>
 
       {/* SVG Chart */}
-      <div className="relative bg-gray-50 rounded-xl p-6 border border-gray-100">
+      <div className="relative p-6 border border-gray-100 bg-gray-50 rounded-xl">
         <svg
           width="100%"
           height="300"
@@ -357,7 +357,7 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
                   fill="white"
                   stroke="#3B82F6"
                   strokeWidth="3"
-                  className="hover:r-8 transition-all duration-200 cursor-pointer"
+                  className="transition-all duration-200 cursor-pointer hover:r-8"
                 />
                 <circle cx={x} cy={y} r="3" fill="#3B82F6" />
               </g>
@@ -378,7 +378,7 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
                 x={x}
                 y={height - 10}
                 textAnchor="middle"
-                className="text-xs fill-gray-600 font-medium"
+                className="text-xs font-medium fill-gray-600"
               >
                 {label}
               </text>
@@ -387,7 +387,7 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
         </svg>
 
         {/* Hover tooltips */}
-        <div className="absolute top-4 right-4 bg-gray-100 rounded-lg px-3 py-2 border border-gray-200">
+        <div className="absolute px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg top-4 right-4">
           <p className="text-xs text-gray-600">
             Peak: ${Math.max(...data.values).toLocaleString()}
           </p>
@@ -441,13 +441,13 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-lg">
+      <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="h-6 bg-gray-200 rounded animate-pulse w-32 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+            <div className="w-32 h-6 mb-2 bg-gray-200 rounded animate-pulse"></div>
+            <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
           </div>
-          <div className="h-8 bg-gray-200 rounded animate-pulse w-20"></div>
+          <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
         </div>
         <div className="h-64 bg-gray-100 rounded-lg animate-pulse"></div>
       </div>
@@ -455,16 +455,16 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-lg">
+    <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center ">
+          <h3 className="flex items-center gap-3 text-xl font-bold text-gray-900">
+            <div className="flex items-center justify-center w-10 h-10 bg-white rounded-xl ">
               <Package className="w-5 h-5 text-green-500" />
             </div>
             Package Sales
           </h3>
-          <p className="text-sm text-gray-600 capitalize mt-1">
+          <p className="mt-1 text-sm text-gray-600 capitalize">
             Audio packages sold - {timeFilter}
           </p>
         </div>
@@ -473,37 +473,37 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
             <p className="text-3xl font-bold text-gray-900">
               {data.total.toLocaleString()}
             </p>
-            <div className="flex items-center gap-1 justify-end mt-1">
+            <div className="flex items-center justify-end gap-1 mt-1">
               <TrendingUp className="w-4 h-4 text-green-600" />
-              <p className="text-sm text-green-600 font-medium">+8.3% growth</p>
+              <p className="text-sm font-medium text-green-600">+8.3% growth</p>
             </div>
           </div>
           <TimeFilterComponent />
         </div>
       </div>
 
-      <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+      <div className="p-4 border border-gray-100 bg-gray-50 rounded-xl">
         <div className="space-y-3">
           {data.values.map((value, index) => (
             <div key={index} className="group">
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-sm font-semibold text-gray-700 w-10">
+                <span className="w-10 text-sm font-semibold text-gray-700">
                   {data.labels[index]}
                 </span>
-                <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden border border-gray-300">
+                <div className="relative flex-1 h-4 overflow-hidden bg-gray-200 border border-gray-300 rounded-full">
                   <div
-                    className="bg-gradient-to-r from-green-500 via-green-600 to-emerald-500 h-full rounded-full transition-all duration-700 ease-out relative group-hover:from-green-400 group-hover:to-emerald-400"
+                    className="relative h-full transition-all duration-700 ease-out rounded-full bg-gradient-to-r from-green-500 via-green-600 to-emerald-500 group-hover:from-green-400 group-hover:to-emerald-400"
                     style={{ width: `${(value / maxValue) * 100}%` }}
                   >
-                    <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
+                    <div className="absolute inset-0 rounded-full bg-white/20 animate-pulse"></div>
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 transition-opacity duration-300 rounded-full opacity-0 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:opacity-100"></div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-900 w-12 text-right">
+                  <span className="w-12 text-sm font-bold text-right text-gray-900">
                     {value}
                   </span>
-                  <div className="w-2 h-2 bg-green-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="w-2 h-2 transition-opacity bg-green-500 rounded-full opacity-60 group-hover:opacity-100"></div>
                 </div>
               </div>
             </div>
@@ -511,7 +511,7 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
         </div>
 
         {/* Summary stats */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="pt-4 mt-6 border-t border-gray-200">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-xs text-gray-500">Average</p>
@@ -540,15 +540,15 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
 const TopPerformers = ({ data, loading }) => {
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-lg">
-        <div className="h-6 bg-gray-200 rounded animate-pulse w-32 mb-6"></div>
+      <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
+        <div className="w-32 h-6 mb-6 bg-gray-200 rounded animate-pulse"></div>
         <div className="space-y-6">
           <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+            <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
             <div className="h-32 bg-gray-100 rounded-xl animate-pulse"></div>
           </div>
           <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+            <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
             <div className="h-32 bg-gray-100 rounded-xl animate-pulse"></div>
           </div>
         </div>
@@ -557,9 +557,9 @@ const TopPerformers = ({ data, loading }) => {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-lg">
-      <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg">
+    <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
+      <h3 className="flex items-center gap-3 mb-6 text-xl font-bold text-gray-900">
+        <div className="flex items-center justify-center w-10 h-10 bg-white shadow-lg rounded-xl">
           <Crown className="w-5 h-5 text-yellow-500" />
         </div>
         Top Performers
@@ -570,29 +570,29 @@ const TopPerformers = ({ data, loading }) => {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Medal className="w-4 h-4 text-black" />
-            <h4 className="text-sm font-semibold text-black uppercase tracking-wide">
+            <h4 className="text-sm font-semibold tracking-wide text-black uppercase">
               Star Guide
             </h4>
             <div className="flex-1 h-px bg-gradient-to-r from-yellow-300 to-transparent"></div>
           </div>
           {data.topTourGuide && (
-            <div className="relative overflow-hidden bg-blue-900 rounded-2xl border border-yellow-200 group hover:border-yellow-300 transition-all duration-300">
+            <div className="relative overflow-hidden transition-all duration-300 bg-blue-900 border border-yellow-200 rounded-2xl group hover:border-yellow-300">
               <div className="relative p-6">
                 {/* Header with avatar and crown */}
                 <div className="flex items-start gap-4 mb-6">
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 p-1 shadow-2xl">
+                    <div className="w-20 h-20 p-1 shadow-2xl rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500">
                       <img
                         src={
                           data.topTourGuide.avatar ||
                           "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop"
                         }
                         alt={data.topTourGuide.name}
-                        className="w-full h-full rounded-xl object-cover"
+                        className="object-cover w-full h-full rounded-xl"
                       />
                     </div>
                     {/* Crown badge */}
-                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg border-2 border-yellow-300">
+                    <div className="absolute flex items-center justify-center w-8 h-8 border-2 border-yellow-300 rounded-full shadow-lg -top-2 -right-2 bg-gradient-to-br from-yellow-400 to-yellow-500">
                       <Crown className="w-4 h-4 text-yellow-800" />
                     </div>
                     {/* Pulse effect */}
@@ -600,17 +600,17 @@ const TopPerformers = ({ data, loading }) => {
                   </div>
 
                   <div className="flex-1">
-                    <h5 className="font-black text-white text-xl mb-2">
+                    <h5 className="mb-2 text-xl font-black text-white">
                       {data.topTourGuide.name}
                     </h5>
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="flex items-center gap-1 bg-yellow-100 px-3 py-1 rounded-full border border-yellow-200">
+                      <div className="flex items-center gap-1 px-3 py-1 bg-yellow-100 border border-yellow-200 rounded-full">
                         <Star className="w-4 h-4 text-yellow-600 fill-current" />
                         <span className="text-sm font-bold text-yellow-700">
                           {data.topTourGuide.rating}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 bg-green-100 px-3 py-1 rounded-full border border-green-200">
+                      <div className="flex items-center gap-1 px-3 py-1 bg-green-100 border border-green-200 rounded-full">
                         <Zap className="w-4 h-4 text-green-600" />
                         <span className="text-sm font-bold text-green-700">
                           Top Rated
@@ -622,10 +622,10 @@ const TopPerformers = ({ data, loading }) => {
 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white backdrop-blur-sm rounded-xl p-4 border border-gray-200 group-hover:bg-white/90 transition-all duration-300">
+                  <div className="p-4 transition-all duration-300 bg-white border border-gray-200 backdrop-blur-sm rounded-xl group-hover:bg-white/90">
                     <div className="flex items-center gap-2 mb-2">
                       <Target className="w-5 h-5 text-blue-600" />
-                      <p className="text-xs font-medium text-blue-700 uppercase tracking-wide">
+                      <p className="text-xs font-medium tracking-wide text-blue-700 uppercase">
                         Tours
                       </p>
                     </div>
@@ -634,10 +634,10 @@ const TopPerformers = ({ data, loading }) => {
                     </p>
                     <p className="text-xs text-gray-600">Completed</p>
                   </div>
-                  <div className="bg-white backdrop-blur-sm rounded-xl p-4 border border-gray-200 group-hover:bg-white/90 transition-all duration-300">
+                  <div className="p-4 transition-all duration-300 bg-white border border-gray-200 backdrop-blur-sm rounded-xl group-hover:bg-white/90">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="w-5 h-5 text-green-600" />
-                      <p className="text-xs font-medium text-green-700 uppercase tracking-wide">
+                      <p className="text-xs font-medium tracking-wide text-green-700 uppercase">
                         Revenue
                       </p>
                     </div>
@@ -656,28 +656,28 @@ const TopPerformers = ({ data, loading }) => {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Trophy className="w-4 h-4 text-black" />
-            <h4 className="text-sm font-semibold text-black uppercase tracking-wide">
+            <h4 className="text-sm font-semibold tracking-wide text-black uppercase">
               Best Seller
             </h4>
             <div className="flex-1 h-px bg-gradient-to-r from-green-300 to-transparent"></div>
           </div>
           {data.mostSoldPackage && (
-            <div className="relative overflow-hidden bg-blue-900  rounded-2xl border border-green-200 group hover:border-green-300 transition-all duration-300">
+            <div className="relative overflow-hidden transition-all duration-300 bg-blue-900 border border-green-200 rounded-2xl group hover:border-green-300">
               <div className="relative p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex-1">
-                    <h5 className="font-black text-white text-xl mb-2">
+                    <h5 className="mb-2 text-xl font-black text-white">
                       {data.mostSoldPackage.name}
                     </h5>
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 bg-green-100 px-3 py-1 rounded-full border border-green-200">
+                      <div className="flex items-center gap-1 px-3 py-1 bg-green-100 border border-green-200 rounded-full">
                         <TrendingUp className="w-4 h-4 text-green-600" />
                         <span className="text-sm font-bold text-green-700">
                           +{data.mostSoldPackage.growth || 15.2}%
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 bg-blue-100 px-3 py-1 rounded-full border border-blue-200">
+                      <div className="flex items-center gap-1 px-3 py-1 bg-blue-100 border border-blue-200 rounded-full">
                         <Zap className="w-4 h-4 text-blue-600" />
                         <span className="text-sm font-bold text-blue-700">
                           Hot
@@ -685,17 +685,17 @@ const TopPerformers = ({ data, loading }) => {
                       </div>
                     </div>
                   </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
+                  <div className="flex items-center justify-center w-16 h-16 transition-transform duration-300 shadow-2xl bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl group-hover:scale-110">
                     <Trophy className="w-8 h-8 text-white" />
                   </div>
                 </div>
 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white backdrop-blur-sm rounded-xl p-4 border border-gray-200 group-hover:bg-white/90 transition-all duration-300">
+                  <div className="p-4 transition-all duration-300 bg-white border border-gray-200 backdrop-blur-sm rounded-xl group-hover:bg-white/90">
                     <div className="flex items-center gap-2 mb-2">
                       <Target className="w-5 h-5 text-green-600" />
-                      <p className="text-xs font-medium text-green-700 uppercase tracking-wide">
+                      <p className="text-xs font-medium tracking-wide text-green-700 uppercase">
                         Sold
                       </p>
                     </div>
@@ -704,10 +704,10 @@ const TopPerformers = ({ data, loading }) => {
                     </p>
                     <p className="text-xs text-gray-600">Units</p>
                   </div>
-                  <div className="bg-white backdrop-blur-sm rounded-xl p-4 border border-gray-200 group-hover:bg-white/90 transition-all duration-300">
+                  <div className="p-4 transition-all duration-300 bg-white border border-gray-200 backdrop-blur-sm rounded-xl group-hover:bg-white/90">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="w-5 h-5 text-green-600" />
-                      <p className="text-xs font-medium text-green-700 uppercase tracking-wide">
+                      <p className="text-xs font-medium tracking-wide text-green-700 uppercase">
                         Revenue
                       </p>
                     </div>
@@ -820,34 +820,34 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full px-4 py-6 max-w-7xl mx-auto">
+      <div className="w-full px-4 py-6 mx-auto max-w-7xl">
         {/* Enhanced Header with Distinctive Title */}
         <div className="mb-8">
           <div className="relative">
             {/* Background decoration */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl blur-xl opacity-50"></div>
+            <div className="absolute inset-0 opacity-50 bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl blur-xl"></div>
 
             {/* Main header content */}
-            <div className="relative bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
+            <div className="relative p-8 bg-white border border-gray-200 shadow-lg rounded-2xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                   {/* Title section */}
                   <div>
-                    <h1 className="text-2xl font-black text-gray-900 mb-2">
+                    <h1 className="mb-2 text-2xl font-black text-gray-900">
                       <span className="text-gray-900">ADMIN DASHBOARD</span>
                     </h1>
-                    <p className="text-gray-600 text-lg font-medium">
+                    <p className="text-lg font-medium text-gray-600">
                       Real-time insights and business analytics
                     </p>
                     <div className="flex items-center gap-4 mt-2">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-green-600 text-sm font-medium">
+                        <span className="text-sm font-medium text-green-600">
                           Live Data
                         </span>
                       </div>
                       <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
-                      <span className="text-gray-500 text-sm">
+                      <span className="text-sm text-gray-500">
                         Last updated: Just now
                       </span>
                     </div>
@@ -857,14 +857,14 @@ const Dashboard = () => {
                 {/* Right side metrics */}
                 <div className="flex items-center gap-4">
                   {/* Revenue Card */}
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
-                    <p className="text-gray-600 text-sm font-medium">
+                  <div className="p-4 border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
+                    <p className="text-sm font-medium text-gray-600">
                       Today's Revenue
                     </p>
                     <p className="text-3xl font-bold text-gray-900">$12,847</p>
                     <div className="flex items-center justify-end gap-1 mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-600" />
-                      <span className="text-green-600 text-sm font-medium">
+                      <span className="text-sm font-medium text-green-600">
                         +8.2%
                       </span>
                     </div>
@@ -872,27 +872,27 @@ const Dashboard = () => {
                   
                   {/* Tour Packages Button */}
                   <button 
-                    className="group bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-xl p-4 border border-emerald-400 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
+                    className="p-4 transition-all duration-300 transform border shadow-lg group bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-xl border-emerald-400 hover:shadow-xl hover:scale-105 active:scale-95"
                     onClick={() => window.location.href = '/admin/tourpackage'}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <Package className="w-5 h-5 text-white" />
-                      <p className="text-white text-sm font-semibold">
+                      <p className="text-sm font-semibold text-white">
                         Tour Packages
                       </p>
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-2xl font-bold text-white">247</p>
                       <div className="flex items-center gap-1">
-                        <Plus className="w-4 h-4 text-white/80 group-hover:text-white transition-colors" />
-                        <span className="text-white/80 text-xs font-medium group-hover:text-white transition-colors">
+                        <Plus className="w-4 h-4 transition-colors text-white/80 group-hover:text-white" />
+                        <span className="text-xs font-medium transition-colors text-white/80 group-hover:text-white">
                           Manage
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-end gap-1 mt-2">
                       <ArrowUpRight className="w-3 h-3 text-white/80" />
-                      <span className="text-white/80 text-xs font-medium">
+                      <span className="text-xs font-medium text-white/80">
                         +12.5%
                       </span>
                     </div>
@@ -907,7 +907,7 @@ const Dashboard = () => {
         <QuickStats data={dashboardData} loading={loading} />
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 gap-8 mb-8 lg:grid-cols-3">
           {/* Revenue Chart */}
           <div className="lg:col-span-2">
             <RevenueChart
@@ -925,12 +925,12 @@ const Dashboard = () => {
             {/* Three Square Cards */}
             <div className="grid grid-cols-3 gap-4 mt-6">
               {/* Card 1 - Total Revenue */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-md hover:shadow-lg transition-all duration-300 group">
+              <div className="p-4 transition-all duration-300 bg-white border border-gray-200 shadow-md rounded-xl hover:shadow-lg group">
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200">
+                  <div className="flex items-center justify-center w-12 h-12 mb-3 transition-transform duration-200 bg-white rounded-xl group-hover:scale-110">
                     <DollarSign className="w-6 h-6 text-green-500" />
                   </div>
-                  <p className="text-xs font-medium text-gray-600 mb-1">
+                  <p className="mb-1 text-xs font-medium text-gray-600">
                     Total Revenue
                   </p>
                   <p className="text-lg font-bold text-gray-900">
@@ -938,7 +938,7 @@ const Dashboard = () => {
                   </p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUpRight className="w-3 h-3 text-green-600" />
-                    <span className="text-xs text-green-600 font-medium">
+                    <span className="text-xs font-medium text-green-600">
                       +12.5%
                     </span>
                   </div>
@@ -946,12 +946,12 @@ const Dashboard = () => {
               </div>
 
               {/* Card 2 - Packages Sold */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-md hover:shadow-lg transition-all duration-300 group">
+              <div className="p-4 transition-all duration-300 bg-white border border-gray-200 shadow-md rounded-xl hover:shadow-lg group">
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200">
+                  <div className="flex items-center justify-center w-12 h-12 mb-3 transition-transform duration-200 bg-white rounded-xl group-hover:scale-110">
                     <Package className="w-6 h-6 text-blue-500" />
                   </div>
-                  <p className="text-xs font-medium text-gray-600 mb-1">
+                  <p className="mb-1 text-xs font-medium text-gray-600">
                     Packages Sold
                   </p>
                   <p className="text-lg font-bold text-gray-900">
@@ -959,7 +959,7 @@ const Dashboard = () => {
                   </p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUpRight className="w-3 h-3 text-green-600" />
-                    <span className="text-xs text-green-600 font-medium">
+                    <span className="text-xs font-medium text-green-600">
                       +8.3%
                     </span>
                   </div>
@@ -967,18 +967,18 @@ const Dashboard = () => {
               </div>
 
               {/* Card 3 - Avg Rating */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-md hover:shadow-lg transition-all duration-300 group">
+              <div className="p-4 transition-all duration-300 bg-white border border-gray-200 shadow-md rounded-xl hover:shadow-lg group">
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200">
+                  <div className="flex items-center justify-center w-12 h-12 mb-3 transition-transform duration-200 bg-white rounded-xl group-hover:scale-110">
                     <Star className="w-6 h-6 text-yellow-500 fill-current" />
                   </div>
-                  <p className="text-xs font-medium text-gray-600 mb-1">
+                  <p className="mb-1 text-xs font-medium text-gray-600">
                     Avg Rating
                   </p>
                   <p className="text-lg font-bold text-gray-900">4.8</p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUpRight className="w-3 h-3 text-green-600" />
-                    <span className="text-xs text-green-600 font-medium">
+                    <span className="text-xs font-medium text-green-600">
                       +0.2
                     </span>
                   </div>

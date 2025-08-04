@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   FiTrendingUp, 
   FiMapPin, 
@@ -9,87 +9,106 @@ import {
   FiCheckCircle, 
   FiXCircle,
   FiCamera,
-  FiImage
+  FiImage,
+  FiLoader
 } from 'react-icons/fi';
+import VendorService from '../../api/vendor/vendorService.js';
+import { Toast } from '../../components/Toast.jsx';
 
 const VendorDashboard = () => {
   const logoInputRef = useRef(null);
   const coverInputRef = useRef(null);
 
-  // Mock data
-  const vendorData = {
-    name: "Sunset Café",
-    logo: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200",
-    coverPhoto: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200",
-    location: { lat: 25.7617, lng: -80.1918 },
-    stats: [
-      { title: "Monthly Views", value: "1,240", change: "+12%", icon: <FiTrendingUp /> },
-      { title: "Recommendations", value: "89", change: "+8%", icon: <FiMapPin /> },
-      { title: "Avg. Rating", value: "4.7", change: "+0.2", icon: <FiStar /> }
-    ],
-    reviews: [
-      { user: "Alex M.", comment: "Best coffee in town!", rating: 5 },
-      { user: "Sarah K.", comment: "Loved the avocado toast.", rating: 4 },
-      { user: "James L.", comment: "Great place to unwind.", rating: 5 }
-    ],
-    activePackages: [
-      {
-        id: 1,
-        name: "Morning Coffee Bundle",
-        description: "2 coffees + breakfast pastry",
-        price: "$12.99",
-        duration: "1 hour",
-        bookings: 24,
-        status: "active"
-      },
-      {
-        id: 2,
-        name: "Sunset Happy Hour",
-        description: "2 cocktails + appetizer platter",
-        price: "$22.99",
-        duration: "2 hours", 
-        bookings: 18,
-        status: "active"
-      },
-      {
-        id: 3,
-        name: "Family Brunch",
-        description: "4 meals + unlimited coffee",
-        price: "$45.99",
-        duration: "1.5 hours",
-        bookings: 12,
-        status: "active"
-      },
-      {
-        id: 4,
-        name: "Date Night Special",
-        description: "3-course meal + wine",
-        price: "$59.99",
-        duration: "2.5 hours",
-        bookings: 8,
-        status: "active"
-      }
-    ]
-  };
-
+  // State for vendor data
+  const [vendorData, setVendorData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    businessName: 'Sunset Café',
-    description: 'A cozy café with ocean views and artisanal coffee.',
-    email: 'contact@sunsetcafe.com',
-    phone: '+1 (555) 123-4567',
-    address: '123 Beachside Ave, Miami, FL',
+    businessName: '',
+    description: '',
+    email: '',
+    phone: '',
     socialMedia: {
-      instagram: 'sunsetcafe',
-      facebook: 'sunsetcafemiami',
-      website: 'https://sunsetcafe.com'
+      instagram: '',
+      facebook: '',
+      website: ''
     }
   });
 
-  const [logo, setLogo] = useState(vendorData.logo);
-  const [coverPhoto, setCoverPhoto] = useState(vendorData.coverPhoto);
+  const [logo, setLogo] = useState(null);
+  const [coverPhoto, setCoverPhoto] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState({});
   const [uploading, setUploading] = useState({ logo: false, cover: false });
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  // Show toast message
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 5000);
+  };
+
+  // Mock stats data (you can move this to API later)
+  const mockStats = [
+    { title: "Monthly Views", value: "1,240", change: "+12%", icon: <FiTrendingUp /> },
+    { title: "Recommendations", value: "89", change: "+8%", icon: <FiMapPin /> },
+    { title: "Avg. Rating", value: "4.7", change: "+0.2", icon: <FiStar /> }
+  ];
+
+  // Load vendor data on component mount
+  useEffect(() => {
+    loadVendorData();
+  }, []);
+
+  const loadVendorData = async () => {
+    try {
+      setLoading(true);
+      setErrors({});
+      const response = await VendorService.getVendorProfile();
+      
+      if (response.success) {
+        const data = response.data;
+        setVendorData(data);
+        setFormData({
+          businessName: data.businessName || '',
+          description: data.description || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          socialMedia: data.socialMedia || {
+            instagram: '',
+            facebook: '',
+            website: ''
+          }
+        });
+        setLogo(data.logoUrl);
+        setCoverPhoto(data.coverPhotoUrl);
+      } else {
+        // Handle case where vendor profile doesn't exist
+        setErrors({ 
+          general: response.message || 'Vendor profile not found. Please contact admin to set up your profile.' 
+        });
+      }
+    } catch (error) {
+      console.error('Error loading vendor data:', error);
+      
+      // Handle different error types
+      if (error.status === 404) {
+        setErrors({ 
+          general: 'Vendor profile not found. Please contact admin to set up your profile.' 
+        });
+      } else if (error.status === 401) {
+        setErrors({ 
+          general: 'Authentication failed. Please log in again.' 
+        });
+      } else {
+        setErrors({ 
+          general: error.message || 'Failed to load vendor data. Please try again.' 
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
   
     // Handle form input changes
     const handleChange = (e) => {
@@ -107,38 +126,64 @@ const VendorDashboard = () => {
     };
   
   // Handle logo upload
-  const handleLogoUpload = (e) => {
+  const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
     if (file && file.type.match('image.*')) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         setErrors({ ...errors, logo: 'Logo file size must be less than 5MB' });
         return;
       }
-      setUploading({ ...uploading, logo: true });
-      // Simulate upload delay
-      setTimeout(() => {
-        setLogo(URL.createObjectURL(file));
-        setUploading({ ...uploading, logo: false });
+      
+      try {
+        setUploading({ ...uploading, logo: true });
         setErrors({ ...errors, logo: null });
-      }, 1000);
+
+        const response = await VendorService.uploadVendorLogo(file);
+        
+        if (response.success) {
+          setLogo(response.data.logoUrl);
+          // Update vendor data
+          setVendorData(prev => ({ ...prev, logoUrl: response.data.logoUrl }));
+        } else {
+          setErrors({ ...errors, logo: response.message || 'Failed to upload logo' });
+        }
+      } catch (error) {
+        console.error('Error uploading logo:', error);
+        setErrors({ ...errors, logo: error.message || 'Failed to upload logo' });
+      } finally {
+        setUploading({ ...uploading, logo: false });
+      }
     }
   };
 
   // Handle cover photo upload
-  const handleCoverUpload = (e) => {
+  const handleCoverUpload = async (e) => {
     const file = e.target.files[0];
     if (file && file.type.match('image.*')) {
       if (file.size > 10 * 1024 * 1024) { // 10MB limit
         setErrors({ ...errors, cover: 'Cover image file size must be less than 10MB' });
         return;
       }
-      setUploading({ ...uploading, cover: true });
-      // Simulate upload delay
-      setTimeout(() => {
-        setCoverPhoto(URL.createObjectURL(file));
-        setUploading({ ...uploading, cover: false });
+      
+      try {
+        setUploading({ ...uploading, cover: true });
         setErrors({ ...errors, cover: null });
-      }, 1500);
+
+        const response = await VendorService.uploadVendorCover(file);
+        
+        if (response.success) {
+          setCoverPhoto(response.data.coverUrl);
+          // Update vendor data
+          setVendorData(prev => ({ ...prev, coverPhotoUrl: response.data.coverUrl }));
+        } else {
+          setErrors({ ...errors, cover: response.message || 'Failed to upload cover image' });
+        }
+      } catch (error) {
+        console.error('Error uploading cover:', error);
+        setErrors({ ...errors, cover: error.message || 'Failed to upload cover image' });
+      } finally {
+        setUploading({ ...uploading, cover: false });
+      }
     }
   };
   
@@ -151,16 +196,48 @@ const VendorDashboard = () => {
     };
   
     // Handle form submission
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
       const validationErrors = validateForm();
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors);
         return;
       }
-      // TODO: Submit to backend
-      setIsEditing(false);
-      setErrors({});
+
+      try {
+        setSaving(true);
+        setErrors({});
+
+        const response = await VendorService.updateVendorProfile(formData);
+        
+        if (response.success) {
+          // Update local state with response data
+          setVendorData(response.data);
+          setIsEditing(false);
+          showToast('Profile updated successfully!', 'success');
+        } else {
+          setErrors({ general: response.message || 'Failed to update profile' });
+          showToast(response.message || 'Failed to update profile', 'error');
+        }
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        
+        // Handle validation errors
+        if (error.status === 400 && error.details?.errors) {
+          const validationErrors = {};
+          error.details.errors.forEach(err => {
+            validationErrors[err.field] = err.message;
+          });
+          setErrors(validationErrors);
+          showToast('Please fix the validation errors', 'error');
+        } else {
+          const errorMessage = error.message || 'Failed to update profile. Please try again.';
+          setErrors({ general: errorMessage });
+          showToast(errorMessage, 'error');
+        }
+      } finally {
+        setSaving(false);
+      }
     };
 
 
@@ -175,8 +252,41 @@ const VendorDashboard = () => {
 
   return (
     <div className="min-h-screen vendor-dashboard bg-gray-50">
-      {/* Hero Section with Cover Photo */}
-      <div className="relative w-full h-80 md:h-96">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <Toast 
+            message={toast.message} 
+            type={toast.type} 
+            onClose={() => setToast(null)} 
+          />
+        </div>
+      )}
+      
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <FiLoader className="w-8 h-8 mx-auto mb-4 text-indigo-600 animate-spin" />
+            <p className="text-gray-600">Loading vendor profile...</p>
+          </div>
+        </div>
+      ) : errors.general ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="p-6 text-center bg-white border border-red-200 rounded-lg shadow-sm">
+            <FiXCircle className="w-8 h-8 mx-auto mb-4 text-red-500" />
+            <p className="mb-4 text-red-600">{errors.general}</p>
+            <button
+              onClick={loadVendorData}
+              className="px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Hero Section with Cover Photo */}
+          <div className="relative w-full h-80 md:h-96">
         {/* Cover Photo */}
         <div className="relative w-full h-full overflow-hidden bg-gray-200">
           <img 
@@ -277,26 +387,26 @@ const VendorDashboard = () => {
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                   <div>
                     <h1 className="text-2xl font-bold leading-tight text-gray-900 md:text-3xl">
-                      {formData.businessName}
+                      {vendorData?.businessName || 'Business Name'}
                     </h1>
                     <p className="mt-2 text-gray-600 line-clamp-2">
-                      {formData.description}
+                      {vendorData?.description || 'Business description not available.'}
                     </p>
                     <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <FiMapPin size={14} />
-                        <span>Miami, FL</span>
+                        <span>Business Location</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span>Open now</span>
+                        <div className={`w-2 h-2 rounded-full ${vendorData?.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        <span>{vendorData?.isActive ? 'Active' : 'Inactive'}</span>
                       </div>
                     </div>
                   </div>
                   
                   {/* Quick Stats */}
                   <div className="flex gap-6">
-                    {vendorData.stats.slice(0, 2).map((stat, index) => (
+                    {mockStats.slice(0, 2).map((stat, index) => (
                       <div key={index} className="text-center">
                         <div className="flex items-center justify-center w-8 h-8 mb-1 text-indigo-600 bg-indigo-100 rounded-full">
                           {stat.icon}
@@ -331,19 +441,58 @@ const VendorDashboard = () => {
               <div className="flex gap-3">
                 <button
                   onClick={handleSubmit}
-                  className="flex items-center gap-2 px-6 py-3 text-white transition-all bg-green-600 rounded-lg hover:bg-green-700 hover:shadow-md focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  disabled={saving}
+                  className="flex items-center gap-2 px-6 py-3 text-white transition-all bg-green-600 rounded-lg hover:bg-green-700 hover:shadow-md focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FiCheckCircle size={18} /> Save Changes
+                  {saving ? (
+                    <>
+                      <FiLoader size={18} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <FiCheckCircle size={18} />
+                      Save Changes
+                    </>
+                  )}
                 </button>
                 <button
-                  onClick={() => setIsEditing(false)}
-                  className="flex items-center gap-2 px-6 py-3 text-gray-700 transition-all bg-gray-100 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setErrors({});
+                    // Reset form data to original vendor data
+                    if (vendorData) {
+                      setFormData({
+                        businessName: vendorData.businessName || '',
+                        description: vendorData.description || '',
+                        email: vendorData.email || '',
+                        phone: vendorData.phone || '',
+                        socialMedia: vendorData.socialMedia || {
+                          instagram: '',
+                          facebook: '',
+                          website: ''
+                        }
+                      });
+                    }
+                  }}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-6 py-3 text-gray-700 transition-all bg-gray-100 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <FiXCircle size={18} /> Cancel
                 </button>
               </div>
             )}
           </div>
+
+          {/* General Error Display */}
+          {errors.general && (
+            <div className="p-4 mb-6 text-red-700 bg-red-100 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <FiXCircle size={16} />
+                <span>{errors.general}</span>
+              </div>
+            </div>
+          )}
       
             {isEditing ? (
               <form onSubmit={handleSubmit} className="space-y-8">
@@ -638,8 +787,10 @@ const VendorDashboard = () => {
             overflow: hidden;
           }
         `}</style>
-      </div>
-    );
-  };
+        </>
+      )}
+    </div>
+  );
+};
 
 export default VendorDashboard;
