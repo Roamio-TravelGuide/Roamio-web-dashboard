@@ -6,28 +6,26 @@ import { useUploadSession } from '../../hooks/useUploadSession';
 import { uploadtempmedia, deletetempmedia } from '../../api/tour/tourApi';
 import { toast } from 'react-hot-toast';
 
-// Constants
 const MEDIA_TYPES = {
   AUDIO: 'audio',
   IMAGE: 'image'
 };
 
-export const MediaUploadStep = ({
-  stops = [],
+export const MediaUploadStepEdit = ({
+  tourData,
+  stops = [], 
   onStopsUpdate,
+  onUpdate,
   onValidationChange
 }) => {
-  // State
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
   const [validationWarnings, setValidationWarnings] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   
-  // Hooks
   const { getDistanceBetweenPoints, getWalkingTime } = useMapbox();
   const sessionId = useUploadSession();
 
-  // Effects
   useEffect(() => {
     validateAudioDurations();
   }, [stops]);
@@ -39,7 +37,6 @@ export const MediaUploadStep = ({
     }
   }, [validationWarnings, onValidationChange]);
 
-  // Helper functions
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -63,7 +60,6 @@ export const MediaUploadStep = ({
     });
   }, []);
 
-  // Validation
   const validateAudioDurations = useCallback(() => {
     const warnings = [];
 
@@ -91,7 +87,6 @@ export const MediaUploadStep = ({
         return total + duration;
       }, 0);
 
-      // Required: At least one audio file per stop
       if (audioFiles.length === 0) {
         warnings.push({
           stopIndex: index,
@@ -100,7 +95,6 @@ export const MediaUploadStep = ({
         });
       }
 
-      // Recommended: Audio duration should be sufficient
       if (totalAudioDuration < minRecommendedAudioTime) {
         warnings.push({
           stopIndex: index,
@@ -113,7 +107,6 @@ export const MediaUploadStep = ({
     setValidationWarnings(warnings);
   }, [stops, getDistanceBetweenPoints, getWalkingTime]);
 
-  // Media handlers
   const handleMediaAdd = useCallback(async (stopIndex, newMedia) => {
     if (!sessionId) {
       toast.error('Upload service is initializing. Please try again in a moment.');
@@ -125,7 +118,6 @@ export const MediaUploadStep = ({
     setUploadProgress(0);
     
     try {
-      // Optimistic update
       const updatedStops = [...stops];
       updatedStops[stopIndex] = {
         ...updatedStops[stopIndex],
@@ -140,13 +132,12 @@ export const MediaUploadStep = ({
       };
       onStopsUpdate(updatedStops);
 
-      // Process uploads
       const uploadedMedia = await Promise.all(
         newMedia.map(async (media) => {
           const formData = new FormData();
           formData.append('file', media.file);
           formData.append('type', media.format.startsWith('audio/') ? 'stop_audio' : 'stop_image');
-          formData.append('sessionId', sessionId);
+          formData.append('tour_id', tourData.id);
           formData.append('stopIndex', stopIndex);
 
           const response = await uploadtempmedia(formData, {
@@ -172,7 +163,6 @@ export const MediaUploadStep = ({
         })
       );
 
-      // Final update with server response
       const finalUpdatedStops = [...stops];
       finalUpdatedStops[stopIndex] = {
         ...finalUpdatedStops[stopIndex],
@@ -188,7 +178,6 @@ export const MediaUploadStep = ({
       console.error('Upload failed:', error);
       toast.error(error.response?.data?.error || 'Upload failed. Please try again.', { id: uploadToast });
       
-      // Revert on error
       const cleanedStops = [...stops];
       cleanedStops[stopIndex] = {
         ...cleanedStops[stopIndex],
@@ -209,16 +198,13 @@ export const MediaUploadStep = ({
     try {
       setIsUploading(true);
       
-      // Remove from state
       updatedStops[stopIndex].media.splice(mediaIndex, 1);
       onStopsUpdate(updatedStops);
 
-      // Delete from server if exists
       if (mediaToRemove?.key) {
         await deletetempmedia(mediaToRemove.key);
       }
       
-      // Clean up temp URLs
       if (mediaToRemove?.tempUrl) {
         URL.revokeObjectURL(mediaToRemove.tempUrl);
       }
@@ -227,7 +213,7 @@ export const MediaUploadStep = ({
     } catch (error) {
       console.error('Error deleting media:', error);
       toast.error('Failed to delete media. Please try again.', { id: deleteToast });
-      onStopsUpdate([...stops]); // Revert changes
+      onStopsUpdate([...stops]);
     } finally {
       setIsUploading(false);
     }
@@ -283,7 +269,7 @@ export const MediaUploadStep = ({
         <div className="p-5 bg-gradient-to-r from-blue-50 to-teal-50">
           <h3 className="font-medium text-gray-800">Tour Stops</h3>
           <p className="mt-1 text-sm text-gray-600">
-            Select a stop to add media
+            Select a stop to edit media
           </p>
         </div>
         
@@ -472,7 +458,7 @@ export const MediaUploadStep = ({
       <div className="p-6 mb-6 bg-gradient-to-r from-blue-50 to-teal-50 rounded-xl">
         <h2 className="text-2xl font-bold text-gray-800">Tour Media Content</h2>
         <p className="mt-2 text-gray-600">
-          Add audio guides and images for each stop of your tour
+          Update audio guides and images for each stop of your tour
         </p>
       </div>
 
