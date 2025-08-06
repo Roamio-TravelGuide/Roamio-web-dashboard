@@ -10,6 +10,9 @@ function formatDate(date) {
   return isNaN(parsed.getTime())
     ? new Date().toISOString()
     : parsed.toISOString();
+  return isNaN(parsed.getTime())
+    ? new Date().toISOString()
+    : parsed.toISOString();
 }
 
 export const getAllUsers = async (filters = {}) => {
@@ -17,9 +20,13 @@ export const getAllUsers = async (filters = {}) => {
     const response = await apiClient.get("/users/");
     // Check if response has the expected structure
     const users = response.data.data || [];
+    const response = await apiClient.get("/users/");
+    // Check if response has the expected structure
+    const users = response.data.data || [];
 
     // Transform the data to match frontend expectations
     return {
+      data: users.map((user) => ({
       data: users.map((user) => ({
         id: user.id.toString(),
         name: user.name,
@@ -27,6 +34,7 @@ export const getAllUsers = async (filters = {}) => {
         phone: user.phone_no,
         status: user.status.toLowerCase(),
         role: user.role,
+        avatar: user.profile_picture_url || "/default-avatar.png",
         avatar: user.profile_picture_url || "/default-avatar.png",
         registeredDate: formatDate(user.registered_date),
         lastLogin: user.last_login ? formatDate(user.last_login) : null,
@@ -36,19 +44,27 @@ export const getAllUsers = async (filters = {}) => {
         ...(user.role !== "traveler" && {
           averageRating: user.average_rating || 0,
         }),
+        ...(user.role !== "traveler" && {
+          averageRating: user.average_rating || 0,
+        }),
       })),
+      message: response.data.message || "Users fetched successfully",
       message: response.data.message || "Users fetched successfully",
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw error.response?.data?.message || "Fetching users failed";
+      throw error.response?.data?.message || "Fetching users failed";
     }
+    throw new Error("An unexpected error occurred");
     throw new Error("An unexpected error occurred");
   }
 };
 
 export const getUserStatistics = async () => {
   try {
+    const response = await apiClient.get('/users/');
+    const users = response.data.data || [];
     const response = await apiClient.get('/users/');
     const users = response.data.data || [];
 
@@ -60,16 +76,21 @@ export const getUserStatistics = async () => {
       blocked: users.filter(user => user.status.toLowerCase() === 'blocked').length,
       travelers: users.filter(user => user.role === 'traveler').length,
       tourGuides: users.filter(user => user.role === 'travel_guide').length,
+      tourGuides: users.filter(user => user.role === 'travel_guide').length,
       moderators: users.filter(user => user.role === 'moderator').length,
       vendors: users.filter(user => user.role === 'vendor').length,
       lastUpdated: new Date().toISOString()
     };
   } catch (error) {
     console.error("Error in getUserStatistics:", error);
+    console.error("Error in getUserStatistics:", error);
     if (axios.isAxiosError(error)) {
       console.error("Response data:", error.response?.data);
       throw error.response?.data?.message || "Fetching statistics failed";
+      console.error("Response data:", error.response?.data);
+      throw error.response?.data?.message || "Fetching statistics failed";
     }
+    throw new Error("An unexpected error occurred while fetching statistics");
     throw new Error("An unexpected error occurred while fetching statistics");
   }
 };
@@ -78,10 +99,12 @@ export const updateUserStatus = async (userId, newStatus) => {
   try {
     const response = await apiClient.patch(`/users/${userId}/status`, {
       status: newStatus,
+      status: newStatus,
     });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      throw error.response?.data?.message || "Updating user status failed";
       throw error.response?.data?.message || "Updating user status failed";
     }
     throw new Error("An unexpected error occurred while updating status");
@@ -147,3 +170,4 @@ export const getTicketStatistics = async (userType = null) => {
     throw new Error("An unexpected error occurred while fetching ticket statistics");
   }
 };
+

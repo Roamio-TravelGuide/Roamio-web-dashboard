@@ -1,66 +1,479 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { 
-  ArrowLeft, Play, Pause, MapPin, Clock, Volume2, Edit, Trash2,
-  AlertCircle, Headphones, Image as ImageIcon, ChevronDown, ChevronRight,
-  Plus, MoreVertical, Settings, Eye, Loader2, Star, Map, RotateCcw, Info,
-  XCircle, VolumeX, Volume1, Download
+  ArrowLeft, Play, Pause, MapPin, Clock, Volume2, X,  
+  Check, AlertCircle, Headphones, Image as ImageIcon, User,
+  CheckCircle, XCircle, Eye, Loader2, ChevronDown, ChevronRight,
+  SkipForward, SkipBack, VolumeX, Volume1, RotateCcw, Settings,
+  Maximize2, ExternalLink, AlertTriangle, ZoomIn, Download,
+  Edit, Trash2, Clock as ClockIcon, AlertOctagon, ThumbsUp
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import axios from 'axios';
 import { TourStopsMap } from '../../components/tour/TourStopsMap';
+import axios from 'axios';
+import { getTourPackageMedia, getMediaUrls } from '../../api/tour/tourApi';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
 
+// Enhanced StatusBadge component
 const StatusBadge = ({ status }) => {
   const statusConfig = {
-    pending_approval: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending Approval' },
-    published: { bg: 'bg-green-100', text: 'text-green-800', label: 'Published' },
-    rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
-    draft: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Draft' }
+    pending_approval: { 
+      bg: 'bg-amber-50 border-amber-200', 
+      text: 'text-amber-800', 
+      icon: <ClockIcon className="w-3 h-3 mr-1" />, 
+      label: 'Pending Approval' 
+    },
+    published: { 
+      bg: 'bg-green-50 border-green-200', 
+      text: 'text-green-800', 
+      icon: <CheckCircle className="w-3 h-3 mr-1" />, 
+      label: 'Published' 
+    },
+    rejected: { 
+      bg: 'bg-red-50 border-red-200', 
+      text: 'text-red-800', 
+      icon: <XCircle className="w-3 h-3 mr-1" />, 
+      label: 'Rejected' 
+    },
+    pending: { 
+      bg: 'bg-amber-50 border-amber-200', 
+      text: 'text-amber-800', 
+      icon: <ClockIcon className="w-3 h-3 mr-1" />, 
+      label: 'Pending' 
+    },
+    approved: { 
+      bg: 'bg-green-50 border-green-200', 
+      text: 'text-green-800', 
+      icon: <ThumbsUp className="w-3 h-3 mr-1" />, 
+      label: 'Approved' 
+    }
   };
 
-  const config = statusConfig[status] || { bg: 'bg-gray-100', text: 'text-gray-800', label: status };
+  const config = statusConfig[status] || { 
+    bg: 'bg-gray-50 border-gray-200', 
+    text: 'text-gray-800', 
+    icon: <AlertOctagon className="w-3 h-3 mr-1" />, 
+    label: 'Unknown' 
+  };
 
   return (
-    <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.bg} ${config.text}`}>
+    <div className={`inline-flex items-center px-3 py-1 border rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+      <span className="flex items-center mr-1.5">{config.icon}</span>
       {config.label}
-    </span>
+    </div>
   );
 };
 
+// Enhanced AudioPlayer component
+const AudioPlayer = React.memo(({ 
+  media, 
+  isPlaying, 
+  onPlay, 
+  onPause, 
+  currentTime, 
+  duration, 
+  volume, 
+  onVolumeChange, 
+  playbackRate, 
+  onPlaybackRateChange,
+  onSeek
+}) => {
+  const formatTime = useCallback((seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }, []);
+
+  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  const handleProgressClick = (e) => {
+    if (duration > 0 && onSeek) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const newTime = (clickX / rect.width) * duration;
+      onSeek(newTime);
+    }
+  };
+
+  return (
+    <div className="p-4 bg-white border border-gray-100 rounded-lg shadow-xs">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start space-x-3">
+          <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 mt-0.5 rounded-lg bg-blue-50">
+            <Headphones className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-gray-800">Audio Narration</h4>
+            <p className="text-xs text-gray-500">
+              {media.format?.toUpperCase() || 'AUDIO'} • {formatTime(media.duration_seconds)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="mb-3">
+        <div 
+          className="relative w-full h-2 bg-gray-100 rounded-full cursor-pointer"
+          onClick={handleProgressClick}
+        >
+          <div 
+            className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+            style={{ width: `${progressPercentage}%` }}
+          />
+          <div 
+            className={`absolute top-1/2 w-3 h-3 -mt-1.5 border-2 border-white rounded-full shadow-sm transform transition-all ${
+              isPlaying ? 'bg-red-500 scale-110' : 'bg-blue-600'
+            }`}
+            style={{ left: `${Math.max(1, Math.min(progressPercentage, 97))}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between mt-1 text-xs">
+          <span className={`font-medium ${isPlaying ? 'text-red-600' : 'text-blue-600'}`}>
+            {formatTime(currentTime)}
+          </span>
+          <span className="text-gray-500">
+            {formatTime(duration || media.duration_seconds)}
+          </span>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={isPlaying ? onPause : onPlay}
+            className={`flex items-center justify-center w-9 h-9 rounded-full transition-colors ${
+              isPlaying 
+                ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+            aria-label={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+          </button>
+          
+          <div className="flex items-center space-x-2">
+            <Settings className="w-4 h-4 text-gray-400" />
+            <select
+              value={playbackRate}
+              onChange={(e) => onPlaybackRateChange(parseFloat(e.target.value))}
+              className="px-2 py-1 text-xs bg-white border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              aria-label="Playback speed"
+            >
+              {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
+                <option key={speed} value={speed}>{speed}x</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button 
+            onClick={() => onVolumeChange(volume > 0 ? 0 : 1)}
+            className="text-gray-400 transition-colors hover:text-gray-600"
+            aria-label={volume > 0 ? 'Mute' : 'Unmute'}
+          >
+            {volume === 0 ? (
+              <VolumeX className="w-4 h-4" />
+            ) : volume < 0.5 ? (
+              <Volume1 className="w-4 h-4" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
+          </button>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={volume}
+            onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+            className="w-16 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${volume * 100}%, #e5e7eb ${volume * 100}%, #e5e7eb 100%)`
+            }}
+            aria-label="Volume control"
+          />
+        </div>
+      </div>
+
+      {media.status === 'rejected' && media.rejection_reason && (
+        <div className="p-3 mt-3 text-sm border border-red-100 rounded-lg bg-red-50">
+          <div className="flex items-start space-x-2">
+            <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-red-800">Rejection Reason:</p>
+              <p className="text-red-700">{media.rejection_reason}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+const RejectionNotice = ({ type, reason }) => {
+  const typeConfig = {
+    audio: {
+      icon: <Headphones className="w-5 h-5 text-red-500" />,
+      title: "Audio Rejection",
+      bg: "bg-red-50",
+      border: "border-l-4 border-red-500",
+      badge: "bg-red-100 text-red-800"
+    },
+    image: {
+      icon: <ImageIcon className="w-5 h-5 text-red-500" />,
+      title: "Image Rejection",
+      bg: "bg-red-50",
+      border: "border-l-4 border-red-500",
+      badge: "bg-red-100 text-red-800"
+    },
+    general: {
+      icon: <AlertTriangle className="w-5 h-5 text-red-500" />,
+      title: "Rejection Summary",
+      bg: "bg-red-50",
+      border: "border-l-4 border-red-500",
+      badge: "bg-red-100 text-red-800"
+    }
+  };
+
+  const config = typeConfig[type] || typeConfig.general;
+
+  return (
+    <div className={`p-4 rounded-lg ${config.bg} ${config.border} shadow-xs`}>
+      <div className="flex items-start">
+        <div className="flex-shrink-0 pt-0.5">
+          {config.icon}
+        </div>
+        <div className="flex-1 ml-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-red-800">{config.title}</h4>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.badge}`}>
+              Requires Action
+            </span>
+          </div>
+          <div className="p-3 mt-2 bg-white border border-red-100 rounded-md">
+            <p className="text-sm text-gray-800 whitespace-pre-wrap">{reason}</p>
+          </div>
+          <div className="mt-2 text-xs text-red-700">
+            <p>Please address these issues and resubmit for approval.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced ImageGallery component
+const ImageGallery = React.memo(({ images, onImageClick }) => {
+  if (!images?.length) {
+    return (
+      <div className="p-6 text-center bg-white border border-gray-100 rounded-lg">
+        <div className="inline-flex items-center justify-center w-12 h-12 mb-3 bg-gray-100 rounded-full">
+          <ImageIcon className="w-5 h-5 text-gray-400" />
+        </div>
+        <h3 className="text-sm font-semibold text-gray-700">No Images Available</h3>
+        <p className="mt-1 text-xs text-gray-500">
+          This tour stop doesn't have any images yet.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      {images.map((image, index) => (
+        <div
+          key={`${image.id}-${index}`}
+          className="relative overflow-hidden transition-all duration-300 bg-white border border-gray-100 rounded-lg shadow-xs group"
+        >
+          <div 
+            className="relative overflow-hidden cursor-pointer h-28"
+            onClick={() => onImageClick(image.url)}
+          >
+            <img 
+              src={image.url} 
+              alt={`Stop image ${index + 1}`}
+              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            
+            <div className="absolute inset-0 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/40 via-transparent to-transparent group-hover:opacity-100" />
+            
+            <div className="absolute inset-0 flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100">
+              <div className="p-1.5 bg-white rounded-full shadow-sm">
+                <Eye className="w-4 h-4 text-gray-700" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-700 truncate">
+                Image #{image.id}
+              </span>
+              <span className="text-xs text-gray-400">
+                #{index + 1}
+              </span>
+            </div>
+            
+            {image.status === 'rejected' && image.rejection_reason && (
+              <div className="p-1.5 mt-1 text-xs border border-red-100 rounded bg-red-50">
+                <p className="text-red-700 truncate">{image.rejection_reason}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+// Enhanced TourStopCard component
+const TourStopCard = React.memo(({ stop, isActive, onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left p-3 rounded-lg border transition-all ${
+        isActive
+          ? 'border-blue-200 bg-blue-50 shadow-inner'
+          : 'border-gray-100 bg-white hover:border-gray-200'
+      } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+      aria-label={`Select stop ${stop.sequence_no}: ${stop.name}`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center min-w-0 space-x-3">
+          <div className={`flex items-center justify-center flex-shrink-0 w-6 h-6 text-xs font-medium rounded-full ${
+            isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+          }`}>
+            {stop.sequence_no}
+          </div>
+          <div className="min-w-0">
+            <h4 className={`text-sm font-medium truncate ${
+              isActive ? 'text-blue-800' : 'text-gray-700'
+            }`}>
+              {stop.name}
+            </h4>
+            <p className={`text-xs truncate ${
+              isActive ? 'text-blue-600' : 'text-gray-500'
+            }`}>
+              {stop.allMedia.length} media items
+            </p>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+});
+
+const ImagePreviewModal = ({ imageUrl, onClose }) => {
+  if (!imageUrl) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90">
+      <div className="relative max-w-4xl max-h-[90vh]">
+        <button
+          onClick={onClose}
+          className="absolute right-0 text-white transition-colors -top-10 hover:text-gray-300"
+          aria-label="Close image preview"
+        >
+          <XCircle className="w-8 h-8" />
+        </button>
+        <img 
+          src={imageUrl} 
+          alt="Full size view"
+          className="object-contain max-w-full max-h-[80vh] rounded-lg"
+          loading="eager"
+        />
+      </div>
+    </div>
+  );
+};
+
+const ConfirmationModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message, 
+  confirmText = "Delete", 
+  cancelText = "Cancel",
+  isProcessing 
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500"
+            disabled={isProcessing}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="mb-6">
+          <p className="text-gray-600">{message}</p>
+        </div>
+        
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            disabled={isProcessing}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isProcessing}
+            className="flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+          >
+            {isProcessing ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4 mr-2" />
+            )}
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Main TourDetail component
 const TourDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
   const [tour, setTour] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [playingAudio, setPlayingAudio] = useState(null);
   const [selectedStopId, setSelectedStopId] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
-  const [expandedSections, setExpandedSections] = useState({
-    audio: true,
-    images: true
-  });
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshingMedia, setIsRefreshingMedia] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   // Audio player state
-  const [audioState, setAudioState] = useState({
-    playingId: null,
-    currentTime: 0,
-    duration: 0,
-    volume: 1,
-    playbackRate: 1,
-    isLoading: false,
-    isSeeking: false
-  });
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [playbackRate, setPlaybackRate] = useState(1);
   
   const audioRef = useRef(null);
-  const progressBarRef = useRef(null);
 
-
+  // Memoize the map stops
   const mapStops = useMemo(() => {
     if (!tour?.tour_stops) return [];
     
@@ -69,240 +482,262 @@ const TourDetail = () => {
       sequence_no: stop.sequence_no,
       stop_name: stop.stop_name,
       description: stop.description,
-      location: stop.location || { lat: 0, lng: 0 },
+      location: stop.location || { latitude: 0, longitude: 0 },
     }));
   }, [tour?.tour_stops]);
 
-  const MemoizedTourStopsMap = useMemo(() => (
-    <TourStopsMap
-      stops={mapStops}
-      selectedStopId={selectedStopId}
-      onSelectStop={stop => setSelectedStopId(stop.id)}
-    />
-  ), [mapStops, selectedStopId]);
+  // Memoize the TourStopsMap component
+  const MemoizedTourStopsMap = useMemo(() => {
+    return (
+      <TourStopsMap
+        stops={mapStops}
+        selectedStopId={selectedStopId}
+        onSelectStop={s => setSelectedStopId(s.id)}
+      />
+    );
+  }, [mapStops, selectedStopId]);
 
+  // Refresh media URLs with fresh signed URLs
+  const refreshMediaUrls = useCallback(async (tourData) => {
+    try {
+      if (!tourData) return tourData;
+
+      const mediaResponse = await getTourPackageMedia(tourData.id);
+      
+      if (mediaResponse.success && mediaResponse.data) {
+        const freshMediaData = mediaResponse.data;
+        
+        if (freshMediaData.cover_image) {
+          tourData.cover_image_url = freshMediaData.cover_image.url;
+          if (tourData.cover_image) {
+            tourData.cover_image.url = freshMediaData.cover_image.url;
+          }
+        }
+
+        if (freshMediaData.tour_stops && tourData.tour_stops) {
+          tourData.tour_stops.forEach((stop, stopIndex) => {
+            const freshStop = freshMediaData.tour_stops[stopIndex];
+            if (freshStop && freshStop.media) {
+              stop.media = freshStop.media;
+            }
+          });
+        }
+      }
+
+      return tourData;
+    } catch (error) {
+      console.error('Error refreshing media URLs:', error);
+      return tourData;
+    }
+  }, []);
+
+  // Fetch tour data
   useEffect(() => {
     const fetchTour = async () => {
       try {
-        setLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/tour-packages/${id}`);
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await axios.get(`${API_BASE_URL}/tour-packages/${id}`, {
+          timeout: 10000
+        });
         
         if (!response.data?.success || !response.data?.data) {
           throw new Error('Invalid tour data received');
         }
 
-        const tourData = response.data.data;
-        setTour(tourData);
+        const data = response.data.data;
+        const enrichedData = await refreshMediaUrls(data);
         
-        if (tourData.tour_stops?.length > 0) {
-          setSelectedStopId(tourData.tour_stops[0].id);
+        setTour(enrichedData);
+        
+        if (!selectedStopId && enrichedData.tour_stops?.[0]) {
+          setSelectedStopId(enrichedData.tour_stops[0].id);
         }
       } catch (error) {
         console.error('Error fetching tour:', error);
-        setError(error.response?.data?.message || 'Failed to load tour details');
-        toast.error('Failed to load tour details');
+        let errorMessage = 'Failed to load tour details. Please try again.';
+        
+        if (axios.isAxiosError(error)) {
+          if (error.code === 'ECONNABORTED') {
+            errorMessage = 'Request timeout. Please check your connection.';
+          } else if (error.response?.status === 404) {
+            errorMessage = 'Tour not found.';
+          } else if (error.response?.status >= 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          }
+        }
+        
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchTour();
-  }, [id]);
+    if (id) fetchTour();
+  }, [id, refreshMediaUrls, selectedStopId]);
 
+  // Audio event handlers
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const updateTime = () => setAudioState(prev => ({ ...prev, currentTime: audio.currentTime }));
-    const updateDuration = () => setAudioState(prev => ({ ...prev, duration: audio.duration }));
-    const handleEnded = () => setAudioState(prev => ({ ...prev, playingId: null, currentTime: 0 }));
+    const handleTimeUpdate = () => {
+      const newCurrentTime = audio.currentTime;
+      setCurrentTime(newCurrentTime);
+    };
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration);
+    };
+    const handleEnded = () => {
+      setPlayingAudio(null);
+      setCurrentTime(0);
+    };
     const handleError = () => {
+      console.error('Audio playback error');
+      setPlayingAudio(null);
       toast.error('Failed to play audio');
-      setAudioState(prev => ({ ...prev, playingId: null, isLoading: false }));
     };
 
-    audio.addEventListener('timeupdate', updateTime);
-    audio.addEventListener('loadedmetadata', updateDuration);
-    audio.addEventListener('durationchange', updateDuration);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
     return () => {
-      audio.removeEventListener('timeupdate', updateTime);
-      audio.removeEventListener('loadedmetadata', updateDuration);
-      audio.removeEventListener('durationchange', updateDuration);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [audioState.isSeeking]);
+  }, [playingAudio]);
 
+  // Update audio volume and playback rate
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = audioState.volume;
-      audioRef.current.playbackRate = audioState.playbackRate;
+      audioRef.current.volume = volume;
+      audioRef.current.playbackRate = playbackRate;
     }
-  }, [audioState.volume, audioState.playbackRate]);
+  }, [volume, playbackRate]);
 
-  const handlePlayAudio = async (mediaId, audioUrl) => {
+  const handlePlayAudio = useCallback((mediaId, audioUrl) => {
     try {
-      if (audioState.playingId === mediaId) {
-        // Pause if already playing
-        audioRef.current.pause();
-        setAudioState(prev => ({ ...prev, playingId: null }));
+      if (playingAudio === mediaId) {
+        audioRef.current?.pause();
+        setPlayingAudio(null);
       } else {
-        // Play new audio
-        setAudioState(prev => ({ ...prev, isLoading: true, playingId: mediaId }));
-        
-        if (audioRef.current.src !== audioUrl) {
+        // Reset current time when switching audio files
+        setCurrentTime(0);
+        setPlayingAudio(mediaId);
+        if (audioRef.current) {
           audioRef.current.src = audioUrl;
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch((error) => {
+            console.error('Audio play failed:', error);
+            toast.error('Failed to play audio');
+            setPlayingAudio(null);
+          });
         }
-        
-        await audioRef.current.play();
-        setAudioState(prev => ({ 
-          ...prev, 
-          isLoading: false,
-          currentTime: 0 // Reset time when new audio starts
-        }));
       }
     } catch (error) {
-      console.error('Audio play failed:', error);
-      toast.error('Failed to play audio');
-      setAudioState(prev => ({ ...prev, playingId: null, isLoading: false }));
+      console.error('Error handling audio play:', error);
+      toast.error('Audio playback error');
+      setPlayingAudio(null);
     }
-  };
+  }, [playingAudio]);
 
-  const handleSeekStart = () => {
-    setAudioState(prev => ({ ...prev, isSeeking: true }));
-  };
+  const handlePauseAudio = useCallback(() => {
+    audioRef.current?.pause();
+    setPlayingAudio(null);
+  }, []);
 
-  const handleSeekMove = (e) => {
-    if (!audioRef.current || !progressBarRef.current) return;
-    
-    const progressBar = progressBarRef.current;
-    const rect = progressBar.getBoundingClientRect();
-    const clickPosition = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    const percentage = clickPosition / rect.width;
-    const newTime = percentage * audioState.duration;
-    
-    setAudioState(prev => ({ ...prev, currentTime: newTime }));
-  };
+  const handleVolumeChange = useCallback((newVolume) => {
+    setVolume(newVolume);
+  }, []);
 
-  const handleSeekEnd = (e) => {
-    if (!audioRef.current) return;
-    
-    const progressBar = progressBarRef.current;
-    const rect = progressBar.getBoundingClientRect();
-    const clickPosition = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    const percentage = clickPosition / rect.width;
-    const newTime = percentage * audioState.duration;
-    
-    audioRef.current.currentTime = newTime;
-    setAudioState(prev => ({ 
-      ...prev, 
-      currentTime: newTime,
-      isSeeking: false 
-    }));
-  };
+  const handlePlaybackRateChange = useCallback((newRate) => {
+    setPlaybackRate(newRate);
+  }, []);
 
-  const handleSeek = (e) => {
-    if (!audioRef.current) return;
-    
-    const progressBar = e.currentTarget;
-    const rect = progressBar.getBoundingClientRect();
-    const clickPosition = e.clientX - rect.left;
-    const percentage = clickPosition / rect.width;
-    const newTime = percentage * audioState.duration;
-    
-    audioRef.current.currentTime = newTime;
-    setAudioState(prev => ({ ...prev, currentTime: newTime }));
-  };
+  const handleSeek = useCallback((newTime) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  }, []);
 
-  const handleVolumeChange = (newVolume) => {
-    setAudioState(prev => ({ ...prev, volume: newVolume }));
-  };
+  const handleEditTour = useCallback(() => {
+    if (!tour) return;
+      navigate(`/guide/tour/edit/${tour.id}`, { state: { tour } });
+  }, [tour, navigate]);
 
-  const handlePlaybackRateChange = (newRate) => {
-    setAudioState(prev => ({ ...prev, playbackRate: newRate }));
-  };
+  const handleDeleteTour = useCallback(async () => {
+    if (!tour || !id || isDeleting) return;
 
-  const formatTime = (seconds) => {
-    if (!seconds || isNaN(seconds)) return '0:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  const handleDeleteTour = async () => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this tour? This action cannot be undone.');
-    if (!confirmDelete) return;
-    
     setIsDeleting(true);
+    const toastId = toast.loading('Deleting tour...');
+
     try {
-      await axios.delete(`${API_BASE_URL}/tour-packages/${id}`);
-      toast.success('Tour deleted successfully');
-      navigate('/guide/tours');
+      const response = await axios.delete(
+        `${API_BASE_URL}/tour-packages/${id}`
+      );
+
+      if (response.status === 200 && response.data?.success) {
+        toast.success('Tour deleted successfully!', { 
+          id: toastId,
+          duration: 3000
+        });
+        navigate('/tours');
+      } else {
+        throw new Error(response.data?.message || 'Unexpected response format');
+      }
     } catch (error) {
-      console.error('Error deleting tour:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete tour');
+      console.error('Deletion failed:', error);
+      
+      let errorMessage = 'Failed to delete tour. Please try again.';
+      
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          errorMessage = 'Request timeout. Please check your connection.';
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Tour not found. It may have already been deleted.';
+        } else if (error.response?.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+
+      setError(errorMessage);
+      toast.error(errorMessage, { id: toastId });
     } finally {
       setIsDeleting(false);
+      setShowDeleteModal(false);
     }
-  };
+  }, [tour, id, isDeleting, navigate]);
 
-  const getMediaByType = (stopId, type) => {
-    if (!tour?.tour_stops) return [];
-    const stop = tour.tour_stops.find(s => s.id === stopId);
-    return stop?.media
-      .filter(m => m.media?.media_type === type)
-      .map(m => m.media) || [];
-  };
-
-  const toggleSection = (section) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const formatDuration = (seconds) => {
-    if (!seconds || seconds <= 0) return '0 seconds';
+  const getMediaByType = useCallback((stopId, type) => {
+    const stop = tour?.tour_stops?.find(s => s.id === stopId);
+    if (!stop?.media) return [];
     
-    const hours = Math.floor(seconds / 3600);
-    const remainingSeconds = seconds % 3600;
-    const minutes = Math.floor(remainingSeconds / 60);
-    const remainingSecs = remainingSeconds % 60;
+    return stop.media
+      .map(mediaItem => mediaItem.media || mediaItem)
+      .filter(m => m && m.media_type === type) || [];
+  }, [tour?.tour_stops]);
 
-    const parts = [];
-    
-    if (hours > 0) {
-      parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
-    }
-    
-    if (minutes > 0) {
-      parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`);
-    }
-    
-    if (remainingSecs > 0 || parts.length === 0) {
-      parts.push(`${remainingSecs} second${remainingSecs !== 1 ? 's' : ''}`);
-    }
-
-    return parts.join(' ');
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    }).format(price);
-  };
-
-  const handleRefreshMedia = async () => {
+  // Manual refresh function for media URLs
+  const handleRefreshMedia = useCallback(async () => {
     if (!tour || isRefreshingMedia) return;
     
     setIsRefreshingMedia(true);
     const toastId = toast.loading('Refreshing media URLs...');
     
     try {
-      // Implement your refresh logic here
+      const refreshedTour = await refreshMediaUrls(tour);
+      setTour(refreshedTour);
       toast.success('Media URLs refreshed successfully!', { id: toastId });
     } catch (error) {
       console.error('Error refreshing media:', error);
@@ -310,14 +745,15 @@ const TourDetail = () => {
     } finally {
       setIsRefreshingMedia(false);
     }
-  };
+  }, [tour, isRefreshingMedia, refreshMediaUrls]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="flex flex-col items-center">
-          <Loader2 className="w-8 h-8 mb-4 text-blue-600 animate-spin" />
-          <p className="text-gray-600">Loading tour details...</p>
+        <div className="p-6 text-center bg-white border border-gray-100 rounded-lg shadow-xs">
+          <Loader2 className="w-8 h-8 mx-auto mb-4 text-blue-500 animate-spin" />
+          <h3 className="text-lg font-medium text-gray-700">Loading Tour Details</h3>
+          <p className="text-sm text-gray-500">Please wait while we load your tour information</p>
         </div>
       </div>
     );
@@ -325,23 +761,17 @@ const TourDetail = () => {
 
   if (error || !tour) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container px-6 py-8 mx-auto">
-          <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center mb-6 text-gray-700 transition-colors hover:text-gray-900"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            <span>Back to Tours</span>
-          </button>
-          <div className="p-4 border border-red-100 rounded-lg bg-red-50">
-            <div className="flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="font-medium text-red-800">Error loading tour</h3>
-                <p className="mt-1 text-sm text-red-600">{error || 'Tour not found'}</p>
-              </div>
-            </div>
+      <div className="p-6 bg-gray-50">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center px-4 py-2 mb-4 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-200 rounded-lg shadow-xs hover:bg-gray-50"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back
+        </button>
+        <div className="p-4 text-red-600 border border-red-100 rounded-lg bg-red-50">
+          <div className="flex items-center justify-center space-x-2">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error || 'Tour not found'}</span>
           </div>
         </div>
       </div>
@@ -352,448 +782,342 @@ const TourDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with cover image */}
-      <div className="relative overflow-hidden bg-gray-800 h-80">
-        <img 
-          src={tour.cover_image?.url} 
-          alt={tour.title}
-          className="absolute inset-0 object-cover w-full h-full"
-          onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80';
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/30 to-transparent"></div>
-        
-        <div className="container relative flex flex-col justify-end h-full px-6 pb-8 mx-auto">
-          <div className="flex items-start justify-between">
-            <div className="max-w-3xl">
-              <button 
+      {/* Header Section */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="flex flex-col justify-between mb-6 space-y-4 md:flex-row md:items-center md:space-y-0">
+            <div>
+              <button
                 onClick={() => navigate(-1)}
-                className="flex items-center mb-6 text-white transition-colors hover:text-gray-200"
+                className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors bg-gray-50 rounded-lg hover:bg-gray-100 border border-gray-200"
               >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                <span className="font-medium">Back to Tours</span>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Tours
               </button>
-              
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                <StatusBadge status={tour.status} />
-                
-                {tour.average_rating && (
-                  <div className="flex items-center px-3 py-1 text-white rounded-full bg-white/10 backdrop-blur-sm">
-                    <Star className="w-4 h-4 mr-1 text-yellow-400 fill-yellow-400" />
-                    <span>{tour.average_rating.toFixed(1)}</span>
+              <h1 className="mt-3 text-2xl font-bold text-gray-900">{tour.title}</h1>
+            </div>
+            
+            {/* Only show Edit/Delete buttons if tour is rejected */}
+            {tour.status === 'rejected' && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={handleEditTour}
+                  disabled={isDeleting}
+                  className="flex items-center px-4 py-1.5 text-sm font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  <Edit className="w-4 h-4 mr-1.5" />
+                  Edit Trip
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  disabled={isDeleting}
+                  className="flex items-center px-4 py-1.5 text-sm font-medium text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  Delete Trip
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Tour Summary Cards */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            {/* Tour Cover Image */}
+            <div className="md:col-span-1">
+              {tour.cover_image_url ? (
+                <div className="relative w-full h-40 overflow-hidden border border-gray-200 rounded-lg shadow-xs">
+                  <img
+                    src={tour.cover_image_url}
+                    alt="Tour Cover"
+                    className="object-cover w-full h-full"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                  <div className="absolute bottom-2 left-2">
+                    <StatusBadge status={tour.status} />
                   </div>
-                )}
-                
-                <div className="flex items-center px-3 py-1 text-white rounded-full bg-white/10 backdrop-blur-sm">
-                  <Clock className="w-4 h-4 mr-1" />
-                  <span>{formatDuration(tour.duration_minutes)}</span>
                 </div>
-                
-                {tour.price > 0 && (
-                  <div className="flex items-center px-3 py-1 text-white rounded-full bg-white/10 backdrop-blur-sm">
-                    <span>{formatPrice(tour.price)}</span>
-                  </div>
-                )}
+              ) : (
+                <div className="flex items-center justify-center w-full h-40 bg-gray-100 border-2 border-gray-200 border-dashed rounded-lg">
+                  <ImageIcon className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
+            </div>
+
+            {/* Tour Details */}
+            <div className="p-4 bg-white border border-gray-100 rounded-lg shadow-xs md:col-span-2">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-gray-800">Tour Overview</h2>
+                <p className="mt-1 text-sm text-gray-600">{tour.description}</p>
               </div>
               
-              <h1 className="mb-3 text-3xl font-bold text-white md:text-4xl">{tour.title}</h1>
-              <p className="text-lg text-gray-200 line-clamp-3">{tour.description}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50">
+                    <Clock className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Duration</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      {Math.floor(tour.duration_minutes / 60)}h {tour.duration_minutes % 60}m
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-50">
+                    <span className="text-green-600">💰</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Price</p>
+                    <p className="text-sm font-medium text-gray-700">${tour.price.toFixed(2)}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-50">
+                    <MapPin className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Stops</p>
+                    <p className="text-sm font-medium text-gray-700">{tour.tour_stops?.length || 0}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-50">
+                    <User className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Created By</p>
+                    <p className="text-sm font-medium text-gray-700">You</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Guide Info */}
+            <div className="md:col-span-1">
+              <div className="h-full p-4 bg-white border border-gray-100 rounded-lg shadow-xs">
+                <div className="flex items-center space-x-3">
+                  {tour.guide?.user?.avatar_url ? (
+                    <img
+                      src={tour.guide.user.avatar_url}
+                      alt={tour.guide.user.name}
+                      className="object-cover w-10 h-10 border-2 border-white rounded-full shadow-sm"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-10 h-10 bg-gray-100 border-2 border-white rounded-full">
+                      <User className="w-5 h-5 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-gray-800 truncate">
+                      {tour.guide?.user?.name || 'Unknown Guide'}
+                    </h3>
+                    {tour.guide?.years_of_experience && (
+                      <p className="text-xs text-gray-600">{tour.guide.years_of_experience} yrs exp</p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Tour-Level Rejection */}
+          {tour.status === 'rejected' && tour.rejection_reason && (
+            <div className="mt-6">
+              <RejectionNotice 
+                type="general" 
+                reason={tour.rejection_reason} 
+              />
+              
+              <div className="p-4 mt-4 border border-blue-200 rounded-lg bg-blue-50">
+                <h4 className="mb-2 text-sm font-semibold text-blue-800">Next Steps</h4>
+                <ol className="space-y-2 text-sm text-blue-700">
+                  <li className="flex items-start">
+                    <span className="flex items-center justify-center w-5 h-5 mt-0.5 mr-2 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">1</span>
+                    Review all rejection notices carefully
+                  </li>
+                  <li className="flex items-start">
+                    <span className="flex items-center justify-center w-5 h-5 mt-0.5 mr-2 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">2</span>
+                    Make the necessary corrections to your content
+                  </li>
+                  <li className="flex items-start">
+                    <span className="flex items-center justify-center w-5 h-5 mt-0.5 mr-2 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">3</span>
+                    Ensure all media meets quality guidelines
+                  </li>
+                  <li className="flex items-start">
+                    <span className="flex items-center justify-center w-5 h-5 mt-0.5 mr-2 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">4</span>
+                    Resubmit for approval when ready
+                  </li>
+                </ol>
+                <div className="pt-3 mt-3 border-t border-blue-200">
+                  <p className="text-xs text-blue-600">
+                    Need help? Contact our support team for clarification on any rejection reasons.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="container px-4 py-8 mx-auto sm:px-6">
-        <div className="flex flex-col gap-6 lg:flex-row">
-          {/* Left sidebar - Tour stops */}
-          <div className="lg:w-1/3 xl:w-1/4">
-            <div className="overflow-hidden bg-white rounded-lg shadow">
-              <div className="px-5 py-4 border-b border-gray-200">
-                <h2 className="flex items-center text-lg font-semibold text-gray-900">
-                  <MapPin className="w-5 h-5 mr-2 text-blue-600" />
-                  Tour Stops
-                  <span className="ml-auto text-sm font-normal text-gray-500">
-                    {tour.tour_stops?.length || 0}
-                  </span>
-                </h2>
-              </div>
-              
-              {tour.tour_stops?.length > 0 ? (
-                <div className="divide-y divide-gray-200">
-                  {tour.tour_stops.map((stop) => (
+      {/* Main Content Area */}
+      <div className="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Combined Tour Stops + Media Content */}
+          <div className="lg:col-span-2">
+            <div className="space-y-4">
+              {tour.tour_stops?.map((stop) => {
+                const allMedia = stop.media?.map(mediaItem => mediaItem.media || mediaItem) || [];
+                const audioMedia = allMedia.filter(m => m.media_type === 'audio');
+                const imageMedia = allMedia.filter(m => m.media_type === 'image');
+                const isSelected = selectedStopId === stop.id;
+                
+                return (
+                  <div
+                    key={stop.id}
+                    className={`bg-white border-2 rounded-xl shadow-sm transition-all duration-200 ${
+                      isSelected 
+                        ? 'border-blue-300 shadow-lg ring-2 ring-blue-100' 
+                        : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                    }`}
+                  >
+                    {/* Stop Header - Clickable */}
                     <button
-                      key={stop.id}
                       onClick={() => setSelectedStopId(stop.id)}
-                      className={`w-full text-left p-4 transition-colors duration-150 ${
-                        selectedStopId === stop.id 
-                          ? 'bg-blue-50 text-blue-700' 
-                          : 'hover:bg-gray-50 text-gray-700'
-                      }`}
+                      className="w-full p-4 text-left transition-colors hover:bg-gray-50 rounded-t-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <div className="flex items-start space-x-3">
-                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                          selectedStopId === stop.id 
-                            ? 'bg-blue-100 text-blue-600 font-medium' 
-                            : 'bg-gray-100 text-gray-500'
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm transition-colors ${
+                          isSelected 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-gray-200 text-gray-600'
                         }`}>
                           {stop.sequence_no}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 truncate">{stop.stop_name}</h3>
-                          {stop.description && (
-                            <p className="mt-1 text-sm text-gray-500 line-clamp-1">{stop.description}</p>
-                          )}
-                          <div className="flex items-center mt-2 space-x-4 text-xs text-gray-500">
-                            <span className="flex items-center">
-                              <Headphones className="w-3 h-3 mr-1.5 text-gray-400" />
-                              {stop.media?.filter(m => m.media_type === 'audio').length || 0}
-                            </span>
-                            <span className="flex items-center">
-                              <ImageIcon className="w-3 h-3 mr-1.5 text-gray-400" />
-                              {stop.media?.filter(m => m.media_type === 'image').length || 0}
-                            </span>
+                          <h3 className={`text-lg font-bold mb-1 ${
+                            isSelected ? 'text-blue-900' : 'text-gray-900'
+                          }`}>
+                            {stop.stop_name}
+                          </h3>
+                          <p className="mb-2 text-sm text-gray-600">{stop.description}</p>
+                          <div className="flex items-center space-x-4 text-xs">
+                            <span className="text-gray-500">{allMedia.length} media files</span>
+                            {audioMedia.length > 0 && (
+                              <span className="flex items-center space-x-1 text-blue-600">
+                                <Headphones className="w-3 h-3" />
+                                <span>{audioMedia.length}</span>
+                              </span>
+                            )}
+                            {imageMedia.length > 0 && (
+                              <span className="flex items-center space-x-1 text-green-600">
+                                <ImageIcon className="w-3 h-3" />
+                                <span>{imageMedia.length}</span>
+                              </span>
+                            )}
                           </div>
                         </div>
-                        {selectedStopId === stop.id && (
-                          <ChevronRight className="w-5 h-5 ml-2 text-blue-500" />
-                        )}
+                        <div className="flex-shrink-0">
+                          {isSelected ? (
+                            <ChevronDown className="w-5 h-5 text-blue-500" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                          )}
+                        </div>
                       </div>
                     </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-6 text-center">
-                  <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 text-gray-400 bg-gray-100 rounded-full">
-                    <MapPin className="w-5 h-5" />
+
+                    {/* Media Content - Only show if selected */}
+                    {isSelected && (
+                      <div className="border-t border-gray-200">
+                        {/* Audio Section */}
+                        {audioMedia.length > 0 && (
+                          <div className="p-4 border-b border-gray-100">
+                            <div className="flex items-center mb-3 space-x-2">
+                              <Headphones className="w-4 h-4 text-blue-600" />
+                              <h4 className="text-sm font-semibold text-gray-900">Audio Narration</h4>
+                              <span className="px-2 py-1 text-xs text-blue-600 bg-blue-100 rounded-full">
+                                {audioMedia.length}
+                              </span>
+                            </div>
+                            <div className="space-y-3">
+                              {audioMedia.map((audio) => (
+                                <AudioPlayer
+                                  key={audio.id}
+                                  media={audio}
+                                  isPlaying={playingAudio === audio.id}
+                                  onPlay={() => handlePlayAudio(audio.id, audio.url)}
+                                  onPause={handlePauseAudio}
+                                  currentTime={playingAudio === audio.id ? currentTime : 0}
+                                  duration={playingAudio === audio.id ? duration : audio.duration_seconds || 0}
+                                  volume={volume}
+                                  onVolumeChange={handleVolumeChange}
+                                  playbackRate={playbackRate}
+                                  onPlaybackRateChange={handlePlaybackRateChange}
+                                  onSeek={handleSeek}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Images Section */}
+                        {imageMedia.length > 0 && (
+                          <div className="p-4">
+                            <div className="flex items-center mb-3 space-x-2">
+                              <ImageIcon className="w-4 h-4 text-green-600" />
+                              <h4 className="text-sm font-semibold text-gray-900">Image Gallery</h4>
+                              <span className="px-2 py-1 text-xs text-green-600 bg-green-100 rounded-full">
+                                {imageMedia.length}
+                              </span>
+                            </div>
+                            <ImageGallery
+                              images={imageMedia}
+                              onImageClick={(imageUrl) => {
+                                setSelectedImage(imageUrl);
+                                setShowImageModal(true);
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {/* No Media State */}
+                        {allMedia.length === 0 && (
+                          <div className="p-6 text-center text-gray-500">
+                            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full">
+                              <AlertCircle className="w-6 h-6 text-gray-400" />
+                            </div>
+                            <p className="text-sm font-medium">No Media Available</p>
+                            <p className="text-xs">This stop doesn't have any media content yet</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <h4 className="font-medium text-gray-500">No stops added</h4>
+                );
+              })}
+
+              {/* No stops message */}
+              {(!tour.tour_stops || tour.tour_stops.length === 0) && (
+                <div className="p-8 text-center bg-white border border-gray-200 rounded-xl">
+                  <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <h3 className="mb-2 text-lg font-semibold text-gray-900">No Tour Stops</h3>
+                  <p className="text-gray-500">This tour doesn't have any stops configured yet</p>
                 </div>
               )}
-              
-              <div className="p-4 border-t border-gray-200">
-                <Link
-                  to={`/guide/tours/${id}/stops/new`}
-                  className="flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add New Stop
-                </Link>
-              </div>
             </div>
           </div>
-          
-          {/* Main content - Selected stop details */}
-          <div className="flex-1">
-            {selectedStop ? (
-              <div className="overflow-hidden bg-white rounded-lg shadow">
-                {/* Stop header */}
-                <div className="px-5 py-4 border-b border-gray-200">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center mb-1">
-                        <span className="mr-2 text-sm font-medium text-gray-500">Stop {selectedStop.sequence_no}</span>
-                      </div>
-                      <h2 className="text-xl font-semibold text-gray-900">
-                        {selectedStop.stop_name}
-                      </h2>
-                      {selectedStop.description && (
-                        <p className="mt-2 text-gray-600">{selectedStop.description}</p>
-                      )}
-                    </div>
-                    <div className="flex ml-4 space-x-2">
-                      <Link
-                        to={`/guide/tours/${id}/stops/${selectedStop.id}/edit`}
-                        className="p-2 text-gray-500 transition-colors rounded-md hover:text-blue-600 hover:bg-blue-50"
-                        title="Edit Stop"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </Link>
-                      <button
-                        className="p-2 text-gray-500 transition-colors rounded-md hover:text-red-600 hover:bg-red-50"
-                        title="Delete Stop"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Media sections */}
-                <div className="p-5">
-                  {/* Audio section */}
-                  <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <button 
-                        onClick={() => toggleSection('audio')}
-                        className="flex items-center text-lg font-semibold text-gray-900 transition-colors hover:text-blue-600"
-                      >
-                        <Headphones className="w-5 h-5 mr-2 text-blue-600" />
-                        <span>Audio Narration</span>
-                        <span className="ml-2 text-sm font-normal text-gray-500">
-                          ({getMediaByType(selectedStop.id, 'audio').length})
-                        </span>
-                        {expandedSections.audio ? (
-                          <ChevronDown className="w-5 h-5 ml-2 text-gray-400" />
-                        ) : (
-                          <ChevronRight className="w-5 h-5 ml-2 text-gray-400" />
-                        )}
-                      </button>
-                      <Link
-                        to={`/guide/tours/${id}/stops/${selectedStop.id}/media/upload?type=audio`}
-                        className="flex items-center text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
-                      >
-                        <Plus className="w-4 h-4 mr-1.5" />
-                        Add Audio
-                      </Link>
-                    </div>
-                    
-                    {expandedSections.audio && (
-                      getMediaByType(selectedStop.id, 'audio').length > 0 ? (
-                        <div className="space-y-3">
-                          {getMediaByType(selectedStop.id, 'audio').map((audio) => (
-                            <div key={audio.id} className="p-4 rounded-lg bg-gray-50">
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center space-x-3">
-                                  <div className="p-2 text-blue-600 bg-blue-100 rounded-full">
-                                    <Volume2 className="w-4 h-4" />
-                                  </div>
-                                  <span className="font-medium">Audio #{audio.id}</span>
-                                </div>
-                                <div className="flex items-center space-x-3">
-                                  <span className="text-sm text-gray-500">
-                                    {formatTime(audio.duration_seconds)}
-                                  </span>
-                                  <button className="text-gray-400 hover:text-gray-600">
-                                    <MoreVertical className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </div>
-                              
-                              {/* Progress bar */}
-                              <div className="mb-2 cursor-pointer" onClick={handleSeek}>
-                                <div className="relative w-full h-1 mb-1 bg-gray-200 rounded-full">
-                                  <div 
-                                    className="absolute top-0 left-0 h-full bg-blue-500 rounded-full"
-                                    style={{ 
-                                      width: `${audioState.playingId === audio.id ? 
-                                        (audioState.duration > 0 ? (audioState.currentTime / audioState.duration) * 100 : 0) 
-                                        : 0}%` 
-                                    }}
-                                  />
-                                </div>
-                                <div className="flex justify-between text-xs text-gray-500">
-                                  <span>
-                                    {audioState.playingId === audio.id ? 
-                                      formatTime(audioState.currentTime) : '0:00'}
-                                  </span>
-                                  <span>
-                                    {formatTime(audio.duration_seconds)}
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                {/* Play/Pause button */}
-                                <button
-                                  onClick={() => handlePlayAudio(audio.id, audio.url)}
-                                  disabled={audioState.isLoading && audioState.playingId === audio.id}
-                                  className={`flex items-center justify-center w-full px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                                    audioState.playingId === audio.id
-                                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                      : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
-                                  }`}
-                                >
-                                  {audioState.isLoading && audioState.playingId === audio.id ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  ) : audioState.playingId === audio.id ? (
-                                    <>
-                                      <Pause className="w-4 h-4 mr-2" />
-                                      <span>Pause</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Play className="w-4 h-4 mr-2" />
-                                      <span>Play</span>
-                                    </>
-                                  )}
-                                </button>
-                                
-                                {/* Volume control */}
-                                <div className="flex items-center ml-3">
-                                  <button 
-                                    onClick={() => handleVolumeChange(audioState.volume > 0 ? 0 : 1)}
-                                    className="p-2 text-gray-500 hover:text-gray-700"
-                                  >
-                                    {audioState.volume === 0 ? (
-                                      <VolumeX className="w-4 h-4" />
-                                    ) : audioState.volume < 0.5 ? (
-                                      <Volume1 className="w-4 h-4" />
-                                    ) : (
-                                      <Volume2 className="w-4 h-4" />
-                                    )}
-                                  </button>
-                                  <input
-                                    type="range"
-                                    min="0"
-                                    max="1"
-                                    step="0.1"
-                                    value={audioState.volume}
-                                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                                    className="w-16 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                  />
-                                </div>
-                                
-                                {/* Playback speed */}
-                                <div className="ml-3">
-                                  <select
-                                    value={audioState.playbackRate}
-                                    onChange={(e) => handlePlaybackRateChange(parseFloat(e.target.value))}
-                                    className="px-2 py-1 text-xs bg-white border border-gray-300 rounded"
-                                  >
-                                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
-                                      <option key={speed} value={speed}>{speed}x</option>
-                                    ))}
-                                  </select>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-6 text-center rounded-lg bg-gray-50">
-                          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 text-gray-400 bg-gray-200 rounded-full">
-                            <Headphones className="w-5 h-5" />
-                          </div>
-                          <h4 className="mb-1 font-medium text-gray-500">No audio narration</h4>
-                          <p className="mb-4 text-sm text-gray-400">Add audio to guide visitors through this stop</p>
-                          <Link
-                            to={`/guide/tours/${id}/stops/${selectedStop.id}/media/upload?type=audio`}
-                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-md hover:bg-blue-700"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Upload Audio
-                          </Link>
-                        </div>
-                      )
-                    )}
-                  </div>
-                  
-                  {/* Images section */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <button 
-                        onClick={() => toggleSection('images')}
-                        className="flex items-center text-lg font-semibold text-gray-900 transition-colors hover:text-blue-600"
-                      >
-                        <ImageIcon className="w-5 h-5 mr-2 text-blue-600" />
-                        <span>Images</span>
-                        <span className="ml-2 text-sm font-normal text-gray-500">
-                          ({getMediaByType(selectedStop.id, 'image').length})
-                        </span>
-                        {expandedSections.images ? (
-                          <ChevronDown className="w-5 h-5 ml-2 text-gray-400" />
-                        ) : (
-                          <ChevronRight className="w-5 h-5 ml-2 text-gray-400" />
-                        )}
-                      </button>
-                      <Link
-                        to={`/guide/tours/${id}/stops/${selectedStop.id}/media/upload?type=image`}
-                        className="flex items-center text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
-                      >
-                        <Plus className="w-4 h-4 mr-1.5" />
-                        Add Image
-                      </Link>
-                    </div>
-                    
-                    {expandedSections.images && (
-                      getMediaByType(selectedStop.id, 'image').length > 0 ? (
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                          {getMediaByType(selectedStop.id, 'image').map((image) => (
-                            <div key={image.id} className="relative group aspect-square">
-                              <div className="absolute inset-0 overflow-hidden rounded-lg">
-                                <img
-                                  src={image.url}
-                                  alt={`Stop ${selectedStop.sequence_no} - ${selectedStop.stop_name}`}
-                                  className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                                  onClick={() => {
-                                    setSelectedImage(image.url);
-                                    setShowImageModal(true);
-                                  }}
-                                />
-                                <div className="absolute inset-0 flex items-end p-3 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/40 via-transparent to-transparent group-hover:opacity-100">
-                                  <div className="flex space-x-2">
-                                    <button 
-                                      className="p-2 text-gray-800 transition-colors rounded-full bg-white/90 hover:bg-white"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedImage(image.url);
-                                        setShowImageModal(true);
-                                      }}
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </button>
-                                    <button className="p-2 text-gray-800 transition-colors rounded-full bg-white/90 hover:bg-white">
-                                      <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button className="p-2 text-gray-800 transition-colors rounded-full bg-white/90 hover:bg-white">
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-6 text-center rounded-lg bg-gray-50">
-                          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 text-gray-400 bg-gray-200 rounded-full">
-                            <ImageIcon className="w-5 h-5" />
-                          </div>
-                          <h4 className="mb-1 font-medium text-gray-500">No images</h4>
-                          <p className="mb-4 text-sm text-gray-400">Add images to showcase this location</p>
-                          <Link
-                            to={`/guide/tours/${id}/stops/${selectedStop.id}/media/upload?type=image`}
-                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 rounded-md hover:bg-blue-700"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Upload Image
-                          </Link>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 text-center bg-white rounded-lg shadow">
-                <div className="flex items-center justify-center mx-auto mb-4 text-gray-400 bg-gray-100 rounded-full w-14 h-14">
-                  <MapPin className="w-6 h-6" />
-                </div>
-                <h3 className="mb-2 text-lg font-medium text-gray-700">No stop selected</h3>
-                <p className="mb-6 text-gray-500">Select a stop from the list to view details</p>
-                <Link
-                  to={`/guide/tours/${id}/stops/new`}
-                  className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Stop
-                </Link>
-              </div>
-            )}
-          </div>
-          
-          {/* Right sidebar - Location and actions */}
-          <div className="space-y-6 lg:w-80 xl:w-96">
-            {/* Location card */}
-            <div className="overflow-hidden bg-white rounded-lg shadow">
-              <div className="px-5 py-4 border-b border-gray-200">
+
+          {/* Map Section */}
+          <div className="lg:col-span-1">
+            <div className="sticky bg-white border border-gray-200 shadow-sm rounded-xl top-8">
+              <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="flex items-center text-lg font-semibold text-gray-900">
-                    <Map className="w-5 h-5 mr-2 text-blue-600" />
-                    <span>Tour Route Map</span>
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Tour Route Map</h3>
                   <button
                     onClick={handleRefreshMedia}
                     disabled={isRefreshingMedia}
@@ -816,59 +1140,34 @@ const TourDetail = () => {
               <div className="overflow-hidden h-96 rounded-b-xl">
                 {MemoizedTourStopsMap}
               </div>
-              <div className="p-4 border-t border-gray-200">
-                <button className="flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Update Location
-                </button>
-              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Hidden audio element */}
+      {/* Audio Element */}
       <audio 
         ref={audioRef} 
-        onEnded={() => setAudioState(prev => ({ ...prev, playingId: null, currentTime: 0 }))}
-        onError={() => {
-          console.error('Audio playback error');
-          setAudioState(prev => ({ ...prev, playingId: null, isLoading: false }));
-          toast.error('Failed to play audio');
-        }}
+        preload="metadata"
+        aria-hidden="true"
       />
 
-      {/* Image preview modal */}
-      {showImageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-          <div className="relative max-w-5xl max-h-[90vh]">
-            <button
-              onClick={() => setShowImageModal(false)}
-              className="absolute -right-2 -top-2 z-10 p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
-            >
-              <XCircle className="w-6 h-6 text-gray-700" />
-            </button>
-            <div className="flex flex-col items-center">
-              <img 
-                src={selectedImage} 
-                alt="Full size preview"
-                className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-xl"
-              />
-              <div className="flex mt-4 space-x-3">
-                <button className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-                  <Download className="w-5 h-5" />
-                </button>
-                <button className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-                  <Edit className="w-5 h-5" />
-                </button>
-                <button className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        imageUrl={selectedImage}
+        onClose={() => setShowImageModal(false)}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteTour}
+        title="Delete Tour Permanently"
+        message="Are you sure you want to delete this tour? This action cannot be undone. All associated stops, media, and data will be permanently removed."
+        confirmText={isDeleting ? "Deleting..." : "Delete Permanently"}
+        isProcessing={isDeleting}
+      />
     </div>
   );
 };
