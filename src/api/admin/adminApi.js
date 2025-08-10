@@ -46,6 +46,32 @@ export const getAllUsers = async (filters = {}) => {
   }
 };
 
+
+export const getAllPackages = async (filters = {}) => {
+  try {
+    const response = await apiClient.get("/tour-package/", {
+      params: {
+        status: filters.status || undefined
+      }
+    });
+    
+    return {
+      data: response.data.data?.packages || [], // Match your backend response structure
+      total: response.data.data?.total || 0,
+      message: response.data.message || "Packages fetched successfully"
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message || 
+        error.response?.data?.error || 
+        "Failed to fetch packages"
+      );
+    }
+    throw new Error("An unexpected error occurred while fetching packages");
+  }
+}
+
 export const getUserStatistics = async () => {
   try {
     const response = await apiClient.get('/users/');
