@@ -87,3 +87,42 @@ export const updateUserStatus = async (userId, newStatus) => {
   }
 };
 
+  export const getTotalRevenue = async () => {
+    try {
+        const response = await apiClient.get("/payment/revenue");
+        
+        // Get current date for daily revenue calculation
+        const today = new Date();
+        const todayStart = new Date(today.setHours(0, 0, 0, 0));
+        const todayEnd = new Date(today.setHours(23, 59, 59, 999));
+        
+        // Transform the data to match frontend expectations
+        return {
+            total: response.data.data?.total_revenue || 0,
+            today: response.data.data?.today_revenue || 0, // Add today's revenue
+            monthly: response.data.data?.monthly || Array(12).fill(0),
+            weekly: response.data.data?.weekly || Array(4).fill(0),
+            yearly: response.data.data?.yearly || [],
+            growthRate: response.data.data?.growth_rate || 0,
+            lastUpdated: new Date().toISOString(),
+            message: response.data.message || "Total revenue fetched successfully",
+        };
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error("API Error Details:", {
+                status: error.response?.status,
+                data: error.response?.data,
+                url: error.config?.url
+            });
+            
+            throw new Error(
+                error.response?.data?.message || 
+                error.response?.data?.error || 
+                "Failed to fetch revenue data"
+            );
+        }
+        
+        console.error("System Error:", error);
+        throw new Error("An unexpected error occurred while fetching revenue");
+    }
+};
