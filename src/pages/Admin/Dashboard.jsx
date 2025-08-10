@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { getAllUsers } from "../../api/admin/adminApi";
 import { getTotalRevenue } from "../../api/admin/adminApi";
+import { getAllPackages } from "../../api/admin/adminApi";
 
 // StatsCard Component
 const StatsCard = ({
@@ -745,6 +746,7 @@ const Dashboard = () => {
   const [users, setUsers] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [todayRevenue, setTodayRevenue] = useState(0);
+  const [tourpackage,setTourPackages] = useState(0);
   const [activeUsers, setActiveUsers] = useState(0);
   const [activeTourGuides, setActiveTourGuides] = useState(0);
   const [activeTourists, setActiveTourists] = useState(0);
@@ -763,6 +765,27 @@ const Dashboard = () => {
     activeTourists,
     activeVendors,
   };
+
+  useEffect(() => {
+  const fetchPackages = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Option 2: Better - Filter on backend
+      const response = await getAllPackages({ status: "published" });
+      setTourPackages(response.data.length); // Or response.total if using pagination
+      
+    } catch (error) {
+      console.error("Failed to fetch packages", error);
+      setError(error.message);
+      setTourPackages(0); // Reset count on error
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchPackages();
+}, []);
 
   useEffect(() => {
     const fetchTodayRevenue = async () => {
@@ -979,7 +1002,7 @@ const Dashboard = () => {
                       </p>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-2xl font-bold text-white">247</p>
+                      <p className="text-2xl font-bold text-white">{tourpackage}</p>
                       <div className="flex items-center gap-1">
                         <Plus className="w-4 h-4 transition-colors text-white/80 group-hover:text-white" />
                         <span className="text-xs font-medium transition-colors text-white/80 group-hover:text-white">
