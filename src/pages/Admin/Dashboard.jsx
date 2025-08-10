@@ -3,10 +3,7 @@ import {
   Users,
   TrendingUp,
   Package,
-  Award,
   ArrowUpRight,
-  Sparkles,
-  BarChart3,
   UserCheck,
   MapPin,
   Store,
@@ -19,7 +16,10 @@ import {
   Medal,
   Zap,
   Plus,
+  Phone,
 } from "lucide-react";
+import { getAllUsers } from "../../api/admin/adminApi";
+import { getTotalRevenue } from "../../api/admin/adminApi";
 
 // StatsCard Component
 const StatsCard = ({
@@ -96,7 +96,11 @@ const QuickStats = ({ data, loading }) => {
   const stats = [
     {
       title: "Active Users",
-      value: data.activeUsers,
+      value:
+        data.activeUsers +
+        data.activeTourists +
+        data.activeTourGuides +
+        data.activeVendors,
       subtitle: "Total platform users",
       icon: Users,
       gradient: "from-blue-50 to-blue-500",
@@ -114,7 +118,7 @@ const QuickStats = ({ data, loading }) => {
     },
     {
       title: "Tourists",
-      value: data.activeTourists,
+      value: data.activeUsers,
       subtitle: "Active tourists",
       icon: MapPin,
       gradient: "from-purple-50 to-purple-600",
@@ -153,21 +157,28 @@ const QuickStats = ({ data, loading }) => {
 };
 
 // RevenueChart Component
-const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
-  // Mock data for different time periods
-  const getRevenueData = () => {
+const RevenueChart = ({
+  timeFilter,
+  loading,
+  TimeFilterComponent,
+  revenueData,
+}) => {
+  // Process real data based on time filter
+  const processRevenueData = () => {
+    if (!revenueData) return null;
+
     switch (timeFilter) {
       case "weekly":
         return {
-          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-          values: [12000, 15000, 8000, 22000, 18000, 25000, 20000],
-          total: 120000,
+          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+          values: revenueData.weekly || Array(4).fill(0),
+          total: revenueData.weekly?.reduce((a, b) => a + b, 0) || 0,
         };
       case "yearly":
         return {
-          labels: ["2020", "2021", "2022", "2023", "2024"],
-          values: [180000, 220000, 280000, 350000, 420000],
-          total: 1450000,
+          labels: revenueData.yearly?.map((y) => y.year) || [],
+          values: revenueData.yearly?.map((y) => y.amount) || [],
+          total: revenueData.yearly?.reduce((sum, y) => sum + y.amount, 0) || 0,
         };
       default: // monthly
         return {
@@ -185,17 +196,16 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
             "Nov",
             "Dec",
           ],
-          values: [
-            25000, 30000, 35000, 28000, 42000, 38000, 45000, 50000, 40000,
-            35000, 38000, 42000,
-          ],
-          total: 448000,
+          values: revenueData.monthly || Array(12).fill(0),
+          total: revenueData.total || 0,
         };
     }
   };
 
-  const data = getRevenueData();
-  const maxValue = Math.max(...data.values);
+  const data = processRevenueData();
+  if (!data) return null;
+
+  const maxValue = Math.max(...data.values, 1);
 
   // Create SVG path for the line chart
   const createPath = (values) => {
@@ -731,17 +741,69 @@ const Dashboard = () => {
   const [revenueTimeFilter, setRevenueTimeFilter] = useState("monthly");
   const [salesTimeFilter, setSalesTimeFilter] = useState("monthly");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [todayRevenue, setTodayRevenue] = useState(0);
+  const [activeUsers, setActiveUsers] = useState(0);
+  const [activeTourGuides, setActiveTourGuides] = useState(0);
+  const [activeTourists, setActiveTourists] = useState(0);
+  const [activeVendors, setActiveVendors] = useState(0);
+
   const [dashboardData, setDashboardData] = useState({
-    activeUsers: 0,
-    activeTourGuides: 0,
-    activeTourists: 0,
-    activeVendors: 0,
-    totalRevenue: 0,
     totalPackagesSold: 0,
     topTourGuide: null,
     mostSoldPackage: null,
   });
 
+  // Prepare quickStatsData
+  const quickStatsData = {
+    activeUsers,
+    activeTourGuides,
+    activeTourists,
+    activeVendors,
+  };
+
+  useEffect(() => {
+    const fetchTodayRevenue = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Use the existing getTotalRevenue function
+        const revenueData = await getTotalRevenue();
+
+        // Extract today's revenue from the response
+        setTodayRevenue(revenueData.today);
+      } catch (error) {
+        console.error("Failed to fetch revenue data", error);
+        setError(error.message);
+        setTodayRevenue(0); // Fallback to 0 if there's an error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTodayRevenue();
+  }, []); // Don't forget the dependency array
+
+  useEffect(() => {
+    const fetchTotalRevenue = async () => {
+      try {
+        setLoading(true);
+        setError(null); // Reset error state
+        const response = await getTotalRevenue();
+        setTotalRevenue(response.total);
+        // Remove the duplicate setTotalRevenue line
+      } catch (error) {
+        console.error("Failed to fetch total revenue", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTotalRevenue();
+  }, []);
   useEffect(() => {
     // Simulate API call
     const fetchDashboardData = async () => {
@@ -749,13 +811,7 @@ const Dashboard = () => {
         setLoading(true);
         // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
-
         setDashboardData({
-          activeUsers: 2847,
-          activeTourGuides: 156,
-          activeTourists: 1891,
-          activeVendors: 89,
-          totalRevenue: 284750,
           totalPackagesSold: 1432,
           topTourGuide: {
             name: "Sarah Johnson",
@@ -780,6 +836,45 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getAllUsers();
+        const users = response.data;
+        setUsers(users);
+        // Use correct role names from backend
+        setActiveUsers(
+          users.filter(
+            (user) => user.role === "traveler" && user.status === "active"
+          ).length
+        );
+        setActiveTourGuides(
+          users.filter(
+            (user) => user.role === "travel_guide" && user.status === "active"
+          ).length
+        );
+        setActiveTourists(
+          users.filter(
+            (user) => user.role === "tourist" && user.status === "active"
+          ).length
+        );
+        setActiveVendors(
+          users.filter(
+            (user) => user.role === "vendor" && user.status === "active"
+          ).length
+        );
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
   }, []);
 
   const timeFilterOptions = [
@@ -861,7 +956,7 @@ const Dashboard = () => {
                     <p className="text-sm font-medium text-gray-600">
                       Today's Revenue
                     </p>
-                    <p className="text-3xl font-bold text-gray-900">$12,847</p>
+                    <p className="text-3xl font-bold text-gray-900">Rs.{todayRevenue}</p>
                     <div className="flex items-center justify-end gap-1 mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-600" />
                       <span className="text-sm font-medium text-green-600">
@@ -869,11 +964,13 @@ const Dashboard = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Tour Packages Button */}
-                  <button 
+                  <button
                     className="p-4 transition-all duration-300 transform border shadow-lg group bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-xl border-emerald-400 hover:shadow-xl hover:scale-105 active:scale-95"
-                    onClick={() => window.location.href = '/admin/tourpackage'}
+                    onClick={() =>
+                      (window.location.href = "/admin/tourpackage")
+                    }
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <Package className="w-5 h-5 text-white" />
@@ -904,7 +1001,7 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Stats */}
-        <QuickStats data={dashboardData} loading={loading} />
+        <QuickStats data={quickStatsData} loading={loading} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 gap-8 mb-8 lg:grid-cols-3">
@@ -934,7 +1031,7 @@ const Dashboard = () => {
                     Total Revenue
                   </p>
                   <p className="text-lg font-bold text-gray-900">
-                    ${dashboardData.totalRevenue.toLocaleString()}
+                    Rs.{totalRevenue.toLocaleString()}
                   </p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUpRight className="w-3 h-3 text-green-600" />
@@ -1013,6 +1110,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
 
 export default Dashboard;

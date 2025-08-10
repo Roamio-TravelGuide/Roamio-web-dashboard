@@ -312,11 +312,7 @@ const Users = () => {
             <div>
               <p className="text-gray-500 text-sm font-medium">Total Users</p>
               <p className="text-2xl font-bold text-gray-800">
-                {stats.total || <span className="text-gray-400">Loading...</span>}
-
-                {stats.total || (
-                  <span className="text-gray-400">Loading...</span>
-                )}
+                {isLoading ? <span className="text-gray-400">Loading...</span> : stats.total}
               </p>
               <p className="text-xs text-gray-400 mt-1">All platform users</p>
             </div>
@@ -332,10 +328,7 @@ const Users = () => {
             <div>
               <p className="text-gray-500 text-sm font-medium">Active Users</p>
               <p className="text-2xl font-bold text-green-600">
-                {stats.active || <span className="text-gray-400">Loading...</span>}
-                {stats.active || (
-                  <span className="text-gray-400">Loading...</span>
-                )}
+                {isLoading ? <span className="text-gray-400">Loading...</span> : stats.active}
               </p>
               <p className="text-xs text-gray-400 mt-1">Currently active</p>
             </div>
@@ -351,10 +344,7 @@ const Users = () => {
             <div>
               <p className="text-gray-500 text-sm font-medium">Pending Users</p>
               <p className="text-2xl font-bold text-yellow-600">
-                {stats.pending || <span className="text-gray-400">Loading...</span>}
-                {stats.pending || (
-                  <span className="text-gray-400">Loading...</span>
-                )}
+                {isLoading ? <span className="text-gray-400">Loading...</span> : stats.pending}
               </p>
               <p className="text-xs text-gray-400 mt-1">Awaiting approval</p>
             </div>
@@ -370,10 +360,7 @@ const Users = () => {
             <div>
               <p className="text-gray-500 text-sm font-medium">Blocked Users</p>
               <p className="text-2xl font-bold text-red-600">
-                {stats.blocked || <span className="text-gray-400">Loading...</span>}
-                {stats.blocked || (
-                  <span className="text-gray-400">Loading...</span>
-                )}
+                {isLoading ? <span className="text-gray-400">Loading...</span> : stats.blocked}
               </p>
               <p className="text-xs text-gray-400 mt-1">Restricted access</p>
             </div>
