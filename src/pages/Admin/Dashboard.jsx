@@ -158,100 +158,89 @@ const QuickStats = ({ data, loading }) => {
 };
 
 // RevenueChart Component
-const RevenueChart = ({
-  timeFilter,
-  loading,
-  TimeFilterComponent,
-  revenueData,
-}) => {
-  // Process real data based on time filter
-  const processRevenueData = () => {
-    if (!revenueData) return null;
+const RevenueChart = ({ timeFilter, loading, TimeFilterComponent, weeklyRevenue, monthlyRevenue, totalRevenue }) => {
+  // Use actual data from props/state instead of mock data
+  const getRevenueData = () => {
+    
+  switch (timeFilter) {
+    case "weekly":
+      console.log(weeklyRevenue);
+      return {
+        
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        values: weeklyRevenue?.dailyBreakdown || Array(7).fill(0),
+        total: weeklyRevenue?.total || 0,
+      };
+    case "yearly":
+      console.log(totalRevenue);
+      return {
+        labels: ["2020", "2021", "2022", "2023", "2024","2025"],
+        values: totalRevenue?.yearlyBreakdown || Array(6).fill(0),
+        total: totalRevenue?.total || 0,
+      };
+    default: // monthly
+      console.log(monthlyRevenue);
+      return {
+        labels: [
+          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        ],
+        values: monthlyRevenue?.monthlyBreakdown || Array(12).fill(0),
+        total: monthlyRevenue?.total || 0,
+      };
+  }
+};
 
-    switch (timeFilter) {
-      case "weekly":
-        return {
-          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-          values: revenueData.weekly || Array(4).fill(0),
-          total: revenueData.weekly?.reduce((a, b) => a + b, 0) || 0,
-        };
-      case "yearly":
-        return {
-          labels: revenueData.yearly?.map((y) => y.year) || [],
-          values: revenueData.yearly?.map((y) => y.amount) || [],
-          total: revenueData.yearly?.reduce((sum, y) => sum + y.amount, 0) || 0,
-        };
-      default: // monthly
-        return {
-          labels: [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ],
-          values: revenueData.monthly || Array(12).fill(0),
-          total: revenueData.total || 0,
-        };
-    }
-  };
-
-  const data = processRevenueData();
-  if (!data) return null;
-
-  const maxValue = Math.max(...data.values, 1);
+const data = getRevenueData();
+// Ensure maxValue is at least 1 to avoid division by zero
+const maxValue = Math.max(1, ...data.values);
 
   // Create SVG path for the line chart
   const createPath = (values) => {
-    const width = 600;
-    const height = 200;
-    const padding = 40;
+  const width = 600;
+  const height = 200;
+  const padding = 40;
 
-    const xStep = (width - 2 * padding) / (values.length - 1);
-    const yScale = (height - 2 * padding) / maxValue;
+  const xStep = (width - 2 * padding) / (values.length - 1);
+  const yScale = (height - 2 * padding) / maxValue;
 
-    let path = "";
-    values.forEach((value, index) => {
-      const x = padding + index * xStep;
-      const y = height - padding - value * yScale;
+  let path = "";
+  values.forEach((value, index) => {
+    const x = padding + index * xStep;
+    const yValue = Number.isFinite(value) ? value : 0;
+    const y = height - padding - yValue * yScale;
 
-      if (index === 0) {
-        path += `M ${x} ${y}`;
-      } else {
-        path += ` L ${x} ${y}`;
-      }
-    });
-
-    return path;
-  };
-
-  // Create area path for gradient fill
-  const createAreaPath = (values) => {
-    const width = 600;
-    const height = 200;
-    const padding = 40;
-
-    const xStep = (width - 2 * padding) / (values.length - 1);
-    const yScale = (height - 2 * padding) / maxValue;
-
-    let path = `M ${padding} ${height - padding}`;
-
-    values.forEach((value, index) => {
-      const x = padding + index * xStep;
-      const y = height - padding - value * yScale;
+    if (index === 0) {
+      path += `M ${x} ${y}`;
+    } else {
       path += ` L ${x} ${y}`;
-    });
+    }
+  });
 
-    path += ` L ${padding + (values.length - 1) * xStep} ${height - padding} Z`;
-    return path;
-  };
+  return path;
+};
+
+const createAreaPath = (values) => {
+  const width = 600;
+  const height = 200;
+  const padding = 40;
+
+  const xStep = (width - 2 * padding) / (values.length - 1);
+  const yScale = (height - 2 * padding) / maxValue;
+
+  let path = `M ${padding} ${height - padding}`;
+
+  values.forEach((value, index) => {
+    const x = padding + index * xStep;
+    const yValue = Number.isFinite(value) ? value : 0;
+    const y = height - padding - yValue * yScale;
+    path += ` L ${x} ${y}`;
+  });
+
+  path += ` L ${padding + (values.length - 1) * xStep} ${height - padding} Z`;
+  return path;
+};
+
 
   if (loading) {
     return (
@@ -288,7 +277,7 @@ const RevenueChart = ({
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="w-5 h-5 text-green-600" />
               <p className="text-3xl font-bold text-gray-900">
-                ${data.total.toLocaleString()}
+                {data.total}
               </p>
             </div>
             <div className="flex items-center justify-end gap-1">
@@ -421,7 +410,7 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
         };
       case "yearly":
         return {
-          labels: ["2020", "2021", "2022", "2023", "2024"],
+          labels: ["2021", "2022", "2023", "2024","2025"],
           values: [1200, 1580, 1920, 2340, 2650],
           total: 9690,
         };
@@ -746,7 +735,10 @@ const Dashboard = () => {
   const [users, setUsers] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [todayRevenue, setTodayRevenue] = useState(0);
+  const [monthlyRevenue,setMonthlyRevenue] = useState(0);
+  const [weeklyRevenue,setWeeklyRevenue] = useState(0);
   const [tourpackage,setTourPackages] = useState(0);
+  const [soldPackages,setSoldPackages] = useState(0);
   const [activeUsers, setActiveUsers] = useState(0);
   const [activeTourGuides, setActiveTourGuides] = useState(0);
   const [activeTourists, setActiveTourists] = useState(0);
@@ -765,6 +757,12 @@ const Dashboard = () => {
     activeTourists,
     activeVendors,
   };
+
+  const revenueData= {
+    totalRevenue,
+    weeklyRevenue,
+    monthlyRevenue
+  }
 
   useEffect(() => {
   const fetchPackages = async () => {
@@ -787,36 +785,21 @@ const Dashboard = () => {
   fetchPackages();
 }, []);
 
-  useEffect(() => {
-    const fetchTodayRevenue = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Use the existing getTotalRevenue function
-        const revenueData = await getTotalRevenue();
-
-        // Extract today's revenue from the response
-        setTodayRevenue(revenueData.today);
-      } catch (error) {
-        console.error("Failed to fetch revenue data", error);
-        setError(error.message);
-        setTodayRevenue(0); // Fallback to 0 if there's an error
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTodayRevenue();
-  }, []); // Don't forget the dependency array
+//Sold Packages,All Revenues
 
   useEffect(() => {
-    const fetchTotalRevenue = async () => {
+    const fetchAllRevenue = async () => {
       try {
         setLoading(true);
         setError(null); // Reset error state
         const response = await getTotalRevenue();
+        console.log(response);
+        setSoldPackages(response.sold_packages)
         setTotalRevenue(response.total);
+        setMonthlyRevenue(response.monthly || 0);
+        setWeeklyRevenue(response.weekly || 0);
+        setTodayRevenue(response.today);
+
         // Remove the duplicate setTotalRevenue line
       } catch (error) {
         console.error("Failed to fetch total revenue", error);
@@ -825,7 +808,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-    fetchTotalRevenue();
+    fetchAllRevenue();
   }, []);
   useEffect(() => {
     // Simulate API call
@@ -1031,6 +1014,7 @@ const Dashboard = () => {
           {/* Revenue Chart */}
           <div className="lg:col-span-2">
             <RevenueChart
+              data={revenueData}
               timeFilter={revenueTimeFilter}
               loading={loading}
               TimeFilterComponent={() => (
@@ -1075,7 +1059,7 @@ const Dashboard = () => {
                     Packages Sold
                   </p>
                   <p className="text-lg font-bold text-gray-900">
-                    {dashboardData.totalPackagesSold.toLocaleString()}
+                    {soldPackages}
                   </p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUpRight className="w-3 h-3 text-green-600" />
