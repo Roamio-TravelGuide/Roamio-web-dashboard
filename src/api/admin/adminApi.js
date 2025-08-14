@@ -155,4 +155,3 @@ export const getTotalRevenue = async () => {
     throw new Error("An unexpected error occurred while fetching revenue");
   }
 };
-
