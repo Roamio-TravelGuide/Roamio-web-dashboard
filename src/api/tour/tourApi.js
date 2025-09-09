@@ -62,13 +62,26 @@ export const getTourById = async (tourId) => {
 
 export const uploadtempcover = async (formData) => {
   try {
-    // console.log(formData);
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}:`, {
+          name: value.name,
+          type: value.type,
+          size: value.size,
+          lastModified: value.lastModified
+        });
+      } else {
+        console.log(`${key}:`, value);
+      }
+    }
+    
     const response = await apiClient.post('storage/temp-cover', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     });
+
     return response.data;
   } catch (error) {
     console.error('Upload error:', error);
@@ -93,7 +106,20 @@ export const viewtempcover = async (s3Key) => {
 
 export const uploadtempmedia = async (formData) => {
   try {
-    // console.log(formData)
+    
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}:`, {
+          name: value.name,
+          type: value.type,
+          size: value.size,
+          lastModified: value.lastModified
+        });
+      } else {
+        console.log(`${key}:`, value);
+      }
+    }
+
     const response = await apiClient.post('storage/temp-media', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -218,8 +244,46 @@ export const deletetempcover = async (key) => {
   return response.data;
 };
 
+export const deletecover = async (key) => {
+  const encodedKey = encodeURIComponent(key);
+  const response = await apiClient.delete(`/storage/cover/${encodedKey}`);
+  return response.data;
+}
+
 export const deletetempmedia = async(key) => {
   const encodedKey = encodeURIComponent(key);
   const response = await apiClient.delete(`/storage/temp-cover/${encodedKey}`);
   return response.data;
 }
+
+export const updateTour = async (id, tourData) => {
+  try {
+    console.log(tourData);
+    const response = await apiClient.put(`tour-packages/${id}`, tourData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Tour update failed:', error);
+    
+    if (axios.isAxiosError(error)) {
+      const serverMessage = error.response?.data?.message;
+      const validationErrors = error.response?.data?.errors;
+      
+      if (validationErrors) {
+        throw new Error(`Validation failed: ${
+          Object.entries(validationErrors)
+            .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+            .join('; ')
+        }`);
+      }
+      
+      throw new Error(serverMessage || 'Failed to update tour (server error)');
+    }
+    
+    throw new Error(error instanceof Error ? error.message : 'Failed to update tour');
+  }
+};

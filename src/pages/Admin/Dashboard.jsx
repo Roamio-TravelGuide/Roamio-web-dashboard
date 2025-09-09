@@ -3,10 +3,7 @@ import {
   Users,
   TrendingUp,
   Package,
-  Award,
   ArrowUpRight,
-  Sparkles,
-  BarChart3,
   UserCheck,
   MapPin,
   Store,
@@ -19,7 +16,11 @@ import {
   Medal,
   Zap,
   Plus,
+  Phone,
 } from "lucide-react";
+import { getAllUsers } from "../../api/admin/adminApi";
+import { getTotalRevenue } from "../../api/admin/adminApi";
+import { getAllPackages } from "../../api/admin/adminApi";
 
 // StatsCard Component
 const StatsCard = ({
@@ -96,7 +97,11 @@ const QuickStats = ({ data, loading }) => {
   const stats = [
     {
       title: "Active Users",
-      value: data.activeUsers,
+      value:
+        data.activeUsers +
+        data.activeTourists +
+        data.activeTourGuides +
+        data.activeVendors,
       subtitle: "Total platform users",
       icon: Users,
       gradient: "from-blue-50 to-blue-500",
@@ -114,7 +119,7 @@ const QuickStats = ({ data, loading }) => {
     },
     {
       title: "Tourists",
-      value: data.activeTourists,
+      value: data.activeUsers,
       subtitle: "Active tourists",
       icon: MapPin,
       gradient: "from-purple-50 to-purple-600",
@@ -153,94 +158,89 @@ const QuickStats = ({ data, loading }) => {
 };
 
 // RevenueChart Component
-const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
-  // Mock data for different time periods
+const RevenueChart = ({ timeFilter, loading, TimeFilterComponent, weeklyRevenue, monthlyRevenue, totalRevenue }) => {
+  // Use actual data from props/state instead of mock data
   const getRevenueData = () => {
-    switch (timeFilter) {
-      case "weekly":
-        return {
-          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-          values: [12000, 15000, 8000, 22000, 18000, 25000, 20000],
-          total: 120000,
-        };
-      case "yearly":
-        return {
-          labels: ["2020", "2021", "2022", "2023", "2024"],
-          values: [180000, 220000, 280000, 350000, 420000],
-          total: 1450000,
-        };
-      default: // monthly
-        return {
-          labels: [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ],
-          values: [
-            25000, 30000, 35000, 28000, 42000, 38000, 45000, 50000, 40000,
-            35000, 38000, 42000,
-          ],
-          total: 448000,
-        };
-    }
-  };
+    
+  switch (timeFilter) {
+    case "weekly":
+      console.log(weeklyRevenue);
+      return {
+        
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        values: weeklyRevenue?.dailyBreakdown || Array(7).fill(0),
+        total: weeklyRevenue?.total || 0,
+      };
+    case "yearly":
+      console.log(totalRevenue);
+      return {
+        labels: ["2020", "2021", "2022", "2023", "2024","2025"],
+        values: totalRevenue?.yearlyBreakdown || Array(6).fill(0),
+        total: totalRevenue?.total || 0,
+      };
+    default: // monthly
+      console.log(monthlyRevenue);
+      return {
+        labels: [
+          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        ],
+        values: monthlyRevenue?.monthlyBreakdown || Array(12).fill(0),
+        total: monthlyRevenue?.total || 0,
+      };
+  }
+};
 
-  const data = getRevenueData();
-  const maxValue = Math.max(...data.values);
+const data = getRevenueData();
+// Ensure maxValue is at least 1 to avoid division by zero
+const maxValue = Math.max(1, ...data.values);
 
   // Create SVG path for the line chart
   const createPath = (values) => {
-    const width = 600;
-    const height = 200;
-    const padding = 40;
+  const width = 600;
+  const height = 200;
+  const padding = 40;
 
-    const xStep = (width - 2 * padding) / (values.length - 1);
-    const yScale = (height - 2 * padding) / maxValue;
+  const xStep = (width - 2 * padding) / (values.length - 1);
+  const yScale = (height - 2 * padding) / maxValue;
 
-    let path = "";
-    values.forEach((value, index) => {
-      const x = padding + index * xStep;
-      const y = height - padding - value * yScale;
+  let path = "";
+  values.forEach((value, index) => {
+    const x = padding + index * xStep;
+    const yValue = Number.isFinite(value) ? value : 0;
+    const y = height - padding - yValue * yScale;
 
-      if (index === 0) {
-        path += `M ${x} ${y}`;
-      } else {
-        path += ` L ${x} ${y}`;
-      }
-    });
-
-    return path;
-  };
-
-  // Create area path for gradient fill
-  const createAreaPath = (values) => {
-    const width = 600;
-    const height = 200;
-    const padding = 40;
-
-    const xStep = (width - 2 * padding) / (values.length - 1);
-    const yScale = (height - 2 * padding) / maxValue;
-
-    let path = `M ${padding} ${height - padding}`;
-
-    values.forEach((value, index) => {
-      const x = padding + index * xStep;
-      const y = height - padding - value * yScale;
+    if (index === 0) {
+      path += `M ${x} ${y}`;
+    } else {
       path += ` L ${x} ${y}`;
-    });
+    }
+  });
 
-    path += ` L ${padding + (values.length - 1) * xStep} ${height - padding} Z`;
-    return path;
-  };
+  return path;
+};
+
+const createAreaPath = (values) => {
+  const width = 600;
+  const height = 200;
+  const padding = 40;
+
+  const xStep = (width - 2 * padding) / (values.length - 1);
+  const yScale = (height - 2 * padding) / maxValue;
+
+  let path = `M ${padding} ${height - padding}`;
+
+  values.forEach((value, index) => {
+    const x = padding + index * xStep;
+    const yValue = Number.isFinite(value) ? value : 0;
+    const y = height - padding - yValue * yScale;
+    path += ` L ${x} ${y}`;
+  });
+
+  path += ` L ${padding + (values.length - 1) * xStep} ${height - padding} Z`;
+  return path;
+};
+
 
   if (loading) {
     return (
@@ -277,7 +277,7 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="w-5 h-5 text-green-600" />
               <p className="text-3xl font-bold text-gray-900">
-                ${data.total.toLocaleString()}
+                {data.total}
               </p>
             </div>
             <div className="flex items-center justify-end gap-1">
@@ -410,7 +410,7 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
         };
       case "yearly":
         return {
-          labels: ["2020", "2021", "2022", "2023", "2024"],
+          labels: ["2021", "2022", "2023", "2024","2025"],
           values: [1200, 1580, 1920, 2340, 2650],
           total: 9690,
         };
@@ -731,17 +731,85 @@ const Dashboard = () => {
   const [revenueTimeFilter, setRevenueTimeFilter] = useState("monthly");
   const [salesTimeFilter, setSalesTimeFilter] = useState("monthly");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [todayRevenue, setTodayRevenue] = useState(0);
+  const [monthlyRevenue,setMonthlyRevenue] = useState(0);
+  const [weeklyRevenue,setWeeklyRevenue] = useState(0);
+  const [tourpackage,setTourPackages] = useState(0);
+  const [soldPackages,setSoldPackages] = useState(0);
+  const [activeUsers, setActiveUsers] = useState(0);
+  const [activeTourGuides, setActiveTourGuides] = useState(0);
+  const [activeTourists, setActiveTourists] = useState(0);
+  const [activeVendors, setActiveVendors] = useState(0);
+
   const [dashboardData, setDashboardData] = useState({
-    activeUsers: 0,
-    activeTourGuides: 0,
-    activeTourists: 0,
-    activeVendors: 0,
-    totalRevenue: 0,
     totalPackagesSold: 0,
     topTourGuide: null,
     mostSoldPackage: null,
   });
 
+  // Prepare quickStatsData
+  const quickStatsData = {
+    activeUsers,
+    activeTourGuides,
+    activeTourists,
+    activeVendors,
+  };
+
+  const revenueData= {
+    totalRevenue,
+    weeklyRevenue,
+    monthlyRevenue
+  }
+
+  useEffect(() => {
+  const fetchPackages = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Option 2: Better - Filter on backend
+      const response = await getAllPackages({ status: "published" });
+      setTourPackages(response.data.length); // Or response.total if using pagination
+      
+    } catch (error) {
+      console.error("Failed to fetch packages", error);
+      setError(error.message);
+      setTourPackages(0); // Reset count on error
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchPackages();
+}, []);
+
+//Sold Packages,All Revenues
+
+  useEffect(() => {
+    const fetchAllRevenue = async () => {
+      try {
+        setLoading(true);
+        setError(null); // Reset error state
+        const response = await getTotalRevenue();
+        console.log(response);
+        setSoldPackages(response.sold_packages)
+        setTotalRevenue(response.total);
+        setMonthlyRevenue(response.monthly || 0);
+        setWeeklyRevenue(response.weekly || 0);
+        setTodayRevenue(response.today);
+
+        // Remove the duplicate setTotalRevenue line
+      } catch (error) {
+        console.error("Failed to fetch total revenue", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAllRevenue();
+  }, []);
   useEffect(() => {
     // Simulate API call
     const fetchDashboardData = async () => {
@@ -749,13 +817,7 @@ const Dashboard = () => {
         setLoading(true);
         // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 1000));
-
         setDashboardData({
-          activeUsers: 2847,
-          activeTourGuides: 156,
-          activeTourists: 1891,
-          activeVendors: 89,
-          totalRevenue: 284750,
           totalPackagesSold: 1432,
           topTourGuide: {
             name: "Sarah Johnson",
@@ -780,6 +842,45 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getAllUsers();
+        const users = response.data;
+        setUsers(users);
+        // Use correct role names from backend
+        setActiveUsers(
+          users.filter(
+            (user) => user.role === "traveler" && user.status === "active"
+          ).length
+        );
+        setActiveTourGuides(
+          users.filter(
+            (user) => user.role === "travel_guide" && user.status === "active"
+          ).length
+        );
+        setActiveTourists(
+          users.filter(
+            (user) => user.role === "tourist" && user.status === "active"
+          ).length
+        );
+        setActiveVendors(
+          users.filter(
+            (user) => user.role === "vendor" && user.status === "active"
+          ).length
+        );
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
   }, []);
 
   const timeFilterOptions = [
@@ -861,7 +962,7 @@ const Dashboard = () => {
                     <p className="text-sm font-medium text-gray-600">
                       Today's Revenue
                     </p>
-                    <p className="text-3xl font-bold text-gray-900">$12,847</p>
+                    <p className="text-3xl font-bold text-gray-900">Rs.{todayRevenue}</p>
                     <div className="flex items-center justify-end gap-1 mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-600" />
                       <span className="text-sm font-medium text-green-600">
@@ -869,11 +970,13 @@ const Dashboard = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Tour Packages Button */}
-                  <button 
+                  <button
                     className="p-4 transition-all duration-300 transform border shadow-lg group bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-xl border-emerald-400 hover:shadow-xl hover:scale-105 active:scale-95"
-                    onClick={() => window.location.href = '/admin/tourpackage'}
+                    onClick={() =>
+                      (window.location.href = "/admin/tourpackage")
+                    }
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <Package className="w-5 h-5 text-white" />
@@ -882,7 +985,7 @@ const Dashboard = () => {
                       </p>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-2xl font-bold text-white">247</p>
+                      <p className="text-2xl font-bold text-white">{tourpackage}</p>
                       <div className="flex items-center gap-1">
                         <Plus className="w-4 h-4 transition-colors text-white/80 group-hover:text-white" />
                         <span className="text-xs font-medium transition-colors text-white/80 group-hover:text-white">
@@ -904,13 +1007,14 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Stats */}
-        <QuickStats data={dashboardData} loading={loading} />
+        <QuickStats data={quickStatsData} loading={loading} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 gap-8 mb-8 lg:grid-cols-3">
           {/* Revenue Chart */}
           <div className="lg:col-span-2">
             <RevenueChart
+              data={revenueData}
               timeFilter={revenueTimeFilter}
               loading={loading}
               TimeFilterComponent={() => (
@@ -934,7 +1038,7 @@ const Dashboard = () => {
                     Total Revenue
                   </p>
                   <p className="text-lg font-bold text-gray-900">
-                    ${dashboardData.totalRevenue.toLocaleString()}
+                    Rs.{totalRevenue.toLocaleString()}
                   </p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUpRight className="w-3 h-3 text-green-600" />
@@ -955,7 +1059,7 @@ const Dashboard = () => {
                     Packages Sold
                   </p>
                   <p className="text-lg font-bold text-gray-900">
-                    {dashboardData.totalPackagesSold.toLocaleString()}
+                    {soldPackages}
                   </p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUpRight className="w-3 h-3 text-green-600" />
@@ -1013,6 +1117,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
 
 export default Dashboard;
