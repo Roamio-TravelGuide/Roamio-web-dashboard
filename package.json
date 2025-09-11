@@ -16,6 +16,8 @@
     "@googlemaps/js-api-loader": "^1.16.8",
     "@heroicons/react": "^2.2.0",
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
+    "@stripe/react-stripe-js": "^4.0.2",
+    "@stripe/stripe-js": "^7.9.0",
     "@tailwindcss/vite": "^4.1.8",
     "@vis.gl/react-google-maps": "^1.5.3",
     "antd": "^5.26.2",
