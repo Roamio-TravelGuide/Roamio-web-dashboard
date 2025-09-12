@@ -9,6 +9,8 @@ import Home from '../pages/Landing/Home';
 import About from '../pages/Landing/About';
 import LoginPage from '../pages/Auth/SignInPage';
 import SignupPage from '../pages/Auth/UnifiedSignup';
+import ResetPassword from '../pages/Auth/ResetPassword';
+import ResetPasswordForm from '../pages/Auth/ResetPasswordForm';
 
 import GuideDashboard from '../pages/Guide/Dashboard';
 import TourCreate from '../pages/Guide/TourCreate';
@@ -50,6 +52,9 @@ const AppRoutes = () => {
         {/* Auth routes (without layout) */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password-form" element={<ResetPasswordForm />} />
+        
 
         {/* Protected Routes - Now protecting the layout too */}
         <Route element={<PrivateRoutes />}>
