@@ -179,3 +179,20 @@ export const getTopPerformerRevenue = async () => {
     throw new Error("An unexpected error occurred while fetching top performers");
   }
 };
+
+export const getTopSellingPackage = async() =>{
+  try {
+    const response = await apiClient.get("/payment/top-selling-package");
+    return{
+      data: response.data.data || [],
+      message: response.data.message || "Top selling package fetched successfully",
+    }
+  } catch (error) {
+    if(axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch top selling package"
+      );
+    }
+    throw new Error("An unexpected error occurred while fetching top selling package");
+  }
+}
