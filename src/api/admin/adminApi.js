@@ -181,8 +181,10 @@ export const getTopPerformerRevenue = async () => {
 };
 
 export const getTopSellingPackage = async() =>{
+  console.log("Fetching top selling package...");
   try {
     const response = await apiClient.get("/payment/top-selling-package");
+    console.log(response.data);
     return{
       data: response.data.data || [],
       message: response.data.message || "Top selling package fetched successfully",
@@ -194,5 +196,24 @@ export const getTopSellingPackage = async() =>{
       );
     }
     throw new Error("An unexpected error occurred while fetching top selling package");
+  }
+}
+
+export const getSoldPackagesCount = async() => {
+  console.log("Fetching sold package count......")
+  try {
+    const response = await apiClient.get("/payment/sold-packages-count");
+    console.log(response.data)
+    return{
+      data:response.data.data || [],
+      message:response.data.message || "Sold package count fetched successfully"
+    }
+  } catch (error) {
+    if(axios.isAxiosError(error)){
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch sold paclkage counts"
+      );
+    }
+    throw new Error("An unexpected error occured while fetching sold package count")
   }
 }
