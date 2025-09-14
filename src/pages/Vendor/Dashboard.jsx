@@ -15,6 +15,9 @@ import {
 import VendorService from '../../api/vendor/vendorService.js';
 import { Toast } from '../../components/Toast.jsx';
 
+const API_BASE_URL = "http://localhost:3001";
+
+
 const VendorDashboard = () => {
   const logoInputRef = useRef(null);
   const coverInputRef = useRef(null);
@@ -254,7 +257,7 @@ const VendorDashboard = () => {
     <div className="min-h-screen vendor-dashboard bg-gray-50">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed z-50 top-4 right-4">
           <Toast 
             message={toast.message} 
             type={toast.type} 
