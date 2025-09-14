@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import {
   Elements,
   useStripe,
@@ -9,6 +10,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { paymentApi } from '../../api/payment/paymentapi';
+
 
 // Load Stripe with your publishable key
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -96,7 +98,7 @@ const CheckoutForm = ({ amount, planName, onSuccess, onError, onCancel }) => {
     <div className="p-6">
       <h3 className="text-xl font-semibold mb-4">Complete Your Payment</h3>
       <p className="text-gray-600 mb-6">You are subscribing to the <span className="font-semibold">{planName}</span> plan for ${amount}/month</p>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -166,9 +168,9 @@ const CheckoutForm = ({ amount, planName, onSuccess, onError, onCancel }) => {
             </div>
           </div>
         </div>
-        
+
         {error && <div className="text-red-500 text-sm p-3 bg-red-50 rounded-md">{error}</div>}
-        
+
         <div className="flex space-x-3 pt-4">
           <button
             type="submit"
@@ -195,13 +197,13 @@ const StripePaymentModal = ({ amount, planName, onSuccess, onError, onCancel, is
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <Elements stripe={stripePromise}>
-          <CheckoutForm 
-            amount={amount} 
+          <CheckoutForm
+            amount={amount}
             planName={planName}
-            onSuccess={onSuccess} 
+            onSuccess={onSuccess}
             onError={onError}
             onCancel={onCancel}
           />
@@ -258,9 +260,10 @@ const VendorBilling = () => {
     fetchPaymentHistory();
   }, []);
 
-  const handlePaymentSuccess = (paymentIntent) => {
+  const handlePaymentSuccess = async (paymentIntent) => {
     console.log('Payment succeeded:', paymentIntent);
     setShowPaymentModal(false);
+    const { data } = await paymentApi.createStripPayment(paymentIntent);
     setSelectedPlan(null);
     // You might want to refresh the payment history here
     alert('Payment successful! Your subscription has been updated.');
@@ -270,6 +273,7 @@ const VendorBilling = () => {
     console.error('Payment error:', error);
     alert('Payment failed. Please try again.');
   };
+
 
   const handleUpgradeClick = (plan) => {
     if (currentPlan.name === plan.name) {
@@ -288,7 +292,7 @@ const VendorBilling = () => {
   return (
     <section className="p-6 bg-white rounded-lg shadow-sm vendor-section">
       <h2 className="mb-6 text-2xl font-semibold">Subscription & Billing</h2>
-      
+
       {/* Current Plan Section */}
       <div className="mb-8">
         <h3 className="mb-4 text-lg font-medium">Your Current Plan</h3>
@@ -327,11 +331,10 @@ const VendorBilling = () => {
                   <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{transaction.date}</td>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{transaction.amount}</td>
                   <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      transaction.status === 'Completed' 
-                        ? 'bg-green-100 text-green-800' 
+                    <span className={`px-2 py-1 text-xs rounded-full ${transaction.status === 'Completed'
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                      }`}>
                       {transaction.status}
                     </span>
                   </td>
@@ -350,8 +353,8 @@ const VendorBilling = () => {
         <h3 className="mb-4 text-lg font-medium">Available Plans</h3>
         <div className="grid gap-4 md:grid-cols-3">
           {availablePlans.map((plan, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={`border rounded-lg p-4 ${plan.recommended ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200'}`}
             >
               {plan.recommended && (
@@ -362,13 +365,12 @@ const VendorBilling = () => {
               <h4 className="mb-1 text-lg font-semibold">{plan.name}</h4>
               <p className="mb-3 text-gray-600">{plan.price}</p>
               <button
-                className={`w-full py-2 px-4 rounded-md ${
-                  plan.recommended
+                className={`w-full py-2 px-4 rounded-md ${plan.recommended
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : currentPlan.name === plan.name
-                    ? 'bg-gray-400 text-white cursor-not-allowed'
-                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                }`}
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                  }`}
                 onClick={() => handleUpgradeClick(plan)}
                 disabled={currentPlan.name === plan.name}
               >
