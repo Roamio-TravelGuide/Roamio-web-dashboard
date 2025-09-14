@@ -2,19 +2,12 @@
 import apiClient from "../apiClient";
 import axios from "axios";
 import { supportAPI } from "../support/index.js";
-import axios from "axios"; 
-
 
 // Helper function to format dates consistently
 function formatDate(date) {
   if (date instanceof Date) return date.toISOString();
   const parsed = new Date(date);
-  return isNaN(parsed.getTime())
-    ? new Date().toISOString()
-    : parsed.toISOString();
-  return isNaN(parsed.getTime())
-    ? new Date().toISOString()
-    : parsed.toISOString();
+  return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 }
 
 export const getAllUsers = async (filters = {}) => {
@@ -22,13 +15,9 @@ export const getAllUsers = async (filters = {}) => {
     const response = await apiClient.get("/users/");
     // Check if response has the expected structure
     const users = response.data.data || [];
-    const response = await apiClient.get("/users/");
-    // Check if response has the expected structure
-    const users = response.data.data || [];
 
     // Transform the data to match frontend expectations
     return {
-      data: users.map((user) => ({
       data: users.map((user) => ({
         id: user.id.toString(),
         name: user.name,
@@ -36,7 +25,6 @@ export const getAllUsers = async (filters = {}) => {
         phone: user.phone_no,
         status: user.status.toLowerCase(),
         role: user.role,
-        avatar: user.profile_picture_url || "/default-avatar.png",
         avatar: user.profile_picture_url || "/default-avatar.png",
         registeredDate: formatDate(user.registered_date),
         lastLogin: user.last_login ? formatDate(user.last_login) : null,
@@ -46,19 +34,13 @@ export const getAllUsers = async (filters = {}) => {
         ...(user.role !== "traveler" && {
           averageRating: user.average_rating || 0,
         }),
-        ...(user.role !== "traveler" && {
-          averageRating: user.average_rating || 0,
-        }),
       })),
-      message: response.data.message || "Users fetched successfully",
       message: response.data.message || "Users fetched successfully",
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw error.response?.data?.message || "Fetching users failed";
-      throw error.response?.data?.message || "Fetching users failed";
     }
-    throw new Error("An unexpected error occurred");
     throw new Error("An unexpected error occurred");
   }
 };
@@ -92,22 +74,10 @@ export const getUserStatistics = async () => {
   try {
     const response = await apiClient.get("/users/");
     const users = response.data.data || [];
-    const response = await apiClient.get('/users/');
-    const users = response.data.data || [];
 
     // Calculate statistics from the user data
     return {
       total: users.length,
-      active: users.filter(user => user.status.toLowerCase() === 'active').length,
-      pending: users.filter(user => user.status.toLowerCase() === 'pending').length,
-      blocked: users.filter(user => user.status.toLowerCase() === 'blocked').length,
-      travelers: users.filter(user => user.role === 'traveler').length,
-      tourGuides: users.filter(user => user.role === 'travel_guide').length,
-      tourGuides: users.filter(user => user.role === 'travel_guide').length,
-      moderators: users.filter(user => user.role === 'moderator').length,
-      vendors: users.filter(user => user.role === 'vendor').length,
-      lastUpdated: new Date().toISOString()
-
       active: users.filter((user) => user.status.toLowerCase() === "active")
         .length,
       pending: users.filter((user) => user.status.toLowerCase() === "pending")
@@ -122,14 +92,10 @@ export const getUserStatistics = async () => {
     };
   } catch (error) {
     console.error("Error in getUserStatistics:", error);
-    console.error("Error in getUserStatistics:", error);
     if (axios.isAxiosError(error)) {
       console.error("Response data:", error.response?.data);
       throw error.response?.data?.message || "Fetching statistics failed";
-      console.error("Response data:", error.response?.data);
-      throw error.response?.data?.message || "Fetching statistics failed";
     }
-    throw new Error("An unexpected error occurred while fetching statistics");
     throw new Error("An unexpected error occurred while fetching statistics");
   }
 };
@@ -138,12 +104,10 @@ export const updateUserStatus = async (userId, newStatus) => {
   try {
     const response = await apiClient.patch(`/users/${userId}/status`, {
       status: newStatus,
-      status: newStatus,
     });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw error.response?.data?.message || "Updating user status failed";
       throw error.response?.data?.message || "Updating user status failed";
     }
     throw new Error("An unexpected error occurred while updating status");
@@ -210,19 +174,13 @@ export const getTicketStatistics = async (userType = null) => {
   }
 };
 
-
 export const getTotalRevenue = async () => {
   try {
     const response = await apiClient.get("/payment/revenue");
 
-    // Get current date for daily revenue calculation
-    const today = new Date();
-    const todayStart = new Date(today.setHours(0, 0, 0, 0));
-    const todayEnd = new Date(today.setHours(23, 59, 59, 999));
-
     // Transform the data to match frontend expectations
     return {
-      sold_packages:response.data.data?.sold_packages,
+      sold_packages: response.data.data?.sold_packages,
       total: response.data.data?.total_revenue || 0,
       today: response.data.data?.today_revenue || 0, // Add today's revenue
       monthly: response.data.data?.monthly || Array(12).fill(0),
@@ -276,41 +234,40 @@ export const getTopPerformerRevenue = async () => {
   }
 };
 
-export const getTopSellingPackage = async() =>{
+export const getTopSellingPackage = async () => {
   console.log("Fetching top selling package...");
   try {
     const response = await apiClient.get("/payment/top-selling-package");
     console.log(response.data);
-    return{
+    return {
       data: response.data.data || [],
       message: response.data.message || "Top selling package fetched successfully",
-    }
+    };
   } catch (error) {
-    if(axios.isAxiosError(error)) {
+    if (axios.isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message || "Failed to fetch top selling package"
       );
     }
     throw new Error("An unexpected error occurred while fetching top selling package");
   }
-}
+};
 
-export const getSoldPackagesCount = async() => {
-  console.log("Fetching sold package count......")
+export const getSoldPackagesCount = async () => {
+  console.log("Fetching sold package count...");
   try {
     const response = await apiClient.get("/payment/sold-packages-count");
-    console.log(response.data)
-    return{
-      data:response.data.data || [],
-      message:response.data.message || "Sold package count fetched successfully"
-    }
+    console.log(response.data);
+    return {
+      data: response.data.data || [],
+      message: response.data.message || "Sold package count fetched successfully",
+    };
   } catch (error) {
-    if(axios.isAxiosError(error)){
+    if (axios.isAxiosError(error)) {
       throw new Error(
-        error.response?.data?.message || "Failed to fetch sold paclkage counts"
+        error.response?.data?.message || "Failed to fetch sold package counts"
       );
     }
-    throw new Error("An unexpected error occured while fetching sold package count")
+    throw new Error("An unexpected error occurred while fetching sold package count");
   }
-}
-
+};
