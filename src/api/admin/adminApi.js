@@ -155,3 +155,44 @@ export const getTotalRevenue = async () => {
     throw new Error("An unexpected error occurred while fetching revenue");
   }
 };
+
+export const getTopPerformerRevenue = async () => {
+  try {
+    const response = await apiClient.get("/payment/top-performer-revenue");
+    return {
+      data: response.data.data || { topTourGuide: null, mostSoldPackage: null },
+      message: response.data.message || "Top performers fetched successfully",
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("API Error Details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url,
+      });
+      // Re-throw the error to be caught by the calling component
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch top performers"
+      );
+    }
+    // Also throw for non-axios errors
+    throw new Error("An unexpected error occurred while fetching top performers");
+  }
+};
+
+export const getTopSellingPackage = async() =>{
+  try {
+    const response = await apiClient.get("/payment/top-selling-package");
+    return{
+      data: response.data.data || [],
+      message: response.data.message || "Top selling package fetched successfully",
+    }
+  } catch (error) {
+    if(axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch top selling package"
+      );
+    }
+    throw new Error("An unexpected error occurred while fetching top selling package");
+  }
+}

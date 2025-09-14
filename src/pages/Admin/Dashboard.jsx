@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { getAllUsers } from "../../api/admin/adminApi";
 import { getTotalRevenue } from "../../api/admin/adminApi";
+import { getTopPerformerRevenue } from "../../api/admin/adminApi";
 import { getAllPackages } from "../../api/admin/adminApi";
 
 // StatsCard Component
@@ -164,22 +165,18 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent, weeklyRevenue,
     
   switch (timeFilter) {
     case "weekly":
-      console.log(weeklyRevenue);
       return {
-        
         labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
         values: weeklyRevenue?.dailyBreakdown || Array(7).fill(0),
         total: weeklyRevenue?.total || 0,
       };
     case "yearly":
-      console.log(totalRevenue);
       return {
         labels: ["2020", "2021", "2022", "2023", "2024","2025"],
         values: totalRevenue?.yearlyBreakdown || Array(6).fill(0),
         total: totalRevenue?.total || 0,
       };
     default: // monthly
-      console.log(monthlyRevenue);
       return {
         labels: [
           "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -537,7 +534,7 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
 };
 
 // TopPerformers Component
-const TopPerformers = ({ data, loading }) => {
+const TopPerformers = ({ data, loading, error }) => {
   if (loading) {
     return (
       <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
@@ -554,6 +551,23 @@ const TopPerformers = ({ data, loading }) => {
         </div>
       </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
+        <h3 className="flex items-center gap-3 mb-6 text-xl font-bold text-gray-900">
+          <div className="flex items-center justify-center w-10 h-10 bg-white shadow-lg rounded-xl">
+            <Crown className="w-5 h-5 text-yellow-500" />
+          </div>
+          Top Performers
+        </h3>
+        <div className="flex flex-col items-center justify-center h-full p-4 text-center bg-red-50 border-red-200 rounded-xl">
+          <p className="font-semibold text-red-600">Failed to load top performers data.</p>
+          <p className="text-sm text-red-500">{error}</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -575,7 +589,7 @@ const TopPerformers = ({ data, loading }) => {
             </h4>
             <div className="flex-1 h-px bg-gradient-to-r from-yellow-300 to-transparent"></div>
           </div>
-          {data.topTourGuide && (
+          {data.topTourGuide ? (
             <div className="relative overflow-hidden transition-all duration-300 bg-blue-900 border border-yellow-200 rounded-2xl group hover:border-yellow-300">
               <div className="relative p-6">
                 {/* Header with avatar and crown */}
@@ -607,7 +621,7 @@ const TopPerformers = ({ data, loading }) => {
                       <div className="flex items-center gap-1 px-3 py-1 bg-yellow-100 border border-yellow-200 rounded-full">
                         <Star className="w-4 h-4 text-yellow-600 fill-current" />
                         <span className="text-sm font-bold text-yellow-700">
-                          {data.topTourGuide.rating}
+                          {data.topTourGuide.rating || 4.8}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 px-3 py-1 bg-green-100 border border-green-200 rounded-full">
@@ -630,7 +644,7 @@ const TopPerformers = ({ data, loading }) => {
                       </p>
                     </div>
                     <p className="text-2xl font-black text-gray-900">
-                      {data.topTourGuide.tours}
+                      {data.topTourGuide.packageCount || 0}
                     </p>
                     <p className="text-xs text-gray-600">Completed</p>
                   </div>
@@ -642,12 +656,16 @@ const TopPerformers = ({ data, loading }) => {
                       </p>
                     </div>
                     <p className="text-2xl font-black text-gray-900">
-                      ${data.topTourGuide.revenue.toLocaleString()}
+                      ${(data.topTourGuide.totalRevenue || 0).toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-600">Generated</p>
                   </div>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="p-4 text-center bg-gray-100 border border-gray-200 rounded-xl">
+              <p className="text-gray-600">No top tour guide data available</p>
             </div>
           )}
         </div>
@@ -661,7 +679,7 @@ const TopPerformers = ({ data, loading }) => {
             </h4>
             <div className="flex-1 h-px bg-gradient-to-r from-green-300 to-transparent"></div>
           </div>
-          {data.mostSoldPackage && (
+          {data.mostSoldPackage ? (
             <div className="relative overflow-hidden transition-all duration-300 bg-blue-900 border border-green-200 rounded-2xl group hover:border-green-300">
               <div className="relative p-6">
                 {/* Header */}
@@ -700,7 +718,7 @@ const TopPerformers = ({ data, loading }) => {
                       </p>
                     </div>
                     <p className="text-2xl font-black text-gray-900">
-                      {data.mostSoldPackage.sold}
+                      {data.mostSoldPackage.sold || 0}
                     </p>
                     <p className="text-xs text-gray-600">Units</p>
                   </div>
@@ -712,12 +730,16 @@ const TopPerformers = ({ data, loading }) => {
                       </p>
                     </div>
                     <p className="text-2xl font-black text-gray-900">
-                      ${data.mostSoldPackage.revenue.toLocaleString()}
+                      ${(data.mostSoldPackage.revenue || 0).toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-600">Total</p>
                   </div>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="p-4 text-center bg-gray-100 border border-gray-200 rounded-xl">
+              <p className="text-gray-600">No package sales data available</p>
             </div>
           )}
         </div>
@@ -765,122 +787,100 @@ const Dashboard = () => {
   }
 
   useEffect(() => {
-  const fetchPackages = async () => {
-    try {
+    const fetchAllDashboardData = async () => {
       setLoading(true);
       setError(null);
-      // Option 2: Better - Filter on backend
-      const response = await getAllPackages({ status: "published" });
-      setTourPackages(response.data.length); // Or response.total if using pagination
-      
-    } catch (error) {
-      console.error("Failed to fetch packages", error);
-      setError(error.message);
-      setTourPackages(0); // Reset count on error
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  fetchPackages();
-}, []);
 
-//Sold Packages,All Revenues
-
-  useEffect(() => {
-    const fetchAllRevenue = async () => {
       try {
-        setLoading(true);
-        setError(null); // Reset error state
-        const response = await getTotalRevenue();
-        console.log(response);
-        setSoldPackages(response.sold_packages)
-        setTotalRevenue(response.total);
-        setMonthlyRevenue(response.monthly || 0);
-        setWeeklyRevenue(response.weekly || 0);
-        setTodayRevenue(response.today);
+        const [
+          packagesResponse,
+          revenueResponse,
+          topPerformerResponse,
+          usersResponse,
+        ] = await Promise.allSettled([
+          getAllPackages({ status: "published" }),
+          getTotalRevenue(),
+          getTopPerformerRevenue(),
+          getAllUsers(),
+        ]);
 
-        // Remove the duplicate setTotalRevenue line
+        if (packagesResponse.status === 'fulfilled') {
+          setTourPackages(packagesResponse.value.data.length);
+        } else {
+          console.error("Failed to fetch packages", packagesResponse.reason);
+          setError(error => ({...error, packages: packagesResponse.reason.message}));
+          setTourPackages(0);
+        }
+
+        if (revenueResponse.status === 'fulfilled') {
+          const response = revenueResponse.value;
+          setSoldPackages(response.sold_packages);
+          setTotalRevenue(response.total);
+          setMonthlyRevenue(response.monthly || 0);
+          setWeeklyRevenue(response.weekly || 0);
+          setTodayRevenue(response.today);
+        } else {
+          console.error("Failed to fetch total revenue", revenueResponse.reason);
+          setError(error => ({...error, revenue: revenueResponse.reason.message}));
+        }
+
+        if (topPerformerResponse.status === 'fulfilled') {
+          const response = topPerformerResponse.value;
+          console.log("Top Performer Revenue Data:", response);
+          
+          // Handle the API response structure properly
+          // The API returns data in response.data, not directly in response
+          const topPerformerData = response.data || response;
+          
+          setDashboardData(prevData => ({
+            ...prevData,
+            topTourGuide: topPerformerData,
+            // For mostSoldPackage, you might need to fetch this separately
+            // or adjust based on your actual API response
+            mostSoldPackage: prevData.mostSoldPackage
+          }));
+        } else {
+          console.error("Failed to fetch dashboard data:", topPerformerResponse.reason);
+          setError(error => ({...error, topPerformers: topPerformerResponse.reason.message}));
+        }
+
+        if (usersResponse.status === 'fulfilled') {
+          const users = usersResponse.value.data;
+          setUsers(users);
+          setActiveUsers(
+            users.filter(
+              (user) => user.role === "traveler" && user.status === "active"
+            ).length
+          );
+          setActiveTourGuides(
+            users.filter(
+              (user) => user.role === "travel_guide" && user.status === "active"
+            ).length
+          );
+          setActiveTourists(
+            users.filter(
+              (user) => user.role === "tourist" && user.status === "active"
+            ).length
+          );
+setActiveVendors(
+            users.filter(
+              (user) => user.role === "vendor" && user.status === "active"
+            ).length
+          );
+        } else {
+          console.error("Failed to fetch users:", usersResponse.reason);
+          setError(error => ({...error, users: usersResponse.reason.message}));
+        }
+
       } catch (error) {
-        console.error("Failed to fetch total revenue", error);
-        setError(error.message);
+        console.error("An unexpected error occurred during dashboard data fetch:", error);
+        setError({ general: "An unexpected error occurred." });
       } finally {
         setLoading(false);
       }
     };
-    fetchAllRevenue();
-  }, []);
-  useEffect(() => {
-    // Simulate API call
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setDashboardData({
-          totalPackagesSold: 1432,
-          topTourGuide: {
-            name: "Sarah Johnson",
-            tours: 89,
-            rating: 4.9,
-            revenue: 15420,
-            avatar:
-              "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-          },
-          mostSoldPackage: {
-            name: "Historic City Tour",
-            sold: 234,
-            revenue: 23400,
-            growth: 15.2,
-          },
-        });
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchDashboardData();
-  }, []);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await getAllUsers();
-        const users = response.data;
-        setUsers(users);
-        // Use correct role names from backend
-        setActiveUsers(
-          users.filter(
-            (user) => user.role === "traveler" && user.status === "active"
-          ).length
-        );
-        setActiveTourGuides(
-          users.filter(
-            (user) => user.role === "travel_guide" && user.status === "active"
-          ).length
-        );
-        setActiveTourists(
-          users.filter(
-            (user) => user.role === "tourist" && user.status === "active"
-          ).length
-        );
-        setActiveVendors(
-          users.filter(
-            (user) => user.role === "vendor" && user.status === "active"
-          ).length
-        );
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsers();
+    fetchAllDashboardData();
   }, []);
 
   const timeFilterOptions = [
@@ -1093,7 +1093,7 @@ const Dashboard = () => {
 
           {/* Top Performers */}
           <div className="lg:col-span-1">
-            <TopPerformers data={dashboardData} loading={loading} />
+            <TopPerformers data={dashboardData} loading={loading} error={error?.topPerformers} />
           </div>
         </div>
 
