@@ -1,14 +1,13 @@
 // src/api/admin/adminApi.js
 import apiClient from "../apiClient";
 import axios from "axios";
+import { supportAPI } from "../support/index.js";
 
 // Helper function to format dates consistently
 function formatDate(date) {
   if (date instanceof Date) return date.toISOString();
   const parsed = new Date(date);
-  return isNaN(parsed.getTime())
-    ? new Date().toISOString()
-    : parsed.toISOString();
+  return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 }
 
 export const getAllUsers = async (filters = {}) => {
@@ -46,22 +45,50 @@ export const getAllUsers = async (filters = {}) => {
   }
 };
 
+export const getAllPackages = async (filters = {}) => {
+  try {
+    const response = await apiClient.get("/tour-package/", {
+      params: {
+        status: filters.status || undefined,
+      },
+    });
+
+    return {
+      data: response.data.data?.packages || [], // Match your backend response structure
+      total: response.data.data?.total || 0,
+      message: response.data.message || "Packages fetched successfully",
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Failed to fetch packages"
+      );
+    }
+    throw new Error("An unexpected error occurred while fetching packages");
+  }
+};
+
 export const getUserStatistics = async () => {
   try {
-    const response = await apiClient.get('/users/');
+    const response = await apiClient.get("/users/");
     const users = response.data.data || [];
 
     // Calculate statistics from the user data
     return {
       total: users.length,
-      active: users.filter(user => user.status.toLowerCase() === 'active').length,
-      pending: users.filter(user => user.status.toLowerCase() === 'pending').length,
-      blocked: users.filter(user => user.status.toLowerCase() === 'blocked').length,
-      travelers: users.filter(user => user.role === 'traveler').length,
-      tourGuides: users.filter(user => user.role === 'travel_guide').length,
-      moderators: users.filter(user => user.role === 'moderator').length,
-      vendors: users.filter(user => user.role === 'vendor').length,
-      lastUpdated: new Date().toISOString()
+      active: users.filter((user) => user.status.toLowerCase() === "active")
+        .length,
+      pending: users.filter((user) => user.status.toLowerCase() === "pending")
+        .length,
+      blocked: users.filter((user) => user.status.toLowerCase() === "blocked")
+        .length,
+      travelers: users.filter((user) => user.role === "traveler").length,
+      tourGuides: users.filter((user) => user.role === "travel_guide").length,
+      moderators: users.filter((user) => user.role === "moderator").length,
+      vendors: users.filter((user) => user.role === "vendor").length,
+      lastUpdated: new Date().toISOString(),
     };
   } catch (error) {
     console.error("Error in getUserStatistics:", error);
@@ -87,3 +114,160 @@ export const updateUserStatus = async (userId, newStatus) => {
   }
 };
 
+// Support/Complaint ticket functions
+export const getAllTickets = async (params = {}) => {
+  try {
+    return await supportAPI.admin.getAllTickets(params);
+  } catch (error) {
+    console.error("Error in getAllTickets:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("Response data:", error.response?.data);
+      throw error.response?.data?.message || "Fetching tickets failed";
+    }
+    throw new Error("An unexpected error occurred while fetching tickets");
+  }
+};
+
+export const getTicketById = async (ticketId) => {
+  try {
+    return await supportAPI.getTicketById(ticketId);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data?.message || "Fetching ticket failed";
+    }
+    throw new Error("An unexpected error occurred while fetching ticket");
+  }
+};
+
+export const updateTicketStatus = async (ticketId, statusData) => {
+  try {
+    return await supportAPI.admin.updateTicketStatus(ticketId, statusData);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data?.message || "Updating ticket status failed";
+    }
+    throw new Error("An unexpected error occurred while updating ticket status");
+  }
+};
+
+export const addSolutionToTicket = async (ticketId, solutionData) => {
+  try {
+    return await supportAPI.admin.addSolutionToTicket(ticketId, solutionData);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data?.message || "Adding solution to ticket failed";
+    }
+    throw new Error("An unexpected error occurred while adding solution to ticket");
+  }
+};
+
+export const getTicketStatistics = async (userType = null) => {
+  try {
+    return await supportAPI.admin.getTicketStats(userType);
+  } catch (error) {
+    console.error("Error in getTicketStatistics:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("Response data:", error.response?.data);
+      throw error.response?.data?.message || "Fetching ticket statistics failed";
+    }
+    throw new Error("An unexpected error occurred while fetching ticket statistics");
+  }
+};
+
+export const getTotalRevenue = async () => {
+  try {
+    const response = await apiClient.get("/payment/revenue");
+
+    // Transform the data to match frontend expectations
+    return {
+      sold_packages: response.data.data?.sold_packages,
+      total: response.data.data?.total_revenue || 0,
+      today: response.data.data?.today_revenue || 0, // Add today's revenue
+      monthly: response.data.data?.monthly || Array(12).fill(0),
+      weekly: response.data.data?.weekly || Array(4).fill(0),
+      yearly: response.data.data?.yearly || [],
+      growthRate: response.data.data?.growth_rate || 0,
+      lastUpdated: new Date().toISOString(),
+      message: response.data.message || "Total revenue fetched successfully",
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("API Error Details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url,
+      });
+
+      throw new Error(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Failed to fetch revenue data"
+      );
+    }
+
+    console.error("System Error:", error);
+    throw new Error("An unexpected error occurred while fetching revenue");
+  }
+};
+
+export const getTopPerformerRevenue = async () => {
+  try {
+    const response = await apiClient.get("/payment/top-performer-revenue");
+    return {
+      data: response.data.data || { topTourGuide: null, mostSoldPackage: null },
+      message: response.data.message || "Top performers fetched successfully",
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("API Error Details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url,
+      });
+      // Re-throw the error to be caught by the calling component
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch top performers"
+      );
+    }
+    // Also throw for non-axios errors
+    throw new Error("An unexpected error occurred while fetching top performers");
+  }
+};
+
+export const getTopSellingPackage = async () => {
+  console.log("Fetching top selling package...");
+  try {
+    const response = await apiClient.get("/payment/top-selling-package");
+    console.log(response.data);
+    return {
+      data: response.data.data || [],
+      message: response.data.message || "Top selling package fetched successfully",
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch top selling package"
+      );
+    }
+    throw new Error("An unexpected error occurred while fetching top selling package");
+  }
+};
+
+export const getSoldPackagesCount = async () => {
+  console.log("Fetching sold package count...");
+  try {
+    const response = await apiClient.get("/payment/sold-packages-count");
+    console.log(response.data);
+    return {
+      data: response.data.data || [],
+      message: response.data.message || "Sold package count fetched successfully",
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch sold package counts"
+      );
+    }
+    throw new Error("An unexpected error occurred while fetching sold package count");
+  }
+};

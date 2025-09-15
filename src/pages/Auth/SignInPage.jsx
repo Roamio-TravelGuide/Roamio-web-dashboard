@@ -4,6 +4,7 @@ import { login } from '../../api/auth/authApi.js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/authContext.jsx';
 import { toast } from 'react-hot-toast';
+import { NavLink } from 'react-router-dom';
 
 const SignInPage = () => {
   const [email, setEmail] = useState('');
@@ -173,9 +174,12 @@ const SignInPage = () => {
                 </div>
 
                 <div className="text-sm">
-                  <a href="#" className={`font-medium ${window.innerWidth >= 1024 ? 'text-white hover:text-white/80' : 'text-teal-600 hover:text-teal-500'}`}>
+                  {/* <a href="#" className={`font-medium ${window.innerWidth >= 1024 ? 'text-white hover:text-white/80' : 'text-teal-600 hover:text-teal-500'}`}>
                     Forgot password?
-                  </a>
+                  </a> */}
+                  <NavLink to="/reset-password" className={`font-medium ${window.innerWidth >= 1024 ? 'text-white hover:text-white/80' : 'text-teal-600 hover:text-teal-500'}`}>
+                    Forgot password?
+                  </NavLink>
                 </div>
               </div>
 

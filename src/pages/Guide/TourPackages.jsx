@@ -48,7 +48,7 @@
         };
 
         const response = await getTourPackagesByGuideId(authState.user.id, filters);
-        console.log(response);
+        // console.log(response);
         if (response.success) {
           setTours(response.data);
           setTotalItems(response.total);
@@ -332,7 +332,6 @@
                 </div>
                 
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex justify-center mt-8">
                     <nav className="flex items-center space-x-2">

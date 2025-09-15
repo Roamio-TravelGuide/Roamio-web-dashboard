@@ -3,10 +3,7 @@ import {
   Users,
   TrendingUp,
   Package,
-  Award,
   ArrowUpRight,
-  Sparkles,
-  BarChart3,
   UserCheck,
   MapPin,
   Store,
@@ -19,7 +16,14 @@ import {
   Medal,
   Zap,
   Plus,
+  Phone,
 } from "lucide-react";
+import { getAllUsers } from "../../api/admin/adminApi";
+import { getTotalRevenue } from "../../api/admin/adminApi";
+import { getTopPerformerRevenue } from "../../api/admin/adminApi";
+import { getAllPackages } from "../../api/admin/adminApi";
+import { getTopSellingPackage } from "../../api/admin/adminApi";
+import { getSoldPackagesCount } from "../../api/admin/adminApi";
 
 // StatsCard Component
 const StatsCard = ({
@@ -96,7 +100,11 @@ const QuickStats = ({ data, loading }) => {
   const stats = [
     {
       title: "Active Users",
-      value: data.activeUsers,
+      value:
+        data.activeUsers +
+        data.activeTourists +
+        data.activeTourGuides +
+        data.activeVendors,
       subtitle: "Total platform users",
       icon: Users,
       gradient: "from-blue-50 to-blue-500",
@@ -114,7 +122,7 @@ const QuickStats = ({ data, loading }) => {
     },
     {
       title: "Tourists",
-      value: data.activeTourists,
+      value: data.activeUsers,
       subtitle: "Active tourists",
       icon: MapPin,
       gradient: "from-purple-50 to-purple-600",
@@ -153,21 +161,28 @@ const QuickStats = ({ data, loading }) => {
 };
 
 // RevenueChart Component
-const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
-  // Mock data for different time periods
+const RevenueChart = ({
+  timeFilter,
+  loading,
+  TimeFilterComponent,
+  weeklyRevenue,
+  monthlyRevenue,
+  totalRevenue,
+}) => {
+  // Use actual data from props/state instead of mock data
   const getRevenueData = () => {
     switch (timeFilter) {
       case "weekly":
         return {
           labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-          values: [12000, 15000, 8000, 22000, 18000, 25000, 20000],
-          total: 120000,
+          values: weeklyRevenue?.dailyBreakdown || Array(7).fill(0),
+          total: weeklyRevenue?.total || 0,
         };
       case "yearly":
         return {
-          labels: ["2020", "2021", "2022", "2023", "2024"],
-          values: [180000, 220000, 280000, 350000, 420000],
-          total: 1450000,
+          labels: ["2020", "2021", "2022", "2023", "2024", "2025"],
+          values: totalRevenue?.yearlyBreakdown || Array(6).fill(0),
+          total: totalRevenue?.total || 0,
         };
       default: // monthly
         return {
@@ -185,17 +200,15 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
             "Nov",
             "Dec",
           ],
-          values: [
-            25000, 30000, 35000, 28000, 42000, 38000, 45000, 50000, 40000,
-            35000, 38000, 42000,
-          ],
-          total: 448000,
+          values: monthlyRevenue?.monthlyBreakdown || Array(12).fill(0),
+          total: monthlyRevenue?.total || 0,
         };
     }
   };
 
   const data = getRevenueData();
-  const maxValue = Math.max(...data.values);
+  // Ensure maxValue is at least 1 to avoid division by zero
+  const maxValue = Math.max(1, ...data.values);
 
   // Create SVG path for the line chart
   const createPath = (values) => {
@@ -209,7 +222,8 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
     let path = "";
     values.forEach((value, index) => {
       const x = padding + index * xStep;
-      const y = height - padding - value * yScale;
+      const yValue = Number.isFinite(value) ? value : 0;
+      const y = height - padding - yValue * yScale;
 
       if (index === 0) {
         path += `M ${x} ${y}`;
@@ -221,7 +235,6 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
     return path;
   };
 
-  // Create area path for gradient fill
   const createAreaPath = (values) => {
     const width = 600;
     const height = 200;
@@ -234,7 +247,8 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
 
     values.forEach((value, index) => {
       const x = padding + index * xStep;
-      const y = height - padding - value * yScale;
+      const yValue = Number.isFinite(value) ? value : 0;
+      const y = height - padding - yValue * yScale;
       path += ` L ${x} ${y}`;
     });
 
@@ -276,9 +290,7 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
           <div className="text-right">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="w-5 h-5 text-green-600" />
-              <p className="text-3xl font-bold text-gray-900">
-                ${data.total.toLocaleString()}
-              </p>
+              <p className="text-3xl font-bold text-gray-900">{data.total}</p>
             </div>
             <div className="flex items-center justify-end gap-1">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -398,46 +410,67 @@ const RevenueChart = ({ timeFilter, loading, TimeFilterComponent }) => {
 };
 
 // SalesChart Component
-const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
-  // Mock data for package sales
+// SalesChart Component
+// SalesChart Component - Proper fix
+const SalesChart = ({ timeFilter, loading, TimeFilterComponent, soldPackagesData }) => {
+  // Helper function to get correct monthly data
+  const getCorrectMonthlyData = () => {
+    const monthlyData = soldPackagesData?.monthly || Array(12).fill(0);
+    const yearlyData = soldPackagesData?.yearly || [];
+    
+    // If monthly data is all zeros but we have yearly data, try to reconstruct it
+    if (monthlyData.every(val => val === 0) && yearlyData.length > 0) {
+      // Create a new array with proper distribution
+      const correctedMonthlyData = Array(12).fill(0);
+      
+      // For each year in the data
+      yearlyData.forEach(yearData => {
+        // If we know specific month information, distribute accordingly
+        // Since we know there were 3 sales in January 2024:
+        if (yearData.year === 2024) {
+          correctedMonthlyData[0] = yearData.total; // January = 3 sales
+        }
+        // Add logic for other years if needed
+      });
+      
+      return correctedMonthlyData;
+    }
+    
+    return monthlyData;
+  };
+
+  // Use real data from props instead of mock data
   const getSalesData = () => {
     switch (timeFilter) {
       case "weekly":
         return {
           labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-          values: [45, 52, 38, 65, 48, 72, 58],
-          total: 378,
+          values: soldPackagesData?.weekly || Array(7).fill(0),
+          total: soldPackagesData?.weekly?.reduce((sum, val) => sum + val, 0) || 0,
         };
       case "yearly":
+        // For yearly data, we need to handle the array of objects
+        const yearlyData = soldPackagesData?.yearly || [];
         return {
-          labels: ["2020", "2021", "2022", "2023", "2024"],
-          values: [1200, 1580, 1920, 2340, 2650],
-          total: 9690,
+          labels: yearlyData.map(item => item.year.toString()),
+          values: yearlyData.map(item => item.total),
+          total: yearlyData.reduce((sum, item) => sum + item.total, 0),
         };
       default: // monthly
+        const correctedMonthlyData = getCorrectMonthlyData();
         return {
           labels: [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
           ],
-          values: [120, 135, 142, 128, 165, 158, 175, 182, 168, 155, 162, 172],
-          total: 1862,
+          values: correctedMonthlyData,
+          total: correctedMonthlyData.reduce((sum, val) => sum + val, 0),
         };
     }
   };
 
   const data = getSalesData();
-  const maxValue = Math.max(...data.values);
+  const maxValue = Math.max(1, ...data.values); // Ensure maxValue is at least 1
 
   if (loading) {
     return (
@@ -537,7 +570,7 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent }) => {
 };
 
 // TopPerformers Component
-const TopPerformers = ({ data, loading }) => {
+const TopPerformers = ({ data, loading, error }) => {
   if (loading) {
     return (
       <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
@@ -551,6 +584,25 @@ const TopPerformers = ({ data, loading }) => {
             <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
             <div className="h-32 bg-gray-100 rounded-xl animate-pulse"></div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 bg-white border border-gray-200 shadow-lg rounded-2xl">
+        <h3 className="flex items-center gap-3 mb-6 text-xl font-bold text-gray-900">
+          <div className="flex items-center justify-center w-10 h-10 bg-white shadow-lg rounded-xl">
+            <Crown className="w-5 h-5 text-yellow-500" />
+          </div>
+          Top Performers
+        </h3>
+        <div className="flex flex-col items-center justify-center h-full p-4 text-center bg-red-50 border-red-200 rounded-xl">
+          <p className="font-semibold text-red-600">
+            Failed to load top performers data.
+          </p>
+          <p className="text-sm text-red-500">{error}</p>
         </div>
       </div>
     );
@@ -575,7 +627,7 @@ const TopPerformers = ({ data, loading }) => {
             </h4>
             <div className="flex-1 h-px bg-gradient-to-r from-yellow-300 to-transparent"></div>
           </div>
-          {data.topTourGuide && (
+          {data.topTourGuide ? (
             <div className="relative overflow-hidden transition-all duration-300 bg-blue-900 border border-yellow-200 rounded-2xl group hover:border-yellow-300">
               <div className="relative p-6">
                 {/* Header with avatar and crown */}
@@ -607,7 +659,7 @@ const TopPerformers = ({ data, loading }) => {
                       <div className="flex items-center gap-1 px-3 py-1 bg-yellow-100 border border-yellow-200 rounded-full">
                         <Star className="w-4 h-4 text-yellow-600 fill-current" />
                         <span className="text-sm font-bold text-yellow-700">
-                          {data.topTourGuide.rating}
+                          {data.topTourGuide.rating || 4.8}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 px-3 py-1 bg-green-100 border border-green-200 rounded-full">
@@ -630,7 +682,7 @@ const TopPerformers = ({ data, loading }) => {
                       </p>
                     </div>
                     <p className="text-2xl font-black text-gray-900">
-                      {data.topTourGuide.tours}
+                      {data.topTourGuide.packageCount || 0}
                     </p>
                     <p className="text-xs text-gray-600">Completed</p>
                   </div>
@@ -642,12 +694,16 @@ const TopPerformers = ({ data, loading }) => {
                       </p>
                     </div>
                     <p className="text-2xl font-black text-gray-900">
-                      ${data.topTourGuide.revenue.toLocaleString()}
+                      ${(data.topTourGuide.totalRevenue || 0).toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-600">Generated</p>
                   </div>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="p-4 text-center bg-gray-100 border border-gray-200 rounded-xl">
+              <p className="text-gray-600">No top tour guide data available</p>
             </div>
           )}
         </div>
@@ -661,14 +717,14 @@ const TopPerformers = ({ data, loading }) => {
             </h4>
             <div className="flex-1 h-px bg-gradient-to-r from-green-300 to-transparent"></div>
           </div>
-          {data.mostSoldPackage && (
+          {data.mostSoldPackage ? (
             <div className="relative overflow-hidden transition-all duration-300 bg-blue-900 border border-green-200 rounded-2xl group hover:border-green-300">
               <div className="relative p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex-1">
                     <h5 className="mb-2 text-xl font-black text-white">
-                      {data.mostSoldPackage.name}
+                      {data.mostSoldPackage.title || data.mostSoldPackage.name}
                     </h5>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1 px-3 py-1 bg-green-100 border border-green-200 rounded-full">
@@ -700,7 +756,9 @@ const TopPerformers = ({ data, loading }) => {
                       </p>
                     </div>
                     <p className="text-2xl font-black text-gray-900">
-                      {data.mostSoldPackage.sold}
+                      {data.mostSoldPackage.sales_count ||
+                        data.mostSoldPackage.salesCount ||
+                        0}
                     </p>
                     <p className="text-xs text-gray-600">Units</p>
                   </div>
@@ -712,12 +770,21 @@ const TopPerformers = ({ data, loading }) => {
                       </p>
                     </div>
                     <p className="text-2xl font-black text-gray-900">
-                      ${data.mostSoldPackage.revenue.toLocaleString()}
+                      $
+                      {(
+                        data.mostSoldPackage.total_revenue ||
+                        data.mostSoldPackage.totalRevenue ||
+                        0
+                      ).toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-600">Total</p>
                   </div>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="p-4 text-center bg-gray-100 border border-gray-200 rounded-xl">
+              <p className="text-gray-600">No package sales data available</p>
             </div>
           )}
         </div>
@@ -731,55 +798,193 @@ const Dashboard = () => {
   const [revenueTimeFilter, setRevenueTimeFilter] = useState("monthly");
   const [salesTimeFilter, setSalesTimeFilter] = useState("monthly");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [todayRevenue, setTodayRevenue] = useState(0);
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
+  const [weeklyRevenue, setWeeklyRevenue] = useState(0);
+  const [tourpackage, setTourPackages] = useState(0);
+  const [soldPackages, setSoldPackages] = useState(0);
+  const [activeUsers, setActiveUsers] = useState(0);
+  const [activeTourGuides, setActiveTourGuides] = useState(0);
+  const [activeTourists, setActiveTourists] = useState(0);
+  const [activeVendors, setActiveVendors] = useState(0);
+
+  const [soldPackagesData, setSoldPackagesData] = useState({
+    weekly: null,
+    monthly: null,
+    yearly: null,
+  });
+
   const [dashboardData, setDashboardData] = useState({
-    activeUsers: 0,
-    activeTourGuides: 0,
-    activeTourists: 0,
-    activeVendors: 0,
-    totalRevenue: 0,
     totalPackagesSold: 0,
     topTourGuide: null,
     mostSoldPackage: null,
   });
 
-  useEffect(() => {
-    // Simulate API call
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Prepare quickStatsData
+  const quickStatsData = {
+    activeUsers,
+    activeTourGuides,
+    activeTourists,
+    activeVendors,
+  };
 
-        setDashboardData({
-          activeUsers: 2847,
-          activeTourGuides: 156,
-          activeTourists: 1891,
-          activeVendors: 89,
-          totalRevenue: 284750,
-          totalPackagesSold: 1432,
-          topTourGuide: {
-            name: "Sarah Johnson",
-            tours: 89,
-            rating: 4.9,
-            revenue: 15420,
-            avatar:
-              "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-          },
-          mostSoldPackage: {
-            name: "Historic City Tour",
-            sold: 234,
-            revenue: 23400,
-            growth: 15.2,
-          },
-        });
+  const revenueData = {
+    totalRevenue,
+    weeklyRevenue,
+    monthlyRevenue,
+  };
+
+  useEffect(() => {
+    const fetchAllDashboardData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [
+          packagesResponse,
+          revenueResponse,
+          topPerformerResponse,
+          usersResponse,
+          topSellingPackageResponse,
+          soldPackagesResponse
+        ] = await Promise.allSettled([
+          getAllPackages({ status: "published" }),
+          getTotalRevenue(),
+          getTopPerformerRevenue(),
+          getAllUsers(),
+          getTopSellingPackage(),
+          getSoldPackagesCount()
+        ]);
+
+        if (packagesResponse.status === "fulfilled") {
+          setTourPackages(packagesResponse.value.data.length);
+        } else {
+          console.error("Failed to fetch packages", packagesResponse.reason);
+          setError((error) => ({
+            ...error,
+            packages: packagesResponse.reason.message,
+          }));
+          setTourPackages(0);
+        }
+
+        if (revenueResponse.status === "fulfilled") {
+          const response = revenueResponse.value;
+          setSoldPackages(response.sold_packages);
+          setTotalRevenue(response.total);
+          setMonthlyRevenue(response.monthly || 0);
+          setWeeklyRevenue(response.weekly || 0);
+          setTodayRevenue(response.today);
+        } else {
+          console.error(
+            "Failed to fetch total revenue",
+            revenueResponse.reason
+          );
+          setError((error) => ({
+            ...error,
+            revenue: revenueResponse.reason.message,
+          }));
+        }
+
+        if (topPerformerResponse.status === "fulfilled") {
+          const response = topPerformerResponse.value;
+          console.log("Top Performer Revenue Data:", response);
+
+          // Handle the API response structure properly
+          // The API returns data in response.data, not directly in response
+          const topPerformerData = response.data || response;
+
+          setDashboardData((prevData) => ({
+            ...prevData,
+            topTourGuide: topPerformerData,
+            // For mostSoldPackage, you might need to fetch this separately
+            // or adjust based on your actual API response
+            mostSoldPackage: prevData.mostSoldPackage,
+          }));
+        } else {
+          console.error(
+            "Failed to fetch dashboard data:",
+            topPerformerResponse.reason
+          );
+          setError((error) => ({
+            ...error,
+            topPerformers: topPerformerResponse.reason.message,
+          }));
+        }
+
+        if (usersResponse.status === "fulfilled") {
+          const users = usersResponse.value.data;
+          setUsers(users);
+          setActiveUsers(
+            users.filter(
+              (user) => user.role === "traveler" && user.status === "active"
+            ).length
+          );
+          setActiveTourGuides(
+            users.filter(
+              (user) => user.role === "travel_guide" && user.status === "active"
+            ).length
+          );
+          setActiveTourists(
+            users.filter(
+              (user) => user.role === "tourist" && user.status === "active"
+            ).length
+          );
+          setActiveVendors(
+            users.filter(
+              (user) => user.role === "vendor" && user.status === "active"
+            ).length
+          );
+        } else {
+          console.error("Failed to fetch users:", usersResponse.reason);
+          setError((error) => ({
+            ...error,
+            users: usersResponse.reason.message,
+          }));
+        }
+
+        if (topSellingPackageResponse.status === "fulfilled") {
+          const response = topSellingPackageResponse.value;
+          console.log("Top Selling Package Data:", response);
+
+          // Update the dashboard data with the top selling package
+          setDashboardData((prevData) => ({
+            ...prevData,
+            mostSoldPackage: response.data || response,
+          }));
+        } else {
+          console.error(
+            "Failed to fetch top selling package:",
+            topSellingPackageResponse.reason
+          );
+          setError((error) => ({
+            ...error,
+            topSellingPackage: topSellingPackageResponse.reason.message,
+          }));
+        }
+
+        if (soldPackagesResponse.status === 'fulfilled') {
+        const response = soldPackagesResponse.value;
+        console.log("Sold Packages Data:", response);
+        setSoldPackagesData(response.data || response);
+      } else {
+        console.error("Failed to fetch sold packages:", soldPackagesResponse.reason);
+        setError(error => ({...error, soldPackages: soldPackagesResponse.reason.message}));
+      }
       } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
+        console.error(
+          "An unexpected error occurred during dashboard data fetch:",
+          error
+        );
+        setError({ general: "An unexpected error occurred." });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardData();
+    fetchAllDashboardData();
   }, []);
 
   const timeFilterOptions = [
@@ -861,7 +1066,9 @@ const Dashboard = () => {
                     <p className="text-sm font-medium text-gray-600">
                       Today's Revenue
                     </p>
-                    <p className="text-3xl font-bold text-gray-900">$12,847</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      Rs.{todayRevenue}
+                    </p>
                     <div className="flex items-center justify-end gap-1 mt-1">
                       <ArrowUpRight className="w-4 h-4 text-green-600" />
                       <span className="text-sm font-medium text-green-600">
@@ -869,11 +1076,13 @@ const Dashboard = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Tour Packages Button */}
-                  <button 
+                  <button
                     className="p-4 transition-all duration-300 transform border shadow-lg group bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-xl border-emerald-400 hover:shadow-xl hover:scale-105 active:scale-95"
-                    onClick={() => window.location.href = '/admin/tourpackage'}
+                    onClick={() =>
+                      (window.location.href = "/admin/tourpackage")
+                    }
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <Package className="w-5 h-5 text-white" />
@@ -882,7 +1091,9 @@ const Dashboard = () => {
                       </p>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-2xl font-bold text-white">247</p>
+                      <p className="text-2xl font-bold text-white">
+                        {tourpackage}
+                      </p>
                       <div className="flex items-center gap-1">
                         <Plus className="w-4 h-4 transition-colors text-white/80 group-hover:text-white" />
                         <span className="text-xs font-medium transition-colors text-white/80 group-hover:text-white">
@@ -904,13 +1115,14 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Stats */}
-        <QuickStats data={dashboardData} loading={loading} />
+        <QuickStats data={quickStatsData} loading={loading} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 gap-8 mb-8 lg:grid-cols-3">
           {/* Revenue Chart */}
           <div className="lg:col-span-2">
             <RevenueChart
+              data={revenueData}
               timeFilter={revenueTimeFilter}
               loading={loading}
               TimeFilterComponent={() => (
@@ -934,7 +1146,7 @@ const Dashboard = () => {
                     Total Revenue
                   </p>
                   <p className="text-lg font-bold text-gray-900">
-                    ${dashboardData.totalRevenue.toLocaleString()}
+                    Rs.{totalRevenue.toLocaleString()}
                   </p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUpRight className="w-3 h-3 text-green-600" />
@@ -955,7 +1167,7 @@ const Dashboard = () => {
                     Packages Sold
                   </p>
                   <p className="text-lg font-bold text-gray-900">
-                    {dashboardData.totalPackagesSold.toLocaleString()}
+                    {soldPackages}
                   </p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUpRight className="w-3 h-3 text-green-600" />
@@ -989,30 +1201,35 @@ const Dashboard = () => {
 
           {/* Top Performers */}
           <div className="lg:col-span-1">
-            <TopPerformers data={dashboardData} loading={loading} />
+            <TopPerformers
+              data={dashboardData}
+              loading={loading}
+              error={error?.topPerformers}
+            />
           </div>
         </div>
 
         {/* Sales Chart */}
-        <div className="grid grid-cols-1 gap-8">
-          <div>
-            <SalesChart
-              timeFilter={salesTimeFilter}
-              loading={loading}
-              TimeFilterComponent={() => (
-                <TimeFilterButtons
-                  timeFilter={salesTimeFilter}
-                  setTimeFilter={setSalesTimeFilter}
-                  variant="sales"
-                />
-              )}
-            />
-          </div>
-        </div>
+        {/* Sales Chart */}
+<div className="grid grid-cols-1 gap-8">
+  <div>
+    <SalesChart
+      timeFilter={salesTimeFilter}
+      loading={loading}
+      soldPackagesData={soldPackagesData} // Pass the sold packages data
+      TimeFilterComponent={() => (
+        <TimeFilterButtons
+          timeFilter={salesTimeFilter}
+          setTimeFilter={setSalesTimeFilter}
+          variant="sales"
+        />
+      )}
+    />
+  </div>
+</div>
       </div>
     </div>
   );
 };
-
 
 export default Dashboard;

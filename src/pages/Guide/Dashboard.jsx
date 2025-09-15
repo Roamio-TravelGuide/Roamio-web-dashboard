@@ -1,509 +1,278 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  MapPin, 
-  Star, 
-  CheckCircle, 
-  Edit, 
-  TrendingUp,
-  Shield, 
-  Search,
-  XCircle, 
-  ChevronDown,
-  DollarSign,
-  Clock,
-  Users,
-  Eye,
-  Heart,
-  Share,
-  Headphones,
-  Image,
-  Video,
-  Calendar,
-  Download,
-  Settings,
-  Filter,
-  Plus,
-  ArrowUp,
-  ArrowDown
-} from "lucide-react";
+import DashboardHeader from '../../components/guide_dashboard/DashboardHeader';
+import StatsCards from '../../components/guide_dashboard/StatsCards';
+import SriLankaMap from '../../components/guide_dashboard/SrilankaMap';
+import TopPerformingTours from '../../components/guide_dashboard/TopPerformingTours';
+import RecentToursTable from '../../components/guide_dashboard/RecentToursTable';
+import RecentHiddenGems from '../../components/guide_dashboard/RecentHiddenGems';
+import { getTourPackagesByGuideId , getHiddenGemByGuideId } from "../../api/guide/dashboardApi";
+import { useAuth } from '../../contexts/authContext';
 
-const GuideDashboard = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState('30d');
+const Dashboard = () => {
   const [stats, setStats] = useState({
-    performance: {},
+    totalTours: 0,
+    publishedTours: 0,
+    hiddenPlaces: 0,
+    totalEarnings: 0,
+    averageRating: 0,
     tours: [],
-    engagement: {},
-    financials: {}
+    reviews: [],
+    recentActivities: []
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hiddenGems, setHiddenGems] = useState([]);
+  const { authState } = useAuth();
 
-  const timeRangeOptions = [
-    { value: '7d', label: '7 Days' },
-    { value: '30d', label: '30 Days' },
-    { value: '90d', label: '90 Days' },
-    { value: 'ytd', label: 'Year to Date' }
-  ];
+  const determineTourType = (title) => {
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes('historical') || lowerTitle.includes('ancient') || lowerTitle.includes('fortress') || lowerTitle.includes('rock')) {
+      return "Historical";
+    } else if (lowerTitle.includes('cultural') || lowerTitle.includes('temple') || lowerTitle.includes('sacred')) {
+      return "Cultural";
+    } else if (lowerTitle.includes('city') || lowerTitle.includes('urban') || lowerTitle.includes('street')) {
+      return "Urban";
+    } else if (lowerTitle.includes('nature') || lowerTitle.includes('wildlife') || lowerTitle.includes('beach') || lowerTitle.includes('tea')) {
+      return "Nature";
+    } else if (lowerTitle.includes('food') || lowerTitle.includes('culinary') || lowerTitle.includes('market')) {
+      return "Food";
+    } else if (lowerTitle.includes('adventure') || lowerTitle.includes('hiking') || lowerTitle.includes('trekking')) {
+      return "Adventure";
+    }
+    return "General";
+  };
 
-  // Sample data - replace with API calls
+  // Helper function to get location coordinates based on tour title or stops
+  const getTourLocation = (tour) => {
+    if (tour.tour_stops && tour.tour_stops.length > 0 && tour.tour_stops[0].location && tour.tour_stops[0].location.city) {
+      const city = tour.tour_stops[0].location.city.toLowerCase();
+      const cityCoordinates = {
+        'colombo': { lat: 6.9271, lng: 79.8612 },
+        'kandy': { lat: 7.2906, lng: 80.6337 },
+        'galle': { lat: 6.0535, lng: 80.2210 },
+        'sigiriya': { lat: 7.9579, lng: 80.7607 },
+        'nuwara eliya': { lat: 6.9497, lng: 80.7829 },
+        'negombo': { lat: 7.2099, lng: 79.8370 },
+        'anuradhapura': { lat: 8.3114, lng: 80.4037 },
+        'polonnaruwa': { lat: 7.9329, lng: 81.0088 },
+        'trincomalee': { lat: 8.5874, lng: 81.2155 },
+        'jaffna': { lat: 9.6615, lng: 80.0255 }
+      };
+      
+      return cityCoordinates[city] || { lat: 7.8731, lng: 80.7718 };
+    }
+
+    const lowerTitle = tour.title.toLowerCase();
+    if (lowerTitle.includes('colombo')) return { lat: 6.9271, lng: 79.8612 };
+    if (lowerTitle.includes('kandy')) return { lat: 7.2906, lng: 80.6337 };
+    if (lowerTitle.includes('galle')) return { lat: 6.0535, lng: 80.2210 };
+    if (lowerTitle.includes('sigiriya')) return { lat: 7.9579, lng: 80.7607 };
+    if (lowerTitle.includes('nuwara') || lowerTitle.includes('eliya')) return { lat: 6.9497, lng: 80.7829 };
+    if (lowerTitle.includes('negombo')) return { lat: 7.2099, lng: 79.8370 };
+    
+    return { lat: 7.8731, lng: 80.7718 }; // Default Sri Lanka coordinates
+  };
+
+  const fetchTourPackages = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (!authState.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await getTourPackagesByGuideId(authState.user.id);
+      
+      if (!response.data || !Array.isArray(response.data)) {
+        throw new Error('Invalid response format');
+      }
+
+      // Transform API response to match your component expectations
+      const transformedTours = response.data.map(tour => ({
+        ...tour,
+        bookings: tour._count?.downloads || 0,
+        revenue: (tour._count?.downloads || 0) * tour.price,
+        rating: calculateTourRating(tour),
+        type: determineTourType(tour.title),
+        location: getTourLocation(tour)
+      }));
+
+      // Calculate stats from the API data
+      const totalTours = response.data.length;
+      const publishedTours = response.data.filter(tour => tour.status === 'published').length;
+      const totalDownloads = response.data.reduce((sum, tour) => sum + (tour._count?.downloads || 0), 0);
+      const totalRevenue = response.data.reduce((sum, tour) => sum + ((tour._count?.downloads || 0) * tour.price), 0);
+      
+      // Calculate average rating (placeholder - you'll need actual rating data)
+      const averageRating = transformedTours.filter(tour => tour.rating).length > 0 
+        ? transformedTours.reduce((sum, tour) => sum + (tour.rating || 0), 0) / transformedTours.filter(tour => tour.rating).length
+        : 4.7;
+
+      setStats(prevStats => ({
+        ...prevStats,
+        totalTours,
+        publishedTours,
+        totalEarnings: totalRevenue,
+        averageRating: Math.round(averageRating * 10) / 10,
+        tours: transformedTours,
+        reviews: getSampleReviews(transformedTours),
+        recentActivities: generateRecentActivities(transformedTours)
+      }));
+
+    } catch (err) {
+      setError('Failed to load tours. Please try again.');
+      console.error('Error fetching tours:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchHiddenGems = async () => {
+    try {
+      if (!authState.user?.id) return;
+      
+      const response = await getHiddenGemByGuideId(authState.user.id);
+
+      // console.log(response);
+      
+      if (response.data && Array.isArray(response.data)) {
+        setHiddenGems(response.data);
+
+        setStats(prevStats => ({
+          ...prevStats,
+          hiddenPlaces: response.data.length
+        }));
+        
+      }
+    } catch (err) {
+      console.error('Error fetching hidden gems:', err);
+    }
+  };
+
+  // Placeholder function for tour rating calculation
+  const calculateTourRating = (tour) => {
+    // You'll need to implement actual rating calculation
+    // For now, return a placeholder based on downloads or random
+    if (tour._count?.downloads > 10) return 4.8;
+    if (tour._count?.downloads > 5) return 4.5;
+    if (tour._count?.downloads > 0) return 4.2;
+    return null;
+  };
+
+  // Generate sample reviews based on tours
+  const getSampleReviews = (tours) => {
+    const publishedTours = tours.filter(tour => tour.status === 'published' && tour._count?.downloads > 0);
+    if (publishedTours.length === 0) return [];
+
+    return [
+      {
+        id: 1,
+        traveler: {
+          id: 2001,
+          name: "Sarah Johnson",
+          profile_picture_url: "/avatars/sarah.jpg"
+        },
+        rating: 5,
+        comment: "Amazing tour! Our guide was incredibly knowledgeable.",
+        date: '2024-03-12',
+        tourId: publishedTours[0]?.id || 1
+      },
+      {
+        id: 2,
+        traveler: {
+          id: 2002,
+          name: "Michael Chen",
+          profile_picture_url: "/avatars/michael.jpg"
+        },
+        rating: 4,
+        comment: "Good experience, would recommend to others.",
+        date: '2024-03-08',
+        tourId: publishedTours[0]?.id || 1
+      }
+    ];
+  };
+
+  // Generate recent activities based on tours
+  const generateRecentActivities = (tours) => {
+    const activities = [];
+    
+    tours.forEach(tour => {
+      if (tour.created_at) {
+        activities.push({
+          id: activities.length + 1,
+          type: 'package_create',
+          description: `Created tour: ${tour.title}`,
+          date: tour.created_at,
+          tourId: tour.id
+        });
+      }
+
+      if (tour.status === 'published' && tour._count?.downloads > 0) {
+        activities.push({
+          id: activities.length + 1,
+          type: 'package_download',
+          description: `${tour._count.downloads} downloads for ${tour.title}`,
+          date: new Date().toISOString(),
+          tourId: tour.id
+        });
+      }
+    });
+
+    return activities.slice(0, 5); // Return only 5 most recent activities
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      setStats({
-        performance: {
-          avgRating: 4.7,
-          ratingChange: '+0.2',
-          completionRate: 92,
-          completionChange: '+3%',
-          avgDuration: 42,
-          durationChange: '-2min'
-        },
-        tours: [
-          {
-            id: 1,
-            title: "Sigiriya Rock Fortress",
-            status: "published",
-            bookings: 87,
-            bookingTrend: '12%',
-            revenue: 3520,
-            revenueTrend: '18%',
-            rating: 4.8,
-            stops: 8,
-            media: {
-              audio: 12,
-              images: 24,
-              videos: 3
-            },
-            created_at: '2024-01-15',
-            cover_image: 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg?auto=compress&cs=tinysrgb&w=400'
-          },
-          {
-            id: 2,
-            title: "Kandy Temple Walk",
-            status: "published",
-            bookings: 42,
-            bookingTrend: '5%',
-            revenue: 1250,
-            revenueTrend: '8%',
-            rating: 4.6,
-            stops: 5,
-            media: {
-              audio: 8,
-              images: 15,
-              videos: 2
-            },
-            created_at: '2024-01-10',
-            cover_image: 'https://images.pexels.com/photos/1007426/pexels-photo-1007426.jpeg?auto=compress&cs=tinysrgb&w=400'
-          },
-          {
-            id: 3,
-            title: "Colombo City Explorer",
-            status: "pending_approval",
-            bookings: 0,
-            bookingTrend: '0%',
-            revenue: 0,
-            revenueTrend: '0%',
-            rating: null,
-            stops: 6,
-            media: {
-              audio: 6,
-              images: 12,
-              videos: 0
-            },
-            created_at: '2024-01-20',
-            cover_image: 'https://images.pexels.com/photos/1007426/pexels-photo-1007426.jpeg?auto=compress&cs=tinysrgb&w=400'
-          }
-        ],
-        engagement: {
-          totalVisitors: 1432,
-          newVisitors: 1024,
-          returningVisitors: 408,
-          favoriteTours: 287,
-          shares: 156,
-          avgSessionDuration: '12:45'
-        },
-        financials: {
-          totalRevenue: 5820.50,
-          monthlyRevenue: 1820.25,
-          avgRevenuePerTour: 485.04,
-          projectedRevenue: 7240.00,
-          conversionRate: 12.4
-        }
-      });
+    if (authState.user?.id) {
+      fetchTourPackages();
+      fetchHiddenGems();
 
-      setIsLoading(false);
-    };
-
-    fetchData();
-  }, [timeRange]);
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
-  const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
-  const getStatusBadge = (status) => {
-    switch(status) {
-      case 'published':
-        return { bg: 'bg-teal-100', text: 'text-teal-800', label: 'Published' };
-      case 'pending_approval':
-        return { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending Review' };
-      case 'rejected':
-        return { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' };
-      default:
-        return { bg: 'bg-slate-100', text: 'text-slate-800', label: status };
     }
-  };
+  }, [authState.user?.id]);
 
-  const renderTrendIndicator = (value) => {
-    const isPositive = value.includes('+');
-    const isNeutral = value === '0%';
-    
-    if (isNeutral) {
-      return (
-        <span className="text-xs font-medium text-slate-500">
-          {value}
-        </span>
-      );
-    }
-    
+  if (loading) {
     return (
-      <span className={`inline-flex items-center text-xs font-medium ${
-        isPositive ? 'text-teal-600' : 'text-red-600'
-      }`}>
-        {isPositive ? <ArrowUp className="w-3 h-3 mr-1" /> : <ArrowDown className="w-3 h-3 mr-1" />}
-        {value}
-      </span>
-    );
-  };
-
-  // Calculate totals for each media type
-  const getTotalMediaCounts = () => {
-    const totals = stats.tours.reduce((acc, tour) => {
-      acc.audio += tour.media.audio;
-      acc.images += tour.media.images;
-      acc.videos += tour.media.videos;
-      return acc;
-    }, { audio: 0, images: 0, videos: 0 });
-
-    const total = totals.audio + totals.images + totals.videos;
-    
-    return {
-      audio: { count: totals.audio, percentage: total > 0 ? (totals.audio / total) * 100 : 0 },
-      images: { count: totals.images, percentage: total > 0 ? (totals.images / total) * 100 : 0 },
-      videos: { count: totals.videos, percentage: total > 0 ? (totals.videos / total) * 100 : 0 }
-    };
-  };
-
-  const CircularProgress = ({ percentage, count, label, color, icon: Icon }) => {
-    const radius = 40;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
-    
-    return (
-      <div className="flex flex-col items-center">
-        <div className="relative w-32 h-32 mb-3">
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-            <circle
-              className="text-slate-100"
-              strokeWidth="6"
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx="50"
-              cy="50"
-            />
-            <circle
-              className={color}
-              strokeWidth="6"
-              strokeDasharray={strokeDasharray}
-              strokeLinecap="round"
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx="50"
-              cy="50"
-              style={{
-                transition: 'stroke-dasharray 1s ease-in-out'
-              }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-2xl font-bold text-slate-800">{count}</div>
-          </div>
-        </div>
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-1">
-            <Icon className="w-4 h-4 mr-2 text-slate-600" />
-            <span className="text-sm font-medium text-slate-700">{label}</span>
-          </div>
-          <div className="text-xs text-slate-500">{percentage.toFixed(1)}%</div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-lg text-gray-600">Loading dashboard...</div>
       </div>
     );
-  };
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-lg text-red-500">{error}</div>
+        <button 
+          onClick={fetchTourPackages}
+          className="px-4 py-2 ml-4 text-white bg-blue-500 rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Header - Exact match to TourPackages */}
-      {/* Main Content */}
       <div className="pb-12 mt-5">
         <div className="mx-auto sm:px-6 lg:px-12">
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+          <DashboardHeader/>
+          
+          <div className="space-y-8">
+            <StatsCards stats={stats} />
+            
+            <div className="grid gap-6 lg:grid-cols-2">
+              <SriLankaMap tours={stats.tours} />
+              <TopPerformingTours tours={stats.tours} />
             </div>
-          ) : (
-            <div className="space-y-8">
-              {/* Hero Stats Section - Horizontal Layout */}
-              <div className="relative overflow-hidden bg-white shadow-sm rounded-xl">
-                <div className="absolute inset-0 opacity-50 bg-gradient-to-r from-teal-50 to-blue-50"></div>
-                <div className="relative p-4">
-                  <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-yellow-100 rounded-full">
-                        <Star className="w-8 h-8 text-yellow-600" />
-                      </div>
-                      <div className="text-3xl font-bold text-slate-800">{stats.performance.avgRating}</div>
-                      <div className="text-sm text-slate-600">Average Rating</div>
-                      <div className="mt-1">{renderTrendIndicator(stats.performance.ratingChange)}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-teal-100 rounded-full">
-                        <CheckCircle className="w-8 h-8 text-teal-600" />
-                      </div>
-                      <div className="text-3xl font-bold text-slate-800">{stats.performance.completionRate}%</div>
-                      <div className="text-sm text-slate-600">Completion Rate</div>
-                      <div className="mt-1">{renderTrendIndicator(stats.performance.completionChange)}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full">
-                        <Clock className="w-8 h-8 text-blue-600" />
-                      </div>
-                      <div className="text-3xl font-bold text-slate-800">{stats.performance.avgDuration}m</div>
-                      <div className="text-sm text-slate-600">Average Duration</div>
-                      <div className="mt-1">{renderTrendIndicator(stats.performance.durationChange)}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-purple-100 rounded-full">
-                        <MapPin className="w-8 h-8 text-purple-600" />
-                      </div>
-                      <div className="text-3xl font-bold text-slate-800">{stats.tours.length}</div>
-                      <div className="text-sm text-slate-600">Active Tours</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Revenue & Engagement Split Layout */}
-              <div className="grid gap-8 lg:grid-cols-2">
-                {/* Revenue Card */}
-                <div className="relative overflow-hidden bg-white shadow-sm rounded-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-teal-50"></div>
-                  <div className="relative flex flex-col h-full p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-slate-800">Total Revenue</h3>
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <DollarSign className="w-5 h-5 text-green-600" />
-                      </div>
-                    </div>
-                    <div className="mb-2 text-3xl font-bold text-slate-800">
-                      {formatCurrency(stats.financials.totalRevenue)}
-                    </div>
-                    <div className="text-sm text-slate-600">
-                      Monthly: {formatCurrency(stats.financials.monthlyRevenue)}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mt-auto">
-                      <div>
-                        <div className="text-sm text-slate-600">Avg Revenue/Tour</div>
-                        <div className="text-lg font-semibold text-slate-800">{formatCurrency(stats.financials.avgRevenuePerTour)}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-slate-600">Conversion Rate</div>
-                        <div className="text-lg font-semibold text-slate-800">{stats.financials.conversionRate}%</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Engagement Card */}
-                <div className="relative overflow-hidden bg-white shadow-sm rounded-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50"></div>
-                  <div className="relative flex flex-col h-full p-6">
-                    <h3 className="mb-4 text-lg font-semibold text-slate-800">Engagement Overview</h3>
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="relative w-24 h-24">
-                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                          <circle
-                            className="text-slate-100"
-                            strokeWidth="8"
-                            stroke="currentColor"
-                            fill="transparent"
-                            r="35"
-                            cx="50"
-                            cy="50"
-                          />
-                          <circle
-                            className="text-teal-500"
-                            strokeWidth="8"
-                            strokeDasharray={`${stats.performance.completionRate * 2.51}, 251`}
-                            strokeLinecap="round"
-                            stroke="currentColor"
-                            fill="transparent"
-                            r="35"
-                            cx="50"
-                            cy="50"
-                            style={{
-                              transition: 'stroke-dasharray 1s ease-in-out'
-                            }}
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <div className="text-xl font-bold text-slate-800">{stats.performance.completionRate}%</div>
-                          <div className="text-xs text-slate-500">Completion</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3 mt-auto">
-                      <div className="p-2 text-center bg-white rounded-lg bg-opacity-70">
-                        <div className="font-bold text-md text-slate-800">{stats.engagement.favoriteTours}</div>
-                        <div className="text-xs text-slate-600">Favorites</div>
-                      </div>
-                      <div className="p-2 text-center bg-white rounded-lg bg-opacity-70">
-                        <div className="font-bold text-md text-slate-800">{stats.engagement.shares}</div>
-                        <div className="text-xs text-slate-600">Shares</div>
-                      </div>
-                      <div className="p-2 text-center bg-white rounded-lg bg-opacity-70">
-                        <div className="font-bold text-md text-slate-800">{stats.engagement.newVisitors}</div>
-                        <div className="text-xs text-slate-600">New Visitors</div>
-                      </div>
-                      <div className="p-2 text-center bg-white rounded-lg bg-opacity-70">
-                        <div className="font-bold text-md text-slate-800">{stats.engagement.avgSessionDuration}</div>
-                        <div className="text-xs text-slate-600">Avg Session</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Content Distribution */}
-              <div className="p-6 bg-white shadow-sm rounded-xl">
-                <h3 className="mb-6 text-lg font-semibold text-slate-800">Content Distribution</h3>
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                  <CircularProgress 
-                    {...getTotalMediaCounts().audio}
-                    label="Audio Clips"
-                    color="text-blue-500"
-                    icon={Headphones}
-                  />
-                  <CircularProgress 
-                    {...getTotalMediaCounts().images}
-                    label="Images"
-                    color="text-teal-500"
-                    icon={Image}
-                  />
-                  <CircularProgress 
-                    {...getTotalMediaCounts().videos}
-                    label="Videos"
-                    color="text-purple-500"
-                    icon={Video}
-                  />
-                </div>
-              </div>
-
-              {/* Tour Performance Table - Moved to Bottom */}
-              <div className="overflow-hidden bg-white shadow-sm rounded-xl">
-                <div className="p-6 border-b border-slate-100">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-800">Tour Performance</h3>
-                    <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 transition-colors bg-blue-50 rounded-lg hover:bg-blue-100">
-                      <Eye className="w-4 h-4" />
-                      View All
-                    </button>
-                  </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        <th className="px-6 py-4 text-xs font-semibold tracking-wider text-left uppercase text-slate-600">Tour</th>
-                        <th className="px-6 py-4 text-xs font-semibold tracking-wider text-left uppercase text-slate-600">Status</th>
-                        <th className="px-6 py-4 text-xs font-semibold tracking-wider text-right uppercase text-slate-600">Bookings</th>
-                        <th className="px-6 py-4 text-xs font-semibold tracking-wider text-right uppercase text-slate-600">Revenue</th>
-                        <th className="px-6 py-4 text-xs font-semibold tracking-wider text-right uppercase text-slate-600">Rating</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-slate-50">
-                      {stats.tours.map((tour) => (
-                        <tr key={tour.id} className="transition-colors hover:bg-slate-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="relative flex-shrink-0 w-12 h-12 overflow-hidden rounded-xl">
-                                <img 
-                                  className="object-cover w-full h-full" 
-                                  src={tour.cover_image} 
-                                  alt={tour.title} 
-                                />
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-semibold text-slate-800">{tour.title}</div>
-                                <div className="flex items-center mt-1 text-xs text-slate-500">
-                                  <MapPin className="w-3 h-3 mr-1" />
-                                  {tour.stops} stops
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(tour.status).bg} ${getStatusBadge(tour.status).text}`}>
-                              {getStatusBadge(tour.status).label}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm font-semibold text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end">
-                              <span className="text-slate-800">{tour.bookings}</span>
-                              <span className="ml-2">{renderTrendIndicator(tour.bookingTrend)}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm font-semibold text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end">
-                              <span className="text-slate-800">{formatCurrency(tour.revenue)}</span>
-                              <span className="ml-2">{renderTrendIndicator(tour.revenueTrend)}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm font-semibold text-right whitespace-nowrap">
-                            {tour.rating ? (
-                              <div className="flex items-center justify-end">
-                                <Star className="w-4 h-4 mr-1 text-yellow-400" />
-                                <span className="text-slate-800">{tour.rating}</span>
-                              </div>
-                            ) : (
-                              <span className="text-slate-400">-</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
+            <RecentToursTable tours={stats.tours} />
+            <RecentHiddenGems hiddenGems={hiddenGems} />
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default GuideDashboard;
+export default Dashboard;

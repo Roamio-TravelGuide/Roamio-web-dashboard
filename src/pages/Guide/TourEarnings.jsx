@@ -1,137 +1,45 @@
-import React, { useState } from 'react';
-import {
-  DollarSign,
-  TrendingUp,
-  Download,
-  Calendar,
-  CreditCard,
-  FileText,
-  MapPin,
-  Users,
-  Star,
-  ChevronRight,
-  Eye,
-  BarChart3,
-  PiggyBank,
-  Clock,
-  CheckCircle,
-  AlertCircle
-} from 'lucide-react';
+import React from 'react';
 
-
-/**
- * @typedef {Object} Transaction
- * @property {string} id
- * @property {string} date
- * @property {string} package
- * @property {number} amount
- * @property {number} fee
- * @property {number} net
- * @property {'completed' | 'pending' | 'processing'} status
- */
-
-function TourEarnings() {
-  const [selectedPeriod, setSelectedPeriod] = useState('30d');
-  
-  const tourPackages = [
-    {
-      id: '1',
-      title: 'Historic Paris Walking Tour',
-      location: 'Paris, France',
-      price: 12.99,
-      downloads: 847,
-      revenue: 8807.53,
-      rating: 4.8,
-      reviews: 156,
-      status: 'active'
-    },
-    {
-      id: '2',
-      title: 'Venice Hidden Gems',
-      location: 'Venice, Italy',
-      price: 15.99,
-      downloads: 623,
-      revenue: 7990.77,
-      rating: 4.6,
-      reviews: 98,
-      status: 'active'
-    },
-    {
-      id: '3',
-      title: 'Tokyo Street Food Adventure',
-      location: 'Tokyo, Japan',
-      price: 18.99,
-      downloads: 412,
-      revenue: 6279.88,
-      rating: 4.9,
-      reviews: 67,
-      status: 'active'
-    },
-    {
-      id: '4',
-      title: 'Barcelona Modernist Architecture',
-      location: 'Barcelona, Spain',
-      price: 14.99,
-      downloads: 298,
-      revenue: 3584.02,
-      rating: 4.5,
-      reviews: 43,
-      status: 'pending'
-    }
-  ];
-
-  const recentTransactions = [
-    {
-      id: '1',
-      date: '2025-01-08',
-      package: 'Historic Paris Walking Tour',
-      amount: 12.99,
-      fee: 1.95,
-      net: 11.04,
-      status: 'completed'
-    },
-    {
-      id: '2',
-      date: '2025-01-08',
-      package: 'Venice Hidden Gems',
-      amount: 15.99,
-      fee: 2.40,
-      net: 13.59,
-      status: 'completed'
-    },
-    {
-      id: '3',
-      date: '2025-01-07',
-      package: 'Tokyo Street Food Adventure',
-      amount: 18.99,
-      fee: 2.85,
-      net: 16.14,
-      status: 'processing'
-    },
-    {
-      id: '4',
-      date: '2025-01-07',
-      package: 'Historic Paris Walking Tour',
-      amount: 12.99,
-      fee: 1.95,
-      net: 11.04,
-      status: 'completed'
-    }
-  ];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-      case 'completed':
-        return 'text-green-600 bg-green-50';
-      case 'pending':
-      case 'processing':
-        return 'text-yellow-600 bg-yellow-50';
-      case 'draft':
-        return 'text-gray-600 bg-gray-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
-    }
+const TourEarnings = () => {
+  // Sample data - 90% of tour price goes to guide, 10% to platform
+  const earningsData = {
+    totalEarnings: 45250.00,  // Total earned (90% of all completed tours)
+    platformFees: 5027.78,    // 10% of total tour value
+    thisMonthEarnings: 28750.00,
+    lastMonthEarnings: 24300.00,
+    percentageChange: 18.2,
+    topTours: [
+      { name: "Sigiriya Rock Fortress", gross: 20555.56, net: 18500.00 },
+      { name: "Kandy Temple Tour", gross: 13666.67, net: 12300.00 },
+      { name: "Gale Fort Walk", gross: 9722.22, net: 8750.00 }
+    ],
+    transactions: [
+      { 
+        date: "Jan 15, 2025", 
+        tour: "Sigiriya Rock Fortress", 
+        id: "TXNL_001", 
+        grossAmount: 8333.33, 
+        netAmount: 7500.00,
+        status: "Completed" 
+      },
+      { 
+        date: "Jan 12, 2025", 
+        tour: "Kandy Temple Tour", 
+        id: "TXNL_002", 
+        grossAmount: 4666.67, 
+        netAmount: 4200.00,
+        status: "Pending" 
+      },
+      { 
+        date: "Jan 10, 2025", 
+        tour: "Gale Fort Walk", 
+        id: "TXNL_003", 
+        grossAmount: 4222.22, 
+        netAmount: 3800.00,
+        status: "Completed" 
+      }
+    ],
+    totalTransactions: 23
   };
 
   const totalEarnings = tourPackages.reduce((sum, pkg) => sum + pkg.revenue, 0);
@@ -139,203 +47,115 @@ function TourEarnings() {
   const avgRating = tourPackages.reduce((sum, pkg) => sum + pkg.rating, 0) / tourPackages.length;
 
   return (
-    <div className="min-h-screen bg-gray-50 ">
-      {/* Header */}
-        <div className="px-6 py-8 bg-gradient-to-r from-slate-900 to-blue-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6 -ml-15">
-            <div>
-              <h1 className="text-3xl text-white">Earnings Dashboard</h1>
-              <p className="mt-1 text-sm text-teal-400">Track your tour guide revenue and performance</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-              >
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
-                <option value="1y">Last year</option>
-              </select>
-              <button className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
-                <FileText className="w-4 h-4" />
-                <span>Generate Report</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-360 -ml-25">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Earnings</p>
-                <p className="text-3xl font-bold text-gray-900">${totalEarnings.toLocaleString()}</p>
-                <p className="text-sm text-green-600 flex items-center mt-1">
-                  <TrendingUp className="w-4 h-4 mr-1" />
-                  +12.5% from last month
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="pb-12 mt-5">
+        <div className="mx-auto sm:px-6 lg:px-12">
+          <h1 className="mb-6 text-2xl font-bold text-gray-800">Tour Guide Earnings</h1>
+          
+          <div className="flex flex-col gap-6 lg:flex-row">
+            {/* Left Side - Earnings Summary (1/3 width) */}
+            <div className="w-full space-y-6 lg:w-1/3">
+              {/* Total Earnings */}
+              <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <h2 className="mb-2 text-sm font-medium text-gray-500">Total Earnings</h2>
+                <p className="mb-2 text-3xl font-bold text-gray-800">
+                  LKR {earningsData.totalEarnings.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Platform fees:</span> LKR {earningsData.platformFees.toLocaleString('en-US', {minimumFractionDigits: 2})} (10%)
                 </p>
               </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <DollarSign className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Downloads</p>
-                <p className="text-3xl font-bold text-gray-900">{totalDownloads.toLocaleString()}</p>
-                <p className="text-sm text-green-600 flex items-center mt-1">
-                  <TrendingUp className="w-4 h-4 mr-1" />
-                  +8.3% from last month
+              {/* Monthly Comparison */}
+              <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <h2 className="mb-2 text-sm font-medium text-gray-500">This Month vs Last Month</h2>
+                <p className="text-2xl font-bold text-gray-800">
+                  LKR {earningsData.thisMonthEarnings.toLocaleString('en-US', {minimumFractionDigits: 2})} 
+                  <span className="ml-2 text-sm text-green-600">↑ {earningsData.percentageChange}%</span>
+                </p>
+                <p className="mt-2 text-sm text-gray-600">
+                  vs LKR {earningsData.lastMonthEarnings.toLocaleString('en-US', {minimumFractionDigits: 2})} last month
                 </p>
               </div>
-              <div className="p-3 bg-green-50 rounded-lg">
-                <Download className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                <p className="text-3xl font-bold text-gray-900">{avgRating.toFixed(1)}</p>
-                <p className="text-sm text-green-600 flex items-center mt-1">
-                  <Star className="w-4 h-4 mr-1 fill-current" />
-                  Across all tours
-                </p>
-              </div>
-              <div className="p-3 bg-yellow-50 rounded-lg">
-                <Star className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Tours</p>
-                <p className="text-3xl font-bold text-gray-900">{tourPackages.filter(p => p.status === 'active').length}</p>
-                <p className="text-sm text-blue-600 flex items-center mt-1">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {tourPackages.filter(p => p.status === 'pending').length} pending approval
-                </p>
-              </div>
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <MapPin className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tour Package Performance */}
-        <div className="mb-8 w-360 -ml-25">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Tour Package Performance</h2>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
-                  View All <ChevronRight className="w-4 h-4 ml-1" />
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {tourPackages.map((tour) => (
-                  <div key={tour.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium text-gray-900">{tour.title}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(tour.status)}`}>
-                          {tour.status}
-                        </span>
+              {/* Top Performing Tours */}
+              <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <h2 className="mb-4 text-sm font-medium text-gray-500">Top Performing Tours</h2>
+                <div className="space-y-3">
+                  {earningsData.topTours.map((tour, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 truncate">{tour.name}</span>
+                        <span className="font-medium">LKR {tour.net.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-600 space-x-4">
-                        <div className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {tour.location}
-                        </div>
-                        <div className="flex items-center">
-                          <Download className="w-4 h-4 mr-1" />
-                          {tour.downloads} downloads
-                        </div>
-                        <div className="flex items-center">
-                          <Star className="w-4 h-4 mr-1 fill-current text-yellow-500" />
-                          {tour.rating} ({tour.reviews})
-                        </div>
+                      <div className="text-xs text-gray-500">
+                        Gross: LKR {tour.gross.toLocaleString('en-US', {minimumFractionDigits: 2})}
                       </div>
                     </div>
-                    <div className="text-right ml-4">
-                      <p className="text-lg font-semibold text-gray-900">${tour.revenue.toLocaleString()}</p>
-                      <p className="text-sm text-gray-600">${tour.price} each</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Transactions */}
-        <div className='mb-8 w-360 -ml-25'>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Recent Transactions</h2>
-                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
-                  View All <ChevronRight className="w-4 h-4 ml-1" />
-                </button>
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {recentTransactions.map((transaction) => (
-                    <tr key={transaction.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(transaction.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {transaction.package}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${transaction.amount.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        ${transaction.fee.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ${transaction.net.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
-                          {transaction.status === 'completed' && <CheckCircle className="w-3 h-3 mr-1" />}
-                          {transaction.status === 'processing' && <AlertCircle className="w-3 h-3 mr-1" />}
-                          {transaction.status}
-                        </span>
-                      </td>
-                    </tr>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side - Chart and Transactions (2/3 width) */}
+            <div className="w-full space-y-6 lg:w-2/3">
+              {/* Earnings Chart */}
+              <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <h2 className="mb-4 font-medium text-gray-800">Earnings Breakdown</h2>
+                <div className="flex items-center justify-center h-64 text-gray-400 bg-gray-100 rounded-md">
+                  <div className="text-center">
+                    <p>Net Earnings vs Platform Fees</p>
+                    <p className="text-sm">(90% guide / 10% platform)</p>
+                  </div>
+                  {/* Replace with actual chart component */}
+                </div>
+              </div>
+
+              {/* Transaction History */}
+              <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <h2 className="mb-4 font-medium text-gray-800">Booking Transactions</h2>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">DATE</th>
+                        <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">TOUR</th>
+                        <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">GROSS</th>
+                        <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">NET</th>
+                        <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">STATUS</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {earningsData.transactions.map((transaction, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{transaction.date}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">{transaction.tour}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                            LKR {transaction.grossAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-green-700 whitespace-nowrap">
+                            LKR {transaction.netAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                          </td>
+                          <td className="px-6 py-4 text-sm whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              transaction.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                              transaction.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {transaction.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-6 py-3 text-right bg-gray-50">
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">1</span> to <span className="font-medium">{earningsData.transactions.length}</span> of <span className="font-medium">{earningsData.totalTransactions}</span> transactions
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,11 +1,10 @@
 import React from 'react';
 import { MapPin, Clock, DollarSign, Volume2, Image as ImageIcon, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
-// Pricing constants
 const PRICE_PER_MINUTE = 500; 
 const MINIMUM_PRICE = 1000; 
 
-export const ReviewStep = ({
+export const ReviewStepEdit = ({
   tourData,
   validationWarnings = [],
   onSubmit,
@@ -52,7 +51,6 @@ export const ReviewStep = ({
   const hasErrors = validationWarnings.some(w => w.severity === 'error');
   const hasWarnings = validationWarnings.some(w => w.severity === 'warning');
 
-  // Calculate derived values
   const totalAudioDuration = getTotalAudioDuration();
   const totalPrice = calculatePrice();
   const totalMinutes = totalAudioDuration / 60;
@@ -60,11 +58,10 @@ export const ReviewStep = ({
 
   return (
     <div className="mx-auto">
-      {/* Header */}
       <div className="p-6 mb-6 bg-gradient-to-r from-blue-50 to-teal-50 rounded-xl">
-        <h2 className="text-2xl font-bold text-gray-800">Review Your Tour</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Review Your Tour Updates</h2>
         <p className="mt-2 text-gray-600">
-          Review all details before submitting your tour for approval
+          Review all changes before updating your tour
         </p>
       </div>
 
@@ -117,7 +114,6 @@ export const ReviewStep = ({
                 </div>
               </div>
 
-              {/* Pricing Information */}
               <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
                 <div className="flex items-start space-x-2">
                   <Info className="text-blue-500 flex-shrink-0 mt-0.5" size={16} />
@@ -134,7 +130,6 @@ export const ReviewStep = ({
             </div>
           </div>
 
-          {/* Submit Button */}
           <div className="mt-6">
             <button
               onClick={onSubmit}
@@ -150,20 +145,18 @@ export const ReviewStep = ({
               {isSubmitting ? (
                 <span className="flex items-center justify-center">
                   <Clock className="mr-2 animate-spin" size={18} />
-                  Submitting...
+                  Updating...
                 </span>
               ) : hasErrors ? (
-                'Fix Errors to Submit'
+                'Fix Errors to Update'
               ) : (
-                'Submit for Approval'
+                'Update Tour'
               )}
             </button>
           </div>
         </div>
 
-        {/* Right Column - Details */}
         <div className="lg:w-2/3">
-          {/* Tour Stops */}
           <div className="overflow-hidden border border-gray-200 rounded-xl">
             <div className="p-5 bg-gradient-to-r from-blue-50 to-teal-50">
               <h3 className="font-medium text-gray-800">Tour Stops</h3>
@@ -258,7 +251,6 @@ export const ReviewStep = ({
             </div>
           </div>
 
-          {/* Validation Summary */}
           <div className="mt-6 overflow-hidden border border-gray-200 rounded-xl">
             <div className="p-5 bg-gradient-to-r from-blue-50 to-teal-50">
               <h3 className="font-medium text-gray-800">Validation Summary</h3>
@@ -270,7 +262,7 @@ export const ReviewStep = ({
                   <CheckCircle className="text-green-500" size={20} />
                   <div>
                     <h4 className="font-medium text-green-800">All validations passed!</h4>
-                    <p className="text-sm text-green-700">Your tour is ready for submission</p>
+                    <p className="text-sm text-green-700">Your tour is ready for update</p>
                   </div>
                 </div>
               ) : (
@@ -288,9 +280,9 @@ export const ReviewStep = ({
                       </h4>
                       <p className="mt-1 text-sm">
                         {hasErrors ? (
-                          'Please fix the critical issues marked in red before submitting.'
+                          'Please fix the critical issues marked in red before updating.'
                         ) : (
-                          'Your tour can be submitted, but consider addressing these recommendations for better quality.'
+                          'Your tour can be updated, but consider addressing these recommendations for better quality.'
                         )}
                       </p>
                     </div>

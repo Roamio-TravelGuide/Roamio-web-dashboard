@@ -90,3 +90,63 @@ export const logout = async () => {
     throw new Error('Logout failed');
   }
 };
+
+// Add these API functions to your authApi.js file
+
+export const forgotPassword = async (email) => {
+  try {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'Failed to send OTP');
+    }
+    throw new Error('An unexpected error occurred');
+  }
+};
+
+export const verifyOTP = async (email, otp) => {
+  try {
+    const response = await apiClient.post('/auth/verify-otp', { email, otp });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'OTP verification failed');
+    }
+    throw new Error('An unexpected error occurred');
+  }
+};
+
+export const resetPasswordWithOTP = async (email, otp, newPassword) => {
+  try {
+    const response = await apiClient.post('/auth/reset-password-otp', {
+      email,
+      otp,
+      newPassword
+    });
+    return response.data;
+  } catch (error) {
+    // If the endpoint wasn't found, some backends use a different route name.
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      try {
+        const altResponse = await apiClient.post('/auth/reset-password', {
+          email,
+          otp,
+          newPassword
+        });
+        return altResponse.data;
+      } catch (altErr) {
+        if (axios.isAxiosError(altErr)) {
+          throw new Error(altErr.response?.data?.message || 'Password reset failed (alternate endpoint)');
+        }
+        throw new Error('An unexpected error occurred (alternate endpoint)');
+      }
+    }
+
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'Password reset failed');
+    }
+
+    throw new Error('An unexpected error occurred');
+  }
+};

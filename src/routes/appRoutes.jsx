@@ -9,6 +9,8 @@ import Home from '../pages/Landing/Home';
 import About from '../pages/Landing/About';
 import LoginPage from '../pages/Auth/SignInPage';
 import SignupPage from '../pages/Auth/UnifiedSignup';
+import ResetPassword from '../pages/Auth/ResetPassword';
+import ResetPasswordForm from '../pages/Auth/ResetPasswordForm';
 
 import GuideDashboard from '../pages/Guide/Dashboard';
 import TourCreate from '../pages/Guide/TourCreate';
@@ -16,12 +18,12 @@ import TourDet from '../pages/Guide/TourDetail';
 import TourPackages from '../pages/Guide/TourPackages';
 import Support from '../pages/Guide/Support'
 // import TourEditPage from '../components/tour/';
-import TourEarnings from '../pages/Guide/TourEarnings'
+// import TourEarnings from '../pages/Guide/TourEarnings'
 
 import ModeratorLayout from '../layouts/ModeratorLayout';     
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
 import TourDetail from '../pages/Moderator/TourDetail';
-import {TourEditPage}  from '../components/tour/TourEditPage';
+import TourEditPage from '../pages/Guide/TourEdit';
 
 import AdminLayout from '../layouts/AdminLayout'
 import Dashboard from '../pages/Admin/Dashboard'
@@ -50,6 +52,9 @@ const AppRoutes = () => {
         {/* Auth routes (without layout) */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password-form" element={<ResetPasswordForm />} />
+        
 
         {/* Protected Routes - Now protecting the layout too */}
         <Route element={<PrivateRoutes />}>
@@ -62,7 +67,7 @@ const AppRoutes = () => {
             <Route path="/guide/tours/view" element={<TourDet/>} />
             <Route path="/guide/tour/view/:id" element={<TourDet/>} />
             <Route path="/guide/tour/edit/:id" element={<TourEditPage/>} />
-            <Route path="/guide/earnings" element={<TourEarnings/>} />
+            {/* <Route path="/guide/earnings" element={<TourEarnings/>} /> */}
           </Route>
 
           <Route element={<ModeratorLayout/>}>
