@@ -48,9 +48,6 @@ const Users = () => {
       active: users.filter(u => u.status === 'active').length,
       pending: users.filter(u => u.status === 'pending').length,
       blocked: users.filter(u => u.status === 'blocked').length,
-      active: users.filter((u) => u.status === "active").length,
-      pending: users.filter((u) => u.status === "pending").length,
-      blocked: users.filter((u) => u.status === "blocked").length,
     });
   }, [users]);
 
@@ -199,24 +196,24 @@ const Users = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="min-h-screen p-6 bg-gray-50">
       {/* Header and Filters */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 mb-6 md:flex-row md:items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
           <p className="text-gray-600">Manage all platform users efficiently</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
+        <div className="flex flex-col items-start w-full gap-4 sm:flex-row sm:items-center md:w-auto">
           {/* Search Bar */}
           <div className="relative w-full sm:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <FaSearch className="text-gray-400" />
             </div>
             <input
               type="text"
               placeholder="Search users..."
-              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="w-full py-2 pl-10 pr-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -229,7 +226,7 @@ const Users = () => {
           <div className="relative w-full sm:w-auto">
             <button
               onClick={() => setUsersDropdownOpen(!usersDropdownOpen)}
-              className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 w-full sm:w-auto justify-between"
+              className="flex items-center justify-between w-full gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 sm:w-auto"
             >
               <span className="font-medium">Filter Users</span>
               {usersDropdownOpen ? (
@@ -240,7 +237,7 @@ const Users = () => {
             </button>
 
             {usersDropdownOpen && (
-              <div className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <div className="absolute right-0 z-10 w-56 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 <div className="py-1">
                   <button
                     onClick={() => handleUserTypeSelect("all")}
@@ -305,66 +302,66 @@ const Users = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
         {/* Total Users Card */}
-        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
+        <div className="p-4 transition-shadow duration-200 bg-white border border-gray-100 rounded-lg shadow-md hover:shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Total Users</p>
+              <p className="text-sm font-medium text-gray-500">Total Users</p>
               <p className="text-2xl font-bold text-gray-800">
                 {isLoading ? <span className="text-gray-400">Loading...</span> : stats.total}
               </p>
-              <p className="text-xs text-gray-400 mt-1">All platform users</p>
+              <p className="mt-1 text-xs text-gray-400">All platform users</p>
             </div>
-            <div className="p-3 rounded-full bg-blue-50 text-blue-600">
+            <div className="p-3 text-blue-600 rounded-full bg-blue-50">
               <FaUser className="w-5 h-5" />
             </div>
           </div>
         </div>
 
         {/* Active Users Card */}
-        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
+        <div className="p-4 transition-shadow duration-200 bg-white border border-gray-100 rounded-lg shadow-md hover:shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Active Users</p>
+              <p className="text-sm font-medium text-gray-500">Active Users</p>
               <p className="text-2xl font-bold text-green-600">
                 {isLoading ? <span className="text-gray-400">Loading...</span> : stats.active}
               </p>
-              <p className="text-xs text-gray-400 mt-1">Currently active</p>
+              <p className="mt-1 text-xs text-gray-400">Currently active</p>
             </div>
-            <div className="p-3 rounded-full bg-green-50 text-green-600">
+            <div className="p-3 text-green-600 rounded-full bg-green-50">
               <FaUser className="w-5 h-5" />
             </div>
           </div>
         </div>
 
         {/* Pending Users Card */}
-        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
+        <div className="p-4 transition-shadow duration-200 bg-white border border-gray-100 rounded-lg shadow-md hover:shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Pending Users</p>
+              <p className="text-sm font-medium text-gray-500">Pending Users</p>
               <p className="text-2xl font-bold text-yellow-600">
                 {isLoading ? <span className="text-gray-400">Loading...</span> : stats.pending}
               </p>
-              <p className="text-xs text-gray-400 mt-1">Awaiting approval</p>
+              <p className="mt-1 text-xs text-gray-400">Awaiting approval</p>
             </div>
-            <div className="p-3 rounded-full bg-yellow-50 text-yellow-600">
+            <div className="p-3 text-yellow-600 rounded-full bg-yellow-50">
               <FaUser className="w-5 h-5" />
             </div>
           </div>
         </div>
 
         {/* Blocked Users Card */}
-        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200">
+        <div className="p-4 transition-shadow duration-200 bg-white border border-gray-100 rounded-lg shadow-md hover:shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Blocked Users</p>
+              <p className="text-sm font-medium text-gray-500">Blocked Users</p>
               <p className="text-2xl font-bold text-red-600">
                 {isLoading ? <span className="text-gray-400">Loading...</span> : stats.blocked}
               </p>
-              <p className="text-xs text-gray-400 mt-1">Restricted access</p>
+              <p className="mt-1 text-xs text-gray-400">Restricted access</p>
             </div>
-            <div className="p-3 rounded-full bg-red-50 text-red-600">
+            <div className="p-3 text-red-600 rounded-full bg-red-50">
               <FaUser className="w-5 h-5" />
             </div>
           </div>
@@ -373,25 +370,25 @@ const Users = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="flex items-center justify-center h-64">
+          <div className="w-12 h-12 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
           <span className="ml-3 text-gray-600">Loading users...</span>
         </div>
       )}
 
       {/* Error State */}
       {error && !isLoading && (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-md mx-auto">
-          <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <FaTimes className="text-red-500 text-2xl" />
+        <div className="max-w-md p-8 mx-auto text-center bg-white rounded-lg shadow-md">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+            <FaTimes className="text-2xl text-red-500" />
           </div>
           <h4 className="text-lg font-medium text-red-600">
             Error Loading Users
           </h4>
-          <p className="text-gray-500 mt-2">{error}</p>
+          <p className="mt-2 text-gray-500">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 mt-4 text-white transition-colors bg-blue-500 rounded-lg hover:bg-blue-600"
           >
             Retry
           </button>
@@ -401,30 +398,30 @@ const Users = () => {
       {/* Users Table */}
       {!isLoading && !error && (
         <>
-          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div className="overflow-hidden bg-white border border-gray-100 shadow-md rounded-xl">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Role
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Registered
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Activity
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                       Actions
                     </th>
                   </tr>
@@ -432,14 +429,14 @@ const Users = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {users.length > 0 ? (
                     users.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={user.id} className="transition-colors hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="relative">
                               <img
                                 src={user.avatar}
                                 alt={user.name}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-white shadow"
+                                className="object-cover w-10 h-10 border-2 border-white rounded-full shadow"
                                 onError={(e) => {
                                   e.target.src = "/default-avatar.png";
                                 }}
@@ -478,7 +475,7 @@ const Users = () => {
                             <div className="text-sm text-gray-500">{user.phone}</div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                           {new Date(user.registeredDate).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -493,11 +490,11 @@ const Users = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-6 py-4 text-sm font-medium whitespace-nowrap">
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => openUserModal(user)}
-                              className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                              className="p-1 text-blue-600 transition-colors rounded hover:text-blue-900 hover:bg-blue-50"
                               title="View Details"
                             >
                               <FaEye className="w-4 h-4" />
@@ -506,7 +503,7 @@ const Users = () => {
                             {user.status === "pending" && (
                               <button
                                 onClick={() => quickStatusUpdate(user.id, "active")}
-                                className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                                className="p-1 text-green-600 transition-colors rounded hover:text-green-900 hover:bg-green-50"
                                 title="Approve User"
                               >
                                 <FaCheck className="w-4 h-4" />
@@ -542,13 +539,13 @@ const Users = () => {
                   ) : (
                     <tr>
                       <td colSpan="7" className="px-6 py-12 text-center">
-                        <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                          <FaUser className="text-gray-400 text-3xl" />
+                        <div className="flex items-center justify-center w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full">
+                          <FaUser className="text-3xl text-gray-400" />
                         </div>
                         <h4 className="text-lg font-medium text-gray-700">
                           No users found
                         </h4>
-                        <p className="text-gray-500 mt-2">
+                        <p className="mt-2 text-gray-500">
                           Try adjusting your search or filter criteria
                         </p>
                         <button
@@ -556,7 +553,7 @@ const Users = () => {
                             setSearchTerm("");
                             setSelectedUserType("all");
                           }}
-                          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                          className="px-4 py-2 mt-4 text-white transition-colors bg-blue-500 rounded-lg hover:bg-blue-600"
                         >
                           Reset Filters
                         </button>
@@ -570,7 +567,7 @@ const Users = () => {
 
           {/* Pagination */}
           {users.length > 0 && (
-            <div className="flex justify-between items-center mt-6">
+            <div className="flex items-center justify-between mt-6">
               <div className="text-sm text-gray-700">
                 Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, users.length)} of {users.length} users
               </div>
@@ -580,17 +577,17 @@ const Users = () => {
                     setCurrentPage((prev) => Math.max(prev - 1, 1))
                   }
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300">
                   Page {currentPage}
                 </span>
                 <button
                   onClick={() => setCurrentPage((prev) => prev + 1)}
                   disabled={users.length < ITEMS_PER_PAGE}
-                  className="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -603,7 +600,7 @@ const Users = () => {
       {/* User Details Modal - Keep the existing modal code */}
       {isModalOpen && selectedUser && (
         <div
-          className="fixed inset-0 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
           onClick={closeUserModal}
         >
@@ -613,25 +610,25 @@ const Users = () => {
           >
             <div className="p-6">
               {/* Modal Header */}
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex items-start justify-between mb-6">
                 <div>
                   <h3 className="text-2xl font-bold text-gray-800">
                     {selectedUser.name}
                   </h3>
-                  <div className="flex items-center mt-1 gap-2">
+                  <div className="flex items-center gap-2 mt-1">
                     {getRoleBadge(selectedUser.role)}
                     {getStatusBadge(selectedUser.status)}
                   </div>
                 </div>
                 <button
                   onClick={closeUserModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                  className="p-1 text-gray-400 transition-colors rounded-full hover:text-gray-600 hover:bg-gray-100"
                 >
                   <FaTimes className="w-6 h-6" />
                 </button>
               </div>
 
-              <div className="flex flex-col lg:flex-row gap-8">
+              <div className="flex flex-col gap-8 lg:flex-row">
                 {/* Left Column - Profile */}
                 <div className="lg:w-1/3">
                   <div className="flex flex-col items-center">
@@ -639,7 +636,7 @@ const Users = () => {
                       <img
                         src={selectedUser.avatar}
                         alt={selectedUser.name}
-                        className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                        className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-lg"
                         onError={(e) => {
                           e.target.src = "/default-avatar.png";
                         }}
@@ -661,7 +658,7 @@ const Users = () => {
                       {selectedUser.status === "pending" && (
                         <button
                           onClick={() => updateUserStatus("active")}
-                          className="w-full px-4 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                          className="flex items-center justify-center w-full gap-2 px-4 py-2 font-medium text-white transition-colors bg-green-500 rounded-lg hover:bg-green-600"
                         >
                           Approve User
                         </button>
@@ -690,8 +687,8 @@ const Users = () => {
                     </div>
 
                     <div className="w-full mt-6 space-y-4">
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <div className="p-4 rounded-lg bg-gray-50">
+                        <h4 className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
                           <FaCalendarAlt className="text-blue-500" />
                           <span>Registration Date</span>
                         </h4>
@@ -707,8 +704,8 @@ const Users = () => {
                       </div>
 
                       {selectedUser.lastLogin && (
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <div className="p-4 rounded-lg bg-gray-50">
+                          <h4 className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
                             <FaCalendarAlt className="text-green-500" />
                             <span>Last Login</span>
                           </h4>
@@ -734,13 +731,13 @@ const Users = () => {
                 <div className="lg:w-2/3">
                   <div className="space-y-6">
                     {/* Contact Information */}
-                    <div className="bg-gray-50 p-5 rounded-lg">
-                      <h4 className="font-semibold text-lg text-gray-800 mb-4">
+                    <div className="p-5 rounded-lg bg-gray-50">
+                      <h4 className="mb-4 text-lg font-semibold text-gray-800">
                         Contact Information
                       </h4>
                       <div className="space-y-4">
                         <div className="flex items-start gap-3">
-                          <div className="p-2 bg-blue-100 text-blue-600 rounded-full">
+                          <div className="p-2 text-blue-600 bg-blue-100 rounded-full">
                             <FaEnvelope className="w-4 h-4" />
                           </div>
                           <div>
@@ -751,7 +748,7 @@ const Users = () => {
 
                         {selectedUser.phone && (
                           <div className="flex items-start gap-3">
-                            <div className="p-2 bg-green-100 text-green-600 rounded-full">
+                            <div className="p-2 text-green-600 bg-green-100 rounded-full">
                               <FaPhone className="w-4 h-4" />
                             </div>
                             <div>
@@ -766,32 +763,32 @@ const Users = () => {
                     </div>
 
                     {/* Activity Stats */}
-                    <div className="bg-gray-50 p-5 rounded-lg">
-                      <h4 className="font-semibold text-lg text-gray-800 mb-4">
+                    <div className="p-5 rounded-lg bg-gray-50">
+                      <h4 className="mb-4 text-lg font-semibold text-gray-800">
                         Activity
                       </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="bg-white p-3 rounded-lg shadow border border-gray-100">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div className="p-3 bg-white border border-gray-100 rounded-lg shadow">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-100 text-purple-600 rounded-full">
+                            <div className="p-2 text-purple-600 bg-purple-100 rounded-full">
                               <FaBook className="w-4 h-4" />
                             </div>
                             <div>
                               <p className="text-sm text-gray-500">Bookings</p>
-                              <p className="font-bold text-lg">
+                              <p className="text-lg font-bold">
                                 {selectedUser.totalBookings}
                               </p>
                             </div>
                           </div>
                         </div>
-                        <div className="bg-white p-3 rounded-lg shadow border border-gray-100">
+                        <div className="p-3 bg-white border border-gray-100 rounded-lg shadow">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-yellow-100 text-yellow-600 rounded-full">
+                            <div className="p-2 text-yellow-600 bg-yellow-100 rounded-full">
                               <FaComment className="w-4 h-4" />
                             </div>
                             <div>
                               <p className="text-sm text-gray-500">Reviews</p>
-                              <p className="font-bold text-lg">
+                              <p className="text-lg font-bold">
                                 {selectedUser.totalReviews}
                               </p>
                             </div>
@@ -799,16 +796,16 @@ const Users = () => {
                         </div>
                         {selectedUser.role !== "traveler" &&
                           selectedUser.averageRating !== undefined && (
-                            <div className="bg-white p-3 rounded-lg shadow border border-gray-100">
+                            <div className="p-3 bg-white border border-gray-100 rounded-lg shadow">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 bg-red-100 text-red-600 rounded-full">
+                                <div className="p-2 text-red-600 bg-red-100 rounded-full">
                                   <FaStar className="w-4 h-4" />
                                 </div>
                                 <div>
                                   <p className="text-sm text-gray-500">
                                     Rating
                                   </p>
-                                  <p className="font-bold text-lg">
+                                  <p className="text-lg font-bold">
                                     {selectedUser.averageRating || 0}/5
                                   </p>
                                 </div>
@@ -820,8 +817,8 @@ const Users = () => {
 
                     {/* Bio */}
                     {selectedUser.bio && (
-                      <div className="bg-gray-50 p-5 rounded-lg">
-                        <h4 className="font-semibold text-lg text-gray-800 mb-4">
+                      <div className="p-5 rounded-lg bg-gray-50">
+                        <h4 className="mb-4 text-lg font-semibold text-gray-800">
                           About
                         </h4>
                         <p className="text-gray-600 whitespace-pre-line">

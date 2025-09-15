@@ -51,7 +51,7 @@ const RecentToursTable = ({ tours = [] }) => {
               </tr>
             </thead>
             <tbody className="text-sm">
-              {pendingTours.slice(0, 5).map((tour) => {
+              {pendingTours.slice(0, 3).map((tour) => {
                 const daysWaiting = getDaysWaiting(tour.created_at);
                 return (
                   <tr key={tour.id} className="border-b border-gray-100 hover:bg-gray-50">

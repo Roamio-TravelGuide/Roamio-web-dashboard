@@ -3,9 +3,9 @@ import RatingStars from './RatingStars';
 
 const StatsCards = ({ stats }) => {
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-LK', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'LKR'
     }).format(amount);
   };
 
@@ -27,9 +27,6 @@ const StatsCards = ({ stats }) => {
         iconBg="bg-purple-100"
         title="Average Rating"
         value={<RatingStars rating={stats.averageRating} />}
-        trend="+0.2 this month"
-        trendColor="text-green-600"
-        additionalText={`From ${stats.reviews.length} reviews`}
       />
       
       <StatCard 
@@ -38,8 +35,6 @@ const StatsCards = ({ stats }) => {
         iconBg="bg-blue-100"
         title="Hidden Places"
         value={stats.hiddenPlaces}
-        trend="+2 this month"
-        trendColor="text-green-600"
       />
       
       <StatCard 
