@@ -5,9 +5,10 @@ import SriLankaMap from '../../components/guide_dashboard/SrilankaMap';
 import TopPerformingTours from '../../components/guide_dashboard/TopPerformingTours';
 import RecentToursTable from '../../components/guide_dashboard/RecentToursTable';
 import RecentHiddenGems from '../../components/guide_dashboard/RecentHiddenGems';
+import { getTourPackagesByGuideId , getHiddenGemByGuideId } from "../../api/guide/dashboardApi";
+import { useAuth } from '../../contexts/authContext';
 
 const Dashboard = () => {
-  const [timeRange, setTimeRange] = useState('30d');
   const [stats, setStats] = useState({
     totalTours: 0,
     publishedTours: 0,
@@ -18,219 +19,153 @@ const Dashboard = () => {
     reviews: [],
     recentActivities: []
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hiddenGems, setHiddenGems] = useState([]);
+  const { authState } = useAuth();
 
-  useEffect(() => {
-  setStats({
-    totalTours: 15,
-    publishedTours: 12,
-    hiddenPlaces: 8,
-    totalEarnings: 25489.50,
-    averageRating: 4.7,
-    tours: [
-      {
-        id: 1,
-        title: "Sigiriya Rock Fortress",
-        status: "published",
-        bookings: 87,
-        revenue: 3520,
-        rating: 4.8,
-        type: "Historical",
-        location: { lat: 7.9579, lng: 80.7607 },
-        cover_image: { 
-          url: "/images/sigiriya.jpg",
-          width: 800,
-          height: 600 
-        },
-        created_at: "2024-03-10T14:30:00Z",
-        duration_minutes: 240,
-        price: 7500,
-        guide: {
-          id: 101,
-          user: {
-            id: 1001,
-            name: "John Doe",
-            profile_picture_url: "/avatars/john.jpg",
-            email: "john@example.com"
-          },
-          years_of_experience: 5,
-          languages_spoken: ["English", "Sinhala"]
-        },
-        tour_stops: [
-          {
-            id: 1001,
-            stop_name: "Lion's Paw Entrance",
-            sequence_no: 1,
-            description: "The iconic lion paw entrance to the rock fortress"
-          },
-          {
-            id: 1002,
-            stop_name: "Fresco Wall",
-            sequence_no: 2,
-            description: "Ancient Sigiriya maidens paintings"
-          }
-        ],
-        rejection_reason: null
-      },
-      {
-        id: 2,
-        title: "Kandy Temple Walk",
-        status: "published",
-        bookings: 42,
-        revenue: 1250,
-        rating: 4.6,
-        type: "Cultural",
-        location: { lat: 7.2906, lng: 80.6337 },
-        cover_image: { 
-          url: "/images/kandy.jpg",
-          width: 800,
-          height: 600 
-        },
-        created_at: "2024-03-08T10:15:00Z",
-        duration_minutes: 180,
-        price: 5000,
-        guide: {
-          id: 102,
-          user: {
-            id: 1002,
-            name: "Jane Smith",
-            profile_picture_url: "/avatars/jane.jpg",
-            email: "jane@example.com"
-          },
-          years_of_experience: 3,
-          languages_spoken: ["English", "Tamil"]
-        },
-        tour_stops: [
-          {
-            id: 2001,
-            stop_name: "Temple of the Tooth",
-            sequence_no: 1,
-            description: "Sacred Buddhist temple housing the tooth relic"
-          }
-        ],
-        rejection_reason: null
-      },
-      {
-        id: 3,
-        title: "Colombo City Explorer",
-        status: "pending_approval",
-        bookings: 0,
-        revenue: 0,
-        rating: null,
-        type: "Urban",
-        location: { lat: 6.9271, lng: 79.8612 },
-        cover_image: { 
-          url: "/images/colombo.jpg",
-          width: 800,
-          height: 600 
-        },
-        created_at: "2024-03-15T09:00:00Z",
-        duration_minutes: 300,
-        price: 6500,
-        guide: {
-          id: 103,
-          user: {
-            id: 1003,
-            name: "Alex Wong",
-            profile_picture_url: "/avatars/alex.jpg",
-            email: "alex@example.com"
-          },
-          years_of_experience: 2,
-          languages_spoken: ["English", "Chinese"]
-        },
-        tour_stops: [
-          {
-            id: 3001,
-            stop_name: "Galle Face Green",
-            sequence_no: 1,
-            description: "Oceanfront urban park"
-          },
-          {
-            id: 3002,
-            stop_name: "Pettah Market",
-            sequence_no: 2,
-            description: "Bustling local market district"
-          }
-        ],
-        rejection_reason: null
-      },
-      {
-        id: 4,
-        title: "Galle Fort Walk",
-        status: "pending_approval",
-        bookings: 0,
-        revenue: 0,
-        rating: null,
-        type: "Historical",
-        location: { lat: 6.0535, lng: 80.2210 },
-        cover_image: { 
-          url: "/images/galle.jpg",
-          width: 800,
-          height: 600 
-        },
-        created_at: "2024-03-18T11:20:00Z",
-        duration_minutes: 210,
-        price: 5500,
-        guide: {
-          id: 104,
-          user: {
-            id: 1004,
-            name: "Maria Garcia",
-            profile_picture_url: "/avatars/maria.jpg",
-            email: "maria@example.com"
-          },
-          years_of_experience: 4,
-          languages_spoken: ["English", "Spanish"]
-        },
-        tour_stops: [
-          {
-            id: 4001,
-            stop_name: "Galle Lighthouse",
-            sequence_no: 1,
-            description: "Iconic lighthouse within the fort"
-          }
-        ],
-        rejection_reason: null
-      },
-      {
-        id: 5,
-        title: "Nuwara Eliya Tea Trails",
-        status: "pending_approval",
-        bookings: 0,
-        revenue: 0,
-        rating: null,
-        type: "Nature",
-        location: { lat: 6.9497, lng: 80.7829 },
-        cover_image: { 
-          url: "/images/tea.jpg",
-          width: 800,
-          height: 600 
-        },
-        created_at: "2024-03-20T08:45:00Z",
-        duration_minutes: 360,
-        price: 8500,
-        guide: {
-          id: 105,
-          user: {
-            id: 1005,
-            name: "David Brown",
-            profile_picture_url: "/avatars/david.jpg",
-            email: "david@example.com"
-          },
-          years_of_experience: 6,
-          languages_spoken: ["English", "Sinhala", "Tamil"]
-        },
-        tour_stops: [
-          {
-            id: 5001,
-            stop_name: "Pedro Tea Estate",
-            sequence_no: 1,
-            description: "Historic tea plantation with factory tour"
-          }
-        ],
-        rejection_reason: null
+  const determineTourType = (title) => {
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes('historical') || lowerTitle.includes('ancient') || lowerTitle.includes('fortress') || lowerTitle.includes('rock')) {
+      return "Historical";
+    } else if (lowerTitle.includes('cultural') || lowerTitle.includes('temple') || lowerTitle.includes('sacred')) {
+      return "Cultural";
+    } else if (lowerTitle.includes('city') || lowerTitle.includes('urban') || lowerTitle.includes('street')) {
+      return "Urban";
+    } else if (lowerTitle.includes('nature') || lowerTitle.includes('wildlife') || lowerTitle.includes('beach') || lowerTitle.includes('tea')) {
+      return "Nature";
+    } else if (lowerTitle.includes('food') || lowerTitle.includes('culinary') || lowerTitle.includes('market')) {
+      return "Food";
+    } else if (lowerTitle.includes('adventure') || lowerTitle.includes('hiking') || lowerTitle.includes('trekking')) {
+      return "Adventure";
+    }
+    return "General";
+  };
+
+  // Helper function to get location coordinates based on tour title or stops
+  const getTourLocation = (tour) => {
+    if (tour.tour_stops && tour.tour_stops.length > 0 && tour.tour_stops[0].location && tour.tour_stops[0].location.city) {
+      const city = tour.tour_stops[0].location.city.toLowerCase();
+      const cityCoordinates = {
+        'colombo': { lat: 6.9271, lng: 79.8612 },
+        'kandy': { lat: 7.2906, lng: 80.6337 },
+        'galle': { lat: 6.0535, lng: 80.2210 },
+        'sigiriya': { lat: 7.9579, lng: 80.7607 },
+        'nuwara eliya': { lat: 6.9497, lng: 80.7829 },
+        'negombo': { lat: 7.2099, lng: 79.8370 },
+        'anuradhapura': { lat: 8.3114, lng: 80.4037 },
+        'polonnaruwa': { lat: 7.9329, lng: 81.0088 },
+        'trincomalee': { lat: 8.5874, lng: 81.2155 },
+        'jaffna': { lat: 9.6615, lng: 80.0255 }
+      };
+      
+      return cityCoordinates[city] || { lat: 7.8731, lng: 80.7718 };
+    }
+
+    const lowerTitle = tour.title.toLowerCase();
+    if (lowerTitle.includes('colombo')) return { lat: 6.9271, lng: 79.8612 };
+    if (lowerTitle.includes('kandy')) return { lat: 7.2906, lng: 80.6337 };
+    if (lowerTitle.includes('galle')) return { lat: 6.0535, lng: 80.2210 };
+    if (lowerTitle.includes('sigiriya')) return { lat: 7.9579, lng: 80.7607 };
+    if (lowerTitle.includes('nuwara') || lowerTitle.includes('eliya')) return { lat: 6.9497, lng: 80.7829 };
+    if (lowerTitle.includes('negombo')) return { lat: 7.2099, lng: 79.8370 };
+    
+    return { lat: 7.8731, lng: 80.7718 }; // Default Sri Lanka coordinates
+  };
+
+  const fetchTourPackages = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (!authState.user?.id) {
+        throw new Error('User not authenticated');
       }
-    ],
-    reviews: [
+
+      const response = await getTourPackagesByGuideId(authState.user.id);
+      
+      if (!response.data || !Array.isArray(response.data)) {
+        throw new Error('Invalid response format');
+      }
+
+      // Transform API response to match your component expectations
+      const transformedTours = response.data.map(tour => ({
+        ...tour,
+        bookings: tour._count?.downloads || 0,
+        revenue: (tour._count?.downloads || 0) * tour.price,
+        rating: calculateTourRating(tour),
+        type: determineTourType(tour.title),
+        location: getTourLocation(tour)
+      }));
+
+      // Calculate stats from the API data
+      const totalTours = response.data.length;
+      const publishedTours = response.data.filter(tour => tour.status === 'published').length;
+      const totalDownloads = response.data.reduce((sum, tour) => sum + (tour._count?.downloads || 0), 0);
+      const totalRevenue = response.data.reduce((sum, tour) => sum + ((tour._count?.downloads || 0) * tour.price), 0);
+      
+      // Calculate average rating (placeholder - you'll need actual rating data)
+      const averageRating = transformedTours.filter(tour => tour.rating).length > 0 
+        ? transformedTours.reduce((sum, tour) => sum + (tour.rating || 0), 0) / transformedTours.filter(tour => tour.rating).length
+        : 4.7;
+
+      setStats(prevStats => ({
+        ...prevStats,
+        totalTours,
+        publishedTours,
+        totalEarnings: totalRevenue,
+        averageRating: Math.round(averageRating * 10) / 10,
+        tours: transformedTours,
+        reviews: getSampleReviews(transformedTours),
+        recentActivities: generateRecentActivities(transformedTours)
+      }));
+
+    } catch (err) {
+      setError('Failed to load tours. Please try again.');
+      console.error('Error fetching tours:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchHiddenGems = async () => {
+    try {
+      if (!authState.user?.id) return;
+      
+      const response = await getHiddenGemByGuideId(authState.user.id);
+
+      // console.log(response);
+      
+      if (response.data && Array.isArray(response.data)) {
+        setHiddenGems(response.data);
+
+        setStats(prevStats => ({
+          ...prevStats,
+          hiddenPlaces: response.data.length
+        }));
+        
+      }
+    } catch (err) {
+      console.error('Error fetching hidden gems:', err);
+    }
+  };
+
+  // Placeholder function for tour rating calculation
+  const calculateTourRating = (tour) => {
+    // You'll need to implement actual rating calculation
+    // For now, return a placeholder based on downloads or random
+    if (tour._count?.downloads > 10) return 4.8;
+    if (tour._count?.downloads > 5) return 4.5;
+    if (tour._count?.downloads > 0) return 4.2;
+    return null;
+  };
+
+  // Generate sample reviews based on tours
+  const getSampleReviews = (tours) => {
+    const publishedTours = tours.filter(tour => tour.status === 'published' && tour._count?.downloads > 0);
+    if (publishedTours.length === 0) return [];
+
+    return [
       {
         id: 1,
         traveler: {
@@ -239,9 +174,9 @@ const Dashboard = () => {
           profile_picture_url: "/avatars/sarah.jpg"
         },
         rating: 5,
-        comment: "Amazing tour! Our guide was incredibly knowledgeable about Sigiriya's history.",
+        comment: "Amazing tour! Our guide was incredibly knowledgeable.",
         date: '2024-03-12',
-        tourId: 1
+        tourId: publishedTours[0]?.id || 1
       },
       {
         id: 2,
@@ -251,22 +186,77 @@ const Dashboard = () => {
           profile_picture_url: "/avatars/michael.jpg"
         },
         rating: 4,
-        comment: "Good experience, but the tour ran a bit longer than expected.",
+        comment: "Good experience, would recommend to others.",
         date: '2024-03-08',
-        tourId: 2
+        tourId: publishedTours[0]?.id || 1
       }
-    ]
-  });
-}, [timeRange]);
+    ];
+  };
+
+  // Generate recent activities based on tours
+  const generateRecentActivities = (tours) => {
+    const activities = [];
+    
+    tours.forEach(tour => {
+      if (tour.created_at) {
+        activities.push({
+          id: activities.length + 1,
+          type: 'package_create',
+          description: `Created tour: ${tour.title}`,
+          date: tour.created_at,
+          tourId: tour.id
+        });
+      }
+
+      if (tour.status === 'published' && tour._count?.downloads > 0) {
+        activities.push({
+          id: activities.length + 1,
+          type: 'package_download',
+          description: `${tour._count.downloads} downloads for ${tour.title}`,
+          date: new Date().toISOString(),
+          tourId: tour.id
+        });
+      }
+    });
+
+    return activities.slice(0, 5); // Return only 5 most recent activities
+  };
+
+  useEffect(() => {
+    if (authState.user?.id) {
+      fetchTourPackages();
+      fetchHiddenGems();
+
+    }
+  }, [authState.user?.id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-lg text-gray-600">Loading dashboard...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-lg text-red-500">{error}</div>
+        <button 
+          onClick={fetchTourPackages}
+          className="px-4 py-2 ml-4 text-white bg-blue-500 rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="pb-12 mt-5">
         <div className="mx-auto sm:px-6 lg:px-12">
-          <DashboardHeader 
-            timeRange={timeRange}
-            setTimeRange={setTimeRange}
-          />
+          <DashboardHeader/>
           
           <div className="space-y-8">
             <StatsCards stats={stats} />
@@ -276,12 +266,8 @@ const Dashboard = () => {
               <TopPerformingTours tours={stats.tours} />
             </div>
 
-            {/* RecentToursTable now takes full width */}
             <RecentToursTable tours={stats.tours} />
-
-            <RecentHiddenGems />
-
-            
+            <RecentHiddenGems hiddenGems={hiddenGems} />
           </div>
         </div>
       </div>

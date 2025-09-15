@@ -1,4 +1,3 @@
-// src/api/tourApi.js
 import apiClient from '../apiClient';
 import axios from 'axios';
 
@@ -36,14 +35,12 @@ export const createTour = async (tourData) => {
 export const getTourPackagesByGuideId = async (guideId, filters = {}) => {
   try {
     const params = new URLSearchParams();
-    // console.log(guideId);
     if (filters.status) params.append('status', filters.status);
     if (filters.search) params.append('search', filters.search);
     if (filters.page) params.append('page', filters.page);
     if (filters.limit) params.append('limit', filters.limit);
     
-    const response = await apiClient.get(`tour-packages/guide/${guideId}?${params.toString()}`);
-    // console.log(response);
+    const response = await apiClient.get(`tour-package/guide/${guideId}?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching tour packages:', error);
@@ -53,7 +50,7 @@ export const getTourPackagesByGuideId = async (guideId, filters = {}) => {
 
 export const getTourById = async (tourId) => {
   try {
-    return await apiClient.get(`tour-packages/${tourId}`);
+    return await apiClient.get(`tour-package/${tourId}`);
   } catch (error) {
     console.error('Error fetching tour package:', error);
     throw error;
@@ -183,7 +180,7 @@ export const getMediaUrls = async (mediaIds) => {
 
 export const createTourStops = async (packageId, stops) => {
   try {
-    const response = await apiClient.post('tour-packages/tour-stops/bulk', {
+    const response = await apiClient.post('tour-package/tour-stops/bulk', {
       package_id: packageId,
       stops
     }, {
@@ -201,7 +198,7 @@ export const createTourStops = async (packageId, stops) => {
 
 export const createLocation = async (locationData) => {
   try {
-    const response = await apiClient.post('tour-packages/locations', locationData, {
+    const response = await apiClient.post('tour-package/locations', locationData, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -224,7 +221,7 @@ export const getTourPackages = async ({statusFilter, searchQuery, currentPage, i
       limit: itemsPerPage
     };
 
-    const response = await apiClient.get('/tour-packages', {
+    const response = await apiClient.get('/tour-package', {
       params,
       headers: {
         'Content-Type': 'application/json'
@@ -259,7 +256,7 @@ export const deletetempmedia = async(key) => {
 export const updateTour = async (id, tourData) => {
   try {
     console.log(tourData);
-    const response = await apiClient.put(`tour-packages/${id}`, tourData, {
+    const response = await apiClient.put(`tour-package/${id}`, tourData, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`

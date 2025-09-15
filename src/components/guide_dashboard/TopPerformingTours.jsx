@@ -54,9 +54,9 @@ const TourCard = ({ tour, rank }) => {
   return (
     <div className="overflow-hidden transition-all duration-200 border border-gray-200 rounded-xl hover:shadow-md">
       <div className="relative h-40 bg-gray-100">
-        {tour.coverImage ? (
+        {tour.cover_image ? (
           <img 
-            src={tour.coverImage} 
+            src={tour.cover_image.url} 
             alt={tour.title}
             className="object-cover w-full h-full"
             loading="lazy"
@@ -78,20 +78,20 @@ const TourCard = ({ tour, rank }) => {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 overflow-hidden bg-gray-100 rounded-full">
-              {tour.guide?.avatar ? (
+              {tour.guide.user.profile_picture_url ? (
                 <img 
-                  src={tour.guide.avatar} 
-                  alt={tour.guide.name}
+                  src={tour.guide.user.profile_picture_url} 
+                  alt={tour.guide.user.name}
                   className="object-cover w-full h-full"
                 />
               ) : (
                 <div className="flex items-center justify-center w-full h-full text-blue-600 bg-blue-100">
-                  <span className="text-xs font-medium">{tour.guide?.name?.charAt(0) || 'G'}</span>
+                  <span className="text-xs font-medium">{tour.guide?.user?.name?.charAt(0) || 'G'}</span>
                 </div>
               )}
             </div>
             <span className="text-sm font-medium text-gray-700 truncate max-w-[100px]">
-              {tour.guide?.name || 'Tour Guide'}
+              {tour.guide?.user?.name || 'Tour Guide'}
             </span>
           </div>
           

@@ -538,7 +538,7 @@ const TourDetail = () => {
         setIsLoading(true);
         setError(null);
         
-        const response = await axios.get(`${API_BASE_URL}/tour-packages/${id}`, {
+        const response = await axios.get(`${API_BASE_URL}/tour-package/${id}`, {
           timeout: 10000
         });
         
