@@ -5,7 +5,7 @@ import { RouteMapStep } from '../../components/tour/RouteMapStep.jsx';
 import { MediaUploadStep } from '../../components/tour/MediaUploadStep.jsx';
 import { ReviewStep } from '../../components/tour/ReviewStep.jsx';
 import { useMapbox } from '../../hooks/useMaps.js';
-import { createTour, finalizemedia, createLocation, createTourStops } from '../../api/tour/tourApi.js';
+import { createCompleteTour } from '../../api/tour/tourApi.js';
 import { useAuth } from '../../contexts/authContext.jsx';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -26,7 +26,7 @@ const initialTourData = {
   price: 0,
   duration_minutes: 0,
   tour_stops: [],
-  cover_image: undefined,
+  cover_image_temp: undefined,
   cover_image_url: undefined
 };
 
@@ -135,113 +135,178 @@ export const TourCreate = () => {
     setTourData(prev => ({ ...prev, tour_stops: stops }));
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    const toastId = toast.loading('Creating your tour...');
+  // const handleSubmit = async () => {
+  //   setIsSubmitting(true);
+  //   const toastId = toast.loading('Creating your tour...');
 
-    try {
-      // 1. Create basic tour package
-      const basicTourData = {
-        title: tourData.title,
-        description: tourData.description,
-        price: price,
-        duration_minutes: durationSeconds,
-        status: 'pending_approval',
-        guide_id: authState.user.id
-      };
+  //   try {
+  //     // Validate authentication
+  //     if (!authState.user?.id) {
+  //       throw new Error('User authentication required');
+  //     }
 
-      // 2. Create the tour package
-      const tourResponse = await createTour(basicTourData);
-      const package_id = tourResponse.data?.id || tourResponse.id;
+  //     // Use FormData for file uploads
+  //     const formData = new FormData();
       
-      if (!package_id) {
-        throw new Error('Failed to get package ID from response');
-      }
-
-      // 3. Process locations and stops
-      const stopsWithLocations = await Promise.all(
-        tourData.tour_stops.map(async (stop) => {
-          if (!stop.location) return { ...stop, location_id: null };
-
-          const locationResponse = await createLocation({
-            longitude: stop.location.longitude,
-            latitude: stop.location.latitude,
-            address: stop.location.address,
-            city: stop.location.city,
-            province: stop.location.province,
-            district: stop.location.district,
-            postal_code: stop.location.postal_code
-          });
-
-          return {
-            ...stop,
-            location_id: locationResponse.data?.id || locationResponse.id
-          };
-        })
-      );
-
-      // 4. Create tour stops
-      await createTourStops(
-        package_id,
-        stopsWithLocations.map((stop, index) => ({
-          sequence_no: index + 1,
-          stop_name: stop.stop_name || `Stop ${index + 1}`,
-          description: stop.description || '',
-          location_id: stop.location_id || null
-        }))
-      );
-
-      // 5. Handle media uploads
-      const fileReferences = [];
-
-      // Add stop media
-      tourData.tour_stops.forEach((stop, stopIndex) => {
-        stop.media?.forEach(mediaItem => {
-          fileReferences.push({
-            key: mediaItem.key,
-            type: mediaItem.media_type === 'audio' ? 'stop_audio' : 'stop_image',
-            duration_seconds: mediaItem.duration_seconds,
-            file_size: mediaItem.file_size,
-            format: mediaItem.format,
-            stopIndex: stopIndex,
-            stopSequence: stopIndex + 1
-          });
-        });
-      });
-
-      // Add cover image if exists
-      if (tourData.cover_image_temp?.key) {
-        fileReferences.push({
-          key: tourData.cover_image_temp.key,
-          type: 'cover',
-          file_size: tourData.cover_image_temp.file_size,
-          format: tourData.cover_image_temp.format
-        });
-      }
-
-      if (fileReferences.length > 0) {
-        const formData = new FormData();
-        formData.append('fileReferences', JSON.stringify(fileReferences));
-        formData.append('packageId', package_id);
-        formData.append('uploadedById', authState.user.id);
+  //     // Add tour data as JSON
+  //     formData.append('tour', JSON.stringify({
+  //       title: tourData.title,
+  //       description: tourData.description,
+  //       price: price,
+  //       duration_minutes: Math.ceil(durationSeconds / 60),
+  //       status: 'pending_approval',
+  //       guide_id: authState.user.id,
+  //     }));
+      
+  //     // Add cover image as file
+  //     if (tourData.cover_image_temp && tourData.cover_image_temp.file) {
+  //       formData.append('cover_image', tourData.cover_image_temp.file);
+  //     }
+      
+  //     // Add stops as JSON and media as files
+  //     tourData.tour_stops.forEach((stop, index) => {
+  //       formData.append(`stops[${index}]`, JSON.stringify({
+  //         sequence_no: index + 1,
+  //         stop_name: stop.stop_name || `Stop ${index + 1}`,
+  //         description: stop.description || '',
+  //         location: stop.location ? {
+  //           longitude: stop.location.longitude,
+  //           latitude: stop.location.latitude,
+  //           address: stop.location.address || '',
+  //           city: stop.location.city || '',
+  //           province: stop.location.province || '',
+  //           district: stop.location.district || '',
+  //           postal_code: stop.location.postal_code || ''
+  //         } : null
+  //       }));
         
-        await finalizemedia(formData);
-      }
+  //       // Add media files for this stop
+  //       stop.media?.forEach((mediaItem, mediaIndex) => {
+  //         if (mediaItem.file) {
+  //           formData.append(`stop_${index}_media`, mediaItem.file);
+  //         }
+  //       });
+  //     });
 
-      toast.success('Tour created successfully!', { id: toastId });
-      setTimeout(() => navigate('/guide/tourpackages'), 1500);
+  //     const response = await createCompleteTour(formData);
+      
+  //     if (response.success) {
+  //       toast.success('Tour created successfully!', { id: toastId });
+  //       // setTimeout(() => navigate('/guide/tourpackages'), 1500);
+  //     } else {
+  //       throw new Error(response.message || 'Failed to create tour');
+  //     }
 
-    } catch (error) {
-      console.error('Tour submission failed:', error);
-      toast.error(
-        error.response?.data?.message || 
-        'Failed to create tour. Please try again.',
-        { id: toastId }
-      );
-    } finally {
-      setIsSubmitting(false);
+  //   } catch (error) {
+  //     console.error('Tour submission failed:', error);
+  //     toast.error(
+  //       error.response?.data?.message || 
+  //       error.message ||
+  //       'Failed to create tour. Please try again.',
+  //       { id: toastId }
+  //     );
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
+  // In the handleSubmit function in TourCreate.jsx
+const handleSubmit = async () => {
+  setIsSubmitting(true);
+  const toastId = toast.loading('Creating your tour...');
+
+  try {
+    if (!authState.user?.id) {
+      throw new Error('User authentication required');
     }
-  };
+
+    const formData = new FormData();
+    
+    // Add tour data as JSON
+    const tourJson = {
+      title: tourData.title,
+      description: tourData.description,
+      price: price,
+      duration_minutes: Math.ceil(durationSeconds / 60),
+      status: 'pending_approval',
+      guide_id: authState.user.id,
+    };
+    
+    console.log('Tour JSON:', tourJson);
+    formData.append('tour', JSON.stringify(tourJson));
+    
+    // Add cover image as file (if exists)
+    if (tourData.cover_image_file) {
+      console.log('Adding cover image:', tourData.cover_image_file.name);
+      formData.append('cover_image', tourData.cover_image_file);
+    } else {
+      console.log('No cover image to add');
+    }
+    
+    // Add stops as JSON and media as files
+    tourData.tour_stops.forEach((stop, index) => {
+      const stopJson = {
+        sequence_no: index + 1,
+        stop_name: stop.stop_name || `Stop ${index + 1}`,
+        description: stop.description || '',
+        location: stop.location ? {
+          longitude: stop.location.longitude,
+          latitude: stop.location.latitude,
+          address: stop.location.address || '',
+          city: stop.location.city || '',
+          province: stop.location.province || '',
+          district: stop.location.district || '',
+          postal_code: stop.location.postal_code || ''
+        } : null
+      };
+      
+      console.log(`Stop ${index} JSON:`, stopJson);
+      formData.append(`stops[${index}]`, JSON.stringify(stopJson));
+      
+      // Add media files for this stop
+      if (stop.media && stop.media.length > 0) {
+        stop.media.forEach((mediaItem, mediaIndex) => {
+          if (mediaItem.file) {
+            console.log(`Adding media for stop ${index}:`, mediaItem.file.name);
+            formData.append(`stop_${index}_media`, mediaItem.file);
+          }
+        });
+      } else {
+        console.log(`No media for stop ${index}`);
+      }
+    });
+
+    // Debug: Log FormData contents
+    console.log('=== FORM DATA CONTENTS ===');
+    for (let [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}: FILE - ${value.name} (${value.size} bytes, ${value.type})`);
+      } else {
+        console.log(`${key}:`, value.substring(0, 100) + (value.length > 100 ? '...' : ''));
+      }
+    }
+
+    const response = await createCompleteTour(formData);
+    
+    if (response.success) {
+      toast.success('Tour created successfully!', { id: toastId });
+      navigate('/guide/tourpackages');
+    } else {
+      throw new Error(response.message || 'Failed to create tour');
+    }
+
+  } catch (error) {
+    console.error('Tour submission failed:', error);
+    toast.error(
+      error.response?.data?.message || 
+      error.message ||
+      'Failed to create tour. Please try again.',
+      { id: toastId }
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const renderCurrentStep = () => {
     const commonProps = {

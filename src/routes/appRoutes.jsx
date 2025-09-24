@@ -24,7 +24,7 @@ import TourSettings from '../pages/Guide/GuideSettings'
 import ModeratorLayout from '../layouts/ModeratorLayout';     
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
 import TourDetail from '../pages/Moderator/TourDetail';
-import TourEditPage from '../pages/Guide/TourEdit';
+// import TourEditPage from '../pages/Guide/TourEdit';
 
 import AdminLayout from '../layouts/AdminLayout'
 import Dashboard from '../pages/Admin/Dashboard'
@@ -67,7 +67,7 @@ const AppRoutes = () => {
             <Route path="/guide/support" element={<Support />} />
             <Route path="/guide/tours/view" element={<TourDet/>} />
             <Route path="/guide/tour/view/:id" element={<TourDet/>} />
-            <Route path="/guide/tour/edit/:id" element={<TourEditPage/>} />
+            {/* <Route path="/guide/tour/edit/:id" element={<TourEditPage/>} /> */}
             <Route path="/guide/earnings" element={<TourEarnings/>} />
             <Route path="/guide/settings" element={<TourSettings/>} />
           </Route>

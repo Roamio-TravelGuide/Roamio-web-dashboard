@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { TourStopsMap } from '../../components/tour/TourStopsMap';
 import axios from 'axios';
-import { getTourPackageMedia, getMediaUrls } from '../../api/tour/tourApi';
 
 const API_BASE_URL = 'http://localhost:3001/api/v1';
 
