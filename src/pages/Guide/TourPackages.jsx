@@ -106,6 +106,11 @@
       return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
+    const getImageUrl = (relativePath) => {
+      if (!relativePath) return null;
+      return `http://localhost:3001${relativePath}`;
+    };
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         {/* Header */}
@@ -193,15 +198,21 @@
                         aria-label={`View ${tour.title}`}
                       />
                       
+
+                      
                       {/* Card content with enhanced hover effects */}
                       <div className="relative flex flex-col h-full">
                         {/* Image container with hover zoom effect */}
                         <div className="relative w-full h-48 overflow-hidden">
                           {tour.cover_image?.url ? (
-                            <img 
-                              src={tour.cover_image.url} 
+                            <img
+                              src={`http://localhost:3001${tour.cover_image.url}`}
                               alt={tour.title}
                               className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                              onError={(e) => {
+                                console.error('Image failed to load:', e.target.src);
+                                e.target.style.display = 'none';
+                              }}
                             />
                           ) : (
                             <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400">
