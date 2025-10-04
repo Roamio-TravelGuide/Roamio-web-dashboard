@@ -178,7 +178,6 @@ export const TourCreate = ({ mode = 'create', tourId }) => {
             district: stop.location.district || '',
             postal_code: stop.location.postal_code || ''
           } : null,
-          // ✅ INCLUDED: Media metadata with durations
           media: mediaMetadata
         };
         
@@ -230,7 +229,6 @@ export const TourCreate = ({ mode = 'create', tourId }) => {
     }
   };
 
-  // Render helpers
   const getPageTitle = () => 
     isEditMode ? UI_LABELS.EDIT.TITLE : UI_LABELS.CREATE.TITLE;
 
