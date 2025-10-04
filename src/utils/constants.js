@@ -3,7 +3,7 @@ export const API_URL = `${API_BASE_URL}`;
 export const UPLOADS_URL = `${API_BASE_URL}`;
 
 export const getMediaUrl = (url) => {
-    console.log(url);
+    // console.log(url);
   if (!url) return '';
   if (url.includes('http')) return url;
   return `http://localhost:3001${url}`;

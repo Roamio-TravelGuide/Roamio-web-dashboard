@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback , useMemo} from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { CoreMap } from '../map/CoreMap';
 import { StopDetailsForm } from './StopDetailsForm';
 import { StopList } from './StopList';
@@ -21,14 +21,24 @@ export const RouteMapStep = ({
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [nextId, setNextId] = useState(1);
 
-  // Initialize stops and nextId from props
+  // Use ref to track previous stops to prevent infinite loop
+  const previousStopsRef = useRef(stops);
+
+  // FIX: Initialize stops only when stops prop actually changes
   useEffect(() => {
-    setInternalStops(stops);
-    if (stops.length > 0) {
-      const maxId = Math.max(...stops.map(s => s.id || 0), 0);
-      setNextId(maxId + 1);
+    // Compare current stops with previous stops using ref
+    const stopsChanged = JSON.stringify(stops) !== JSON.stringify(previousStopsRef.current);
+    
+    if (stopsChanged) {
+      setInternalStops(stops);
+      previousStopsRef.current = stops;
+      
+      if (stops.length > 0) {
+        const maxId = Math.max(...stops.map(s => s.id || 0), 0);
+        setNextId(maxId + 1);
+      }
     }
-  }, [stops]);
+  }, [stops]); // Only depend on stops
 
   // Memoized sorted stops
   const sortedStops = useMemo(() => 
@@ -40,10 +50,15 @@ export const RouteMapStep = ({
     ? externalSelectedStopId 
     : selectedStop?.id || null;
 
-  // Update stops and notify parent
+  // FIX: Update stops without causing infinite loop
   const updateStops = useCallback((newStops) => {
     setInternalStops(newStops);
-    onStopsUpdate?.(newStops);
+    
+    // Only call onStopsUpdate if stops actually changed
+    const stopsChanged = JSON.stringify(newStops) !== JSON.stringify(previousStopsRef.current);
+    if (stopsChanged) {
+      onStopsUpdate?.(newStops);
+    }
   }, [onStopsUpdate]);
 
   // Handle map click to add new stop

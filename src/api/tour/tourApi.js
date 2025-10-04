@@ -1,5 +1,4 @@
 import apiClient from '../apiClient';
-import axios from 'axios';
 
 export const getTourPackagesByGuideId = async (guideId, filters = {}) => {
   try {
@@ -19,7 +18,8 @@ export const getTourPackagesByGuideId = async (guideId, filters = {}) => {
 
 export const getTourById = async (tourId) => {
   try {
-    return await apiClient.get(`tour-package/${tourId}`);
+    const result = await apiClient.get(`tour-package/${tourId}`);
+    return result.data;
   } catch (error) {
     console.error('Error fetching tour package:', error);
     throw error;
@@ -49,38 +49,6 @@ export const getTourPackages = async ({statusFilter, searchQuery, currentPage, i
   }
 }
 
-export const updateTour = async (id, tourData) => {
-  try {
-    console.log(tourData);
-    const response = await apiClient.put(`tour-package/${id}`, tourData, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Tour update failed:', error);
-    
-    if (axios.isAxiosError(error)) {
-      const serverMessage = error.response?.data?.message;
-      const validationErrors = error.response?.data?.errors;
-      
-      if (validationErrors) {
-        throw new Error(`Validation failed: ${
-          Object.entries(validationErrors)
-            .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
-            .join('; ')
-        }`);
-      }
-      
-      throw new Error(serverMessage || 'Failed to update tour (server error)');
-    }
-    
-    throw new Error(error instanceof Error ? error.message : 'Failed to update tour');
-  }
-};
-
 export const createCompleteTour = async (formData) => {
   const response = await apiClient.post('tour-package/complete', formData, {
     headers: {
@@ -88,4 +56,17 @@ export const createCompleteTour = async (formData) => {
     },
   });
   return response.data;
+};
+
+export const updateTour = async (tourId, formData) => {
+  try {
+    const response = await apiClient.put(`tour-package/${tourId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
