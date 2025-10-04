@@ -10,6 +10,7 @@
   } from 'lucide-react';
   import {TourStopsMap} from '../../components/tour/TourStopsMap';
   import axios from 'axios';
+  import { getMediaUrl } from '../../utils/constants';
 
   const API_BASE_URL = 'http://localhost:3001/api/v1';
 
@@ -574,31 +575,32 @@
       );
     }, [mapStops, selectedStopId]);
 
-    // Refresh media URLs with fresh signed URLs
+  // Refresh media URLs (map relative URLs returned by the API to full API URLs)
     const refreshMediaUrls = useCallback(async (tourData) => {
       try {
         if (!tourData) return tourData;
 
-        const mediaResponse = await getTourPackageMedia(tourData.id);
-        
-        if (mediaResponse.success && mediaResponse.data) {
-          const freshMediaData = mediaResponse.data;
-          
-          if (freshMediaData.cover_image) {
-            tourData.cover_image_url = freshMediaData.cover_image.url;
-            if (tourData.cover_image) {
-              tourData.cover_image.url = freshMediaData.cover_image.url;
-            }
-          }
+        // If the API already returned media entries, convert any relative urls
+        if (tourData.cover_image && tourData.cover_image.url) {
+          tourData.cover_image_url = getMediaUrl(tourData.cover_image.url);
+          tourData.cover_image.url = getMediaUrl(tourData.cover_image.url);
+        }
 
-          if (freshMediaData.tour_stops && tourData.tour_stops) {
-            tourData.tour_stops.forEach((stop, stopIndex) => {
-              const freshStop = freshMediaData.tour_stops[stopIndex];
-              if (freshStop && freshStop.media) {
-                stop.media = freshStop.media;
-              }
+        if (tourData.tour_stops && Array.isArray(tourData.tour_stops)) {
+          tourData.tour_stops.forEach((stop) => {
+            if (!stop.media) return;
+            // stop.media is an array of { stop_id, media_id, media: { ... } }
+            stop.media = stop.media.map((m) => {
+              const mediaObj = m.media || m;
+              return {
+                ...m,
+                media: {
+                  ...mediaObj,
+                  url: getMediaUrl(mediaObj?.url),
+                },
+              };
             });
-          }
+          });
         }
 
         return tourData;
@@ -615,15 +617,34 @@
           setIsLoading(true);
           setError(null);
           
-          const response = await axios.get(`${API_BASE_URL}/tour-packages/${id}`, {
-            timeout: 10000
-          });
-          
+          const response = await axios.get(`${API_BASE_URL}/tour-package/${id}`, { timeout: 10000 });
           if (!response.data?.success || !response.data?.data) {
             throw new Error('Invalid tour data received');
           }
 
           const data = response.data.data;
+
+          // Fetch explicit media listing from the backend (cover + stops media)
+          try {
+            const mediaResp = await axios.get(`${API_BASE_URL}/tour-package/${id}/media`);
+            if (mediaResp.data?.success && mediaResp.data?.data) {
+              // merge the media payload into the tour data for consistent mapping
+              data.cover_image = mediaResp.data.data.cover_image || data.cover_image || null;
+              // Replace stop media arrays with the authoritative media list
+              if (Array.isArray(data.tour_stops)) {
+                data.tour_stops = data.tour_stops.map((stop) => {
+                  const mediaInfo = (mediaResp.data.data.tour_stops || []).find(s => s.id === stop.id);
+                  return {
+                    ...stop,
+                    media: mediaInfo ? (mediaInfo.media || []) : (stop.media || [])
+                  };
+                });
+              }
+            }
+          } catch (err) {
+            console.debug('Failed to fetch package media list, falling back to inline media', err?.message || err);
+          }
+
           const enrichedData = await refreshMediaUrls(data);
           
           setTour(enrichedData);
@@ -701,6 +722,7 @@
     }, [volume, playbackRate]);
 
     const handlePlayAudio = useCallback((mediaId, audioUrl) => {
+      console.debug('handlePlayAudio called', { mediaId, audioUrl });
       try {
         if (playingAudio === mediaId) {
           audioRef.current?.pause();
@@ -754,7 +776,7 @@
       
       try {
         const response = await axios.patch(
-          `${API_BASE_URL}/tour-packages/${id}/status`,
+          `${API_BASE_URL}/tour-package/${id}/status`,
           { status: 'published' },
           {
             headers: { 'Content-Type': 'application/json' },
@@ -810,7 +832,7 @@
 
       try {
         const response = await axios.patch(
-          `${API_BASE_URL}/tour-packages/${id}/status`,
+          `${API_BASE_URL}/tour-package/${id}/status`,
           {
             status: 'rejected',
             rejection_reason: rejectionReason
