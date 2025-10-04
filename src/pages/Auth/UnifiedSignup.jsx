@@ -36,7 +36,12 @@ const UnifiedSignup = () => {
     contactNumber: '',
     guideId: '',
     restaurantType: '',
-    address: '',
+  streetNumber: '',
+  streetName: '',
+  city: '',
+  fullAddress: '',
+    latitude: null,
+    longitude: null,
     password: '',
     confirmPassword: '',
     verificationDocument:'',
@@ -64,7 +69,7 @@ const UnifiedSignup = () => {
       icon: MapPin,
       gradient: 'from-blue-500 to-teal-500',
       subtitle: 'Start your journey of discovery',
-      levels: [1]
+  levels: [1, 2, 3]
     },
     {
       id: 'guide',
@@ -73,7 +78,7 @@ const UnifiedSignup = () => {
       icon: Users,
       gradient: 'from-emerald-500 to-teal-500',
       subtitle: 'Share your local expertise',
-      levels: [1]
+  levels: [1, 2, 3]
     },
     {
       id: 'restaurant',
@@ -82,131 +87,29 @@ const UnifiedSignup = () => {
       icon: ChefHat,
       gradient: 'from-blue-500 to-teal-500',
       subtitle: 'Showcase your culinary excellence',
-      levels: [1, 2]
+  levels: [1, 2, 3]
     }
   ];
 
   const fieldConfigs = [
-    {
-      key: 'name',
-      label: 'Full Name',
-      type: 'text',
-      placeholder: 'Enter your full name',
-      icon: User,
-      required: true,
-      showFor: ['traveler', 'guide', 'restaurant'],
-      level: 1
-    },
-    {
-      key: 'email',
-      label: 'Email Address',
-      type: 'email',
-      placeholder: 'Enter your email',
-      icon: Mail,
-      required: true,
-      showFor: ['traveler', 'guide', 'restaurant'],
-      level: 1
-    },
-    {
-      key: 'contactNumber',
-      label: 'Contact Number',
-      type: 'tel',
-      placeholder: 'Enter your contact number',
-      icon: Phone,
-      required: true,
-      showFor: ['traveler', 'guide', 'restaurant'],
-      level: 1
-    },
-    {
-      key: 'guideId',
-      label: 'Guide License ID',
-      type: 'text',
-      placeholder: 'Enter your guide license ID',
-      icon: CreditCard,
-      required: true,
-      showFor: ['guide'],
-      level: 1
-    },
-    {
-      key:'verificationDocument',
-      label:'verification Document',
-      type:'file',
-      placeholder:'Add your verification document',
-      icon: FileUp,
-      required:true,
-      showFor:['guide'],
-      level:1
-    },
-    {
-      key:'years_of_experience',
-      label:'Years of Experience',
-      type:'number',
-      placeholder:'Years of Experiance',
-      icon: FileUp,
-      required:true,
-      showFor:['guide'],
-      level:1
-    },
-    {
-      key: 'password',
-      label: 'Password',
-      type: 'password',
-      placeholder: 'Create a strong password',
-      icon: Lock,
-      required: true,
-      showFor: ['traveler', 'guide'],
-      level: 1
-    },
-    {
-      key: 'confirmPassword',
-      label: 'Confirm Password',
-      type: 'password',
-      placeholder: 'Confirm your password',
-      icon: Lock,
-      required: true,
-      showFor: ['traveler', 'guide'],
-      level: 1
-    },
-    {
-      key: 'restaurantType',
-      label: 'Restaurant Type',
-      type: 'text',
-      placeholder: 'e.g., Italian, Asian, Casual Dining',
-      icon: ChefHat,
-      required: true,
-      showFor: ['restaurant'],
-      level: 1
-    },
-    {
-      key: 'address',
-      label: 'Business Address',
-      type: 'text',
-      placeholder: 'Enter your business address',
-      icon: Building,
-      required: true,
-      showFor: ['restaurant'],
-      level: 1
-    },
-    {
-      key: 'password',
-      label: 'Password',
-      type: 'password',
-      placeholder: 'Create a strong password',
-      icon: Lock,
-      required: true,
-      showFor: ['restaurant'],
-      level: 2
-    },
-    {
-      key: 'confirmPassword',
-      label: 'Confirm Password',
-      type: 'password',
-      placeholder: 'Confirm your password',
-      icon: Lock,
-      required: true,
-      showFor: ['restaurant'],
-      level: 2
-    }
+    // Common / level 1 fields
+    { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Enter your full name', icon: User, required: true, showFor: ['traveler', 'guide', 'restaurant'], level: 1 },
+    { key: 'email', label: 'Email Address', type: 'email', placeholder: 'Enter your email', icon: Mail, required: true, showFor: ['traveler', 'guide', 'restaurant'], level: 1 },
+    { key: 'contactNumber', label: 'Contact Number', type: 'tel', placeholder: 'Enter your contact number', icon: Phone, required: true, showFor: ['traveler', 'guide', 'restaurant'], level: 1 },
+    { key: 'guideId', label: 'Guide License ID', type: 'text', placeholder: 'Enter your guide license ID', icon: CreditCard, required: true, showFor: ['guide'], level: 1 },
+    { key: 'verificationDocument', label: 'verification Document', type: 'file', placeholder: 'Add your verification document', icon: FileUp, required: true, showFor: ['guide'], level: 1 },
+    { key: 'years_of_experience', label: 'Years of Experience', type: 'number', placeholder: 'Years of Experience', icon: FileUp, required: true, showFor: ['guide'], level: 1 },
+
+    // Restaurant-specific level 1
+    { key: 'restaurantType', label: 'Restaurant Type', type: 'text', placeholder: 'e.g., Italian, Asian, Casual Dining', icon: ChefHat, required: true, showFor: ['restaurant'], level: 1 },
+
+    // Restaurant-specific level 2 (structured address)
+  { key: 'streetNumber', label: 'Street / Number', type: 'text', placeholder: 'e.g., 9/1 or 123', icon: Building, required: true, showFor: ['restaurant'], level: 2 },
+  { key: 'streetName', label: 'Street Name', type: 'text', placeholder: 'e.g., Rampart Street, Fort', icon: Building, required: true, showFor: ['restaurant'], level: 2 },
+  { key: 'city', label: 'City', type: 'text', placeholder: 'e.g., Galle', icon: Building, required: true, showFor: ['restaurant'], level: 2 },
+  { key: 'fullAddress', label: 'Full Address (optional)', type: 'text', placeholder: 'Or paste full address here (e.g., 9/1 Rampart Street, Galle)', icon: Building, required: false, showFor: ['restaurant'], level: 2 },
+    { key: 'password', label: 'Password', type: 'password', placeholder: 'Create a strong password', icon: Lock, required: true, showFor: ['traveler','guide','restaurant'], level: 3 },
+    { key: 'confirmPassword', label: 'Confirm Password', type: 'password', placeholder: 'Confirm your password', icon: Lock, required: true, showFor: ['traveler','guide','restaurant'], level: 3 }
   ];
 
   const AnimatedBackground = () => (
@@ -241,7 +144,11 @@ const UnifiedSignup = () => {
         contactNumber: '',
         guideId: '',
         restaurantType: '',
-        address: '',
+        streetNumber: '',
+        streetName: '',
+        city: '',
+        latitude: null,
+        longitude: null,
         password: '',
         confirmPassword: ''
       });
@@ -261,7 +168,11 @@ const UnifiedSignup = () => {
         contactNumber: '',
         guideId: '',
         restaurantType: '',
-        address: '',
+        streetNumber: '',
+        streetName: '',
+        city: '',
+        latitude: null,
+        longitude: null,
         password: '',
         confirmPassword: ''
       });
@@ -271,13 +182,18 @@ const UnifiedSignup = () => {
   };
 
   const handleNextLevel = () => {
+    if (!selectedUserType) return;
+    const config = userTypes.find(t => t.id === selectedUserType);
+    const max = Math.max(...(config?.levels || [1]));
     if (validateCurrentLevel()) {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentLevel(2);
-        setErrors({});
-        setIsAnimating(false);
-      }, 300);
+      if (currentLevel < max) {
+        setIsAnimating(true);
+        setTimeout(() => {
+          setCurrentLevel(prev => prev + 1);
+          setErrors({});
+          setIsAnimating(false);
+        }, 300);
+      }
     }
   };
 
@@ -322,15 +238,6 @@ const UnifiedSignup = () => {
         newErrors[field.key] = `${field.label} is required`;
       }
     });
-    
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    
-    if (formData.contactNumber && !/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(formData.contactNumber)) {
-      newErrors.contactNumber = 'Please enter a valid phone number';
-    }
-    
     if (formData.password) {
       if (formData.password.length < 8) {
         newErrors.password = 'Password must be at least 8 characters';
@@ -352,11 +259,17 @@ const UnifiedSignup = () => {
     }
     
     if (selectedUserType === 'restaurant') {
+      // On level 1 we only require the restaurant type; address is collected on level 2
       if (currentLevel === 1 && !formData.restaurantType.trim()) {
         newErrors.restaurantType = 'Restaurant type is required';
       }
-      if (currentLevel === 1 && !formData.address.trim()) {
-        newErrors.address = 'Business address is required';
+      if (currentLevel === 2) {
+        // For restaurants: allow either structured fields OR a single fullAddress fallback
+        const hasStructured = formData.streetNumber?.trim() && formData.streetName?.trim() && formData.city?.trim();
+        const hasFull = formData.fullAddress?.trim();
+        if (!hasStructured && !hasFull) {
+          newErrors.streetNumber = newErrors.streetNumber || 'Provide street number, street name and city, or paste full address';
+        }
       }
     }
     
@@ -382,6 +295,18 @@ const UnifiedSignup = () => {
         'traveler': 'traveler'
       };
       
+      const config = userTypes.find(t => t.id === selectedUserType);
+      const max = Math.max(...(config?.levels || [1]));
+
+      // If there's another level and we're not on it yet, advance instead of submitting
+      if (currentLevel < max) {
+        setCurrentLevel(prev => prev + 1);
+        setIsAnimating(true);
+        setTimeout(() => setIsAnimating(false), 350);
+        setIsLoading(false);
+        return;
+      }
+
       const payload = {
         name: formData.name,
         email: formData.email,
@@ -400,11 +325,95 @@ const UnifiedSignup = () => {
         payload.business_name = formData.name;
         payload.business_type = formData.restaurantType;
         payload.restaurantType = formData.restaurantType;
-        payload.address = formData.address;
-        payload.city = 'Unknown';
-        payload.province = 'Unknown';
-        payload.latitude = 0;
-        payload.longitude = 0;
+
+  // Prefer structured fields; fall back to fullAddress when provided
+  const constructedAddress = formData.fullAddress?.trim() || [formData.streetNumber, formData.streetName, formData.city].filter(Boolean).join(', ') + ', Sri Lanka';
+
+        // If latitude/longitude already set (from an earlier validation), use them.
+        // Otherwise attempt to geocode the constructed address restricted to Sri Lanka.
+        let latitude = formData.latitude || 0;
+        let longitude = formData.longitude || 0;
+
+        if (!latitude || !longitude) {
+          try {
+            // Try multiple query permutations to increase chance of matching
+            const sanitize = (s) => String(s || '').replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
+            const streetNum = sanitize(formData.streetNumber);
+            const streetName = sanitize(formData.streetName);
+            const city = sanitize(formData.city);
+
+            const candidates = [];
+            if (streetNum && streetName && city) candidates.push(`${streetNum} ${streetName}, ${city}, Sri Lanka`);
+            if (streetName && city) candidates.push(`${streetName}, ${city}, Sri Lanka`);
+            if (streetNum && streetName) candidates.push(`${streetNum} ${streetName}, Sri Lanka`);
+            if (streetName) candidates.push(`${streetName}, Sri Lanka`);
+            // fallback: full constructed address and city-only
+            candidates.push(constructedAddress);
+            if (city) candidates.push(`${city}, Sri Lanka`);
+
+            const buildUrl = (q, opts = {}) => {
+              const { countrycodes, limit = 3 } = opts;
+              const params = new URLSearchParams({ format: 'json', q: q, limit: String(limit), addressdetails: '1' });
+              if (countrycodes) params.set('countrycodes', countrycodes);
+              return `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+            };
+
+            const headers = { 'User-Agent': 'Roamio/1.0 (contact@roamio.example)' };
+
+            let found = null;
+            for (const q of candidates) {
+              if (!q || q.trim().length === 0) continue;
+              // Try restricted first
+              let resp = await fetch(buildUrl(q, { countrycodes: 'lk', limit: 3 }), { headers });
+              let results = [];
+              if (resp.ok) {
+                try { results = await resp.json(); } catch (e) { results = []; }
+              }
+
+              // If nothing found with restriction, try without
+              if (!Array.isArray(results) || results.length === 0) {
+                resp = await fetch(buildUrl(q, { limit: 3 }), { headers });
+                if (resp.ok) {
+                  try { results = await resp.json(); } catch (e) { results = []; }
+                }
+              }
+
+              if (Array.isArray(results) && results.length > 0) {
+                // pick first result that is in Sri Lanka
+                const candidate = results.find(r => {
+                  const cc = (r?.address?.country_code || '').toLowerCase();
+                  const dn = String(r.display_name || '').toLowerCase();
+                  return cc === 'lk' || dn.includes('sri lanka') || dn.includes('srilanka') || dn.includes('srílanka');
+                }) || results[0];
+
+                const cc = (candidate?.address?.country_code || '').toLowerCase();
+                const dn = String(candidate.display_name || '').toLowerCase();
+                const inSriLanka = cc === 'lk' || dn.includes('sri lanka') || dn.includes('srilanka') || dn.includes('srílanka');
+                if (inSriLanka) {
+                  found = candidate;
+                  break;
+                }
+              }
+            }
+
+            if (!found) {
+              setErrors({ general: 'Address not found. Try a slightly different format like "9/1 Rampart Street, Galle, Sri Lanka" or provide a nearby landmark.' });
+              throw new Error('Address not found');
+            }
+
+            latitude = parseFloat(found.lat);
+            longitude = parseFloat(found.lon);
+            setFormData(prev => ({ ...prev, latitude, longitude }));
+          } catch (err) {
+            console.error('Address validation error:', err);
+            throw err;
+          }
+        }
+
+        payload.address = constructedAddress;
+        payload.city = formData.city || 'Unknown';
+        payload.latitude = latitude;
+        payload.longitude = longitude;
       }
 
       await signup(payload);
@@ -418,11 +427,9 @@ const UnifiedSignup = () => {
       console.error('Signup error:', error);
       
       // Show error toast
-      toast.error('Failed to create account. Please try again.');
-      
-      setErrors({
-        general: error.message || 'Failed to create account. Please try again.'
-      });
+      const message = error?.response?.data?.message || error?.message || 'Failed to create account. Please try again.';
+      toast.error(message);
+      setErrors({ general: message });
     } finally {
       setIsLoading(false);
     }
@@ -548,7 +555,7 @@ const UnifiedSignup = () => {
           </div>
         </div>
         
-        <style jsx>{`
+        <style>{`
           @keyframes fadeInUp {
             from {
               opacity: 0;
@@ -639,7 +646,7 @@ const UnifiedSignup = () => {
               {fieldConfigs.map((field, index) => renderFormField(field, index))}
               
               <div className="flex space-x-4">
-                {isRestaurant && currentLevel === 2 && (
+                {currentLevel > 1 && (
                   <button
                     type="button"
                     onClick={handlePreviousLevel}
@@ -649,8 +656,8 @@ const UnifiedSignup = () => {
                     Previous
                   </button>
                 )}
-                
-                {isRestaurant && currentLevel < maxLevel ? (
+
+                {currentLevel < maxLevel ? (
                   <button
                     type="button"
                     onClick={handleNextLevel}
@@ -691,7 +698,7 @@ const UnifiedSignup = () => {
         </div>
       </div>
       
-      <style jsx>{`
+      <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;

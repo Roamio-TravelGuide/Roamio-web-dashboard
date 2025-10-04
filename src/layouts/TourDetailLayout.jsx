@@ -18,7 +18,7 @@ export const TourDetailLayout = ({
   children 
 }) => {
   const selectedStop = tour?.tour_stops?.find(stop => stop.id === selectedStopId);
-  console.log(tour.cover_image_url)
+  // console.log(tour.cover_image.url);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -62,7 +62,7 @@ export const TourDetailLayout = ({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             {/* Tour Cover Image */}
             <div className="md:col-span-1">
-              {tour.cover_image_url ? (
+              {tour.cover_image.url ? (
                 <div className="relative w-full h-40 overflow-hidden border border-gray-200 rounded-lg shadow-xs">
                   <img
                     src={getMediaUrl(tour.cover_image.url)}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FiMapPin, 
   FiClock, 
@@ -9,7 +9,11 @@ import {
   FiEdit2
 } from 'react-icons/fi';
 
+import apiClient from '../../api/apiClient';
+import { useAuth } from '../../contexts/authContext';
+
 const VendorLocation = () => {
+  const { authState } = useAuth();
   const [isAvailable, setIsAvailable] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [hours, setHours] = useState({
@@ -22,12 +26,37 @@ const VendorLocation = () => {
     sunday: { open: '09:00', close: '18:00' }
   });
 
-  // Mock coordinates (replace with actual data)
-  const location = {
-    lat: 40.7128,
-    lng: -74.0060,
-    address: '123 Business Ave, New York, NY 10001'
-  };
+  const [location, setLocation] = useState({ lat: null, lng: null, address: '' });
+  const [loadingLocation, setLoadingLocation] = useState(false);
+  const [locationError, setLocationError] = useState(null);
+
+  useEffect(() => {
+    const fetchPoi = async () => {
+      // try to get vendor id from auth state
+      const vendorId = authState?.user?.id;
+      if (!vendorId) return;
+      setLoadingLocation(true);
+      setLocationError(null);
+      try {
+        const res = await apiClient.get(`/poi/vendor/${vendorId}`);
+        const pois = res.data?.data || [];
+        if (pois.length === 0) {
+          setLocationError('No POI found for this vendor');
+        } else {
+          const poi = pois[0];
+          const loc = poi.location || {};
+          setLocation({ lat: loc.latitude, lng: loc.longitude, address: loc.address || poi.name });
+        }
+      } catch (err) {
+        console.error('Failed to fetch POI:', err);
+        setLocationError('Failed to load location');
+      } finally {
+        setLoadingLocation(false);
+      }
+    };
+
+    fetchPoi();
+  }, [authState]);
 
   const handleTimeChange = (day, field, value) => {
     setHours(prev => ({
@@ -76,19 +105,27 @@ const VendorLocation = () => {
         {/* Map Section */}
         <div className="space-y-4 lg:col-span-2">
           <div className="h-64 overflow-hidden bg-gray-200 rounded-xl">
-            <iframe
-              title="Business Location"
-              className="w-full h-full"
-              src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed`}
-              frameBorder="0"
-              allowFullScreen
-            ></iframe>
+            {loadingLocation ? (
+              <div className="flex items-center justify-center w-full h-full text-gray-500">Loading map...</div>
+            ) : locationError ? (
+              <div className="flex items-center justify-center w-full h-full text-red-500">{locationError}</div>
+            ) : location.lat && location.lng ? (
+              <iframe
+                title="Business Location"
+                className="w-full h-full"
+                src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed`}
+                frameBorder="0"
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <div className="flex items-center justify-center w-full h-full text-gray-500">No location available</div>
+            )}
           </div>
           <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50">
             <FiMapPin className="flex-shrink-0 mt-1 text-blue-600" />
             <div>
               <p className="font-medium text-gray-800">Business Address</p>
-              <p className="text-gray-600">{location.address}</p>
+              <p className="text-gray-600">{location.address || 'Address not available'}</p>
               <p className="mt-2 text-sm text-gray-500">
                 Status: <span className="text-green-600">Verified by Admin</span>
               </p>

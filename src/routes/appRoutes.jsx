@@ -16,14 +16,15 @@ import GuideDashboard from '../pages/Guide/Dashboard';
 import TourCreate from '../pages/Guide/TourCreate';
 import TourDet from '../pages/Guide/TourDetail';
 import TourPackages from '../pages/Guide/TourPackages';
-import Support from '../pages/Guide/Support'
-// import TourEditPage from '../components/tour/';
-// import TourEarnings from '../pages/Guide/TourEarnings'
+import Support from '../pages/Guide/Support';
+import TourEarnings from '../pages/Guide/TourEarnings';
+import TourSettings from '../pages/Guide/GuideSettings';
+import TourEditPage from '../pages/Guide/TourEdit';
+
 
 import ModeratorLayout from '../layouts/ModeratorLayout';     
 import ModeratorDashboard from '../pages/Moderator/ModeratorDashboard ';
 import TourDetail from '../pages/Moderator/TourDetail';
-// import TourEditPage from '../pages/Guide/TourEdit';
 
 import AdminLayout from '../layouts/AdminLayout'
 import Dashboard from '../pages/Admin/Dashboard'
@@ -73,7 +74,7 @@ const AppRoutes = () => {
 
           <Route element={<ModeratorLayout/>}>
               <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
-              <Route path = "/tour/:id" element={<TourDetail/>}> </Route>
+              {/* <Route path = "/tour/:id" element={<TourDetail/>}> </Route> */}
           </Route>
 
           <Route element={<AdminLayout/>}>
