@@ -1,23 +1,22 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { BasicInfoStep } from '../../components/tour/BasicInfoStep.jsx';
-import { RouteMapStep } from '../../components/tour/RouteMapStep.jsx';
-import { MediaUploadStep } from '../../components/tour/MediaUploadStep.jsx';
-import { ReviewStep } from '../../components/tour/ReviewStep.jsx';
-import { useMapbox } from '../../hooks/useMaps.js';
-import { createCompleteTour } from '../../api/tour/tourApi.js';
-import { useAuth } from '../../contexts/authContext.jsx';
+import { BasicInfoStep } from '../../components/tour/BasicInfoStep';
+import { RouteMapStep } from '../../components/tour/RouteMapStep';
+import { MediaUploadStep } from '../../components/tour/MediaUploadStep';
+import { ReviewStep } from '../../components/tour/ReviewStep';
+import { useTourForm } from '../../hooks/useTourForm';
+import { createCompleteTour, getTourById, updateTour } from '../../api/tour/tourApi';
+import { useAuth } from '../../contexts/authContext';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { TOUR_CONSTANTS, UI_LABELS } from '../../utils/tourConstants';
+import { transformTourData } from '../../utils/tourUtils';
 
-const PRICE_PER_MINUTE = 500;
-const MINIMUM_PRICE = 1000;
-
-const tabs = [
-  { id: 1, name: 'Basic Info' },
-  { id: 2, name: 'Route' },
-  { id: 3, name: 'Media' },
-  { id: 4, name: 'Review' }
+const STEPS = [
+  { id: TOUR_CONSTANTS.STEPS.BASIC_INFO, name: 'Basic Info' },
+  { id: TOUR_CONSTANTS.STEPS.ROUTE, name: 'Route' },
+  { id: TOUR_CONSTANTS.STEPS.MEDIA, name: 'Media' },
+  { id: TOUR_CONSTANTS.STEPS.REVIEW, name: 'Review' }
 ];
 
 const initialTourData = {
@@ -27,362 +26,308 @@ const initialTourData = {
   duration_minutes: 0,
   tour_stops: [],
   cover_image_temp: undefined,
-  cover_image_url: undefined
+  cover_image_url: undefined,
+  cover_image_file: undefined
 };
 
-export const TourCreate = () => {
+export const TourCreate = ({ mode = 'create', tourId }) => {
   const navigate = useNavigate();
   const { authState } = useAuth();
-  const { getDistanceBetweenPoints, getWalkingTime } = useMapbox();
-  
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(TOUR_CONSTANTS.STEPS.BASIC_INFO);
   const [tourData, setTourData] = useState(initialTourData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(mode === 'edit');
 
-  const validateCurrentStep = () => {
+  const isEditMode = mode === 'edit';
+  
+  // Initialize useTourForm with the current tour_stops
+  const {
+    stops,
+    validationWarnings,
+    totalAudioDuration,
+    totalPrice,
+    updateStops,
+    validateAudioDurations
+  } = useTourForm(tourData.tour_stops);
+
+  // Sync stops back to tourData whenever stops change
+  useEffect(() => {
+    const stopsChanged = JSON.stringify(stops) !== JSON.stringify(tourData.tour_stops);
+    
+    if (stopsChanged) {
+      setTourData(prev => ({ ...prev, tour_stops: stops }));
+    }
+  }, [stops]);
+
+  // Fetch tour data for edit mode
+  useEffect(() => {
+    if (isEditMode && tourId) {
+      const fetchTourData = async () => {
+        try {
+          setIsLoading(true);
+          const response = await getTourById(tourId);
+          if (response.success) {
+            const transformedData = transformTourData(response.data);
+            setTourData(transformedData);
+          } else {
+            throw new Error('Failed to load tour data');
+          }
+        } catch (error) {
+          toast.error('Failed to load tour data');
+          navigate('/guide/tourpackages');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchTourData();
+    }
+  }, [isEditMode, tourId, navigate]);
+
+  // Step validation
+  const validateCurrentStep = useMemo(() => {
     switch (currentStep) {
-      case 1:
+      case TOUR_CONSTANTS.STEPS.BASIC_INFO:
         return tourData.title?.trim() && tourData.description?.trim();
-      case 2: 
-        return tourData.tour_stops?.length >= 2 &&
-               tourData.tour_stops.every(stop => stop.location);
-      case 3: 
-        return tourData.tour_stops.every(stop => 
+      case TOUR_CONSTANTS.STEPS.ROUTE: 
+        return stops.length >= 2 && stops.every(stop => stop.location);
+      case TOUR_CONSTANTS.STEPS.MEDIA: 
+        return stops.every(stop => 
           stop.media?.some(m => m.media_type === 'audio')
         ) && validationWarnings.every(w => w.severity !== 'error');
-      case 4: 
+      case TOUR_CONSTANTS.STEPS.REVIEW: 
         return true;
       default: 
         return false;
     }
-  };
+  }, [currentStep, tourData, stops, validationWarnings]);
 
-  const validateMediaContent = () => {
-    const warnings = [];
+  const canGoNext = currentStep < STEPS.length && validateCurrentStep;
+  const canGoBack = currentStep > TOUR_CONSTANTS.STEPS.BASIC_INFO;
 
-    tourData.tour_stops.forEach((stop, index) => {
-      if (index === tourData.tour_stops.length - 1) return;
-
-      const nextStop = tourData.tour_stops[index + 1];
-      if (!stop.location || !nextStop.location) {
-        warnings.push({
-          stopIndex: index,
-          message: 'Location not set for this stop',
-          severity: 'error'
-        });
-        return;
-      }
-
-      const distance = getDistanceBetweenPoints(
-        { lat: stop.location.latitude, lng: stop.location.longitude },
-        { lat: nextStop.location.latitude, lng: nextStop.location.longitude }
-      );
-
-      const walkingTime = getWalkingTime(distance);
-      const maxRecommendedAudioTime = Math.floor(walkingTime * 0.8);
-
-      const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
-      const totalAudioDuration = audioFiles.reduce((total, audio) => total + (audio.duration_seconds || 0), 0);
-
-      if (totalAudioDuration < maxRecommendedAudioTime) {
-        warnings.push({
-          stopIndex: index,
-          message: `Audio duration (${totalAudioDuration}s) is too short for this stop`,
-          severity: 'warning'
-        });
-      }
-
-      if (audioFiles.length === 0) {
-        warnings.push({
-          stopIndex: index,
-          message: 'No audio content added',
-          severity: 'error'
-        });
-      }
-    });
-
-    return warnings;
-  };
-
-  const validationWarnings = useMemo(() => {
-    return currentStep >= 3 ? validateMediaContent() : [];
-  }, [tourData.tour_stops, currentStep]);
-
-  const durationSeconds = useMemo(() => {
-    return tourData.tour_stops.reduce((total, stop) => {
-      const audioFiles = stop.media?.filter(m => m.media_type === 'audio') || [];
-      return total + audioFiles.reduce((stopTotal, audio) => 
-        stopTotal + (audio.duration_seconds || 0), 0);
-    }, 0);
-  }, [tourData.tour_stops]);
-
-  const price = useMemo(() => {
-    const basePrice = durationSeconds * (PRICE_PER_MINUTE / 60);
-    return Math.max(basePrice, MINIMUM_PRICE);
-  }, [durationSeconds]);
-
-  const canGoNext = currentStep < tabs.length && validateCurrentStep();
-  const canGoBack = currentStep > 1;
-
+  // Navigation handlers
   const handleNext = () => canGoNext && setCurrentStep(c => c + 1);
   const handlePrevious = () => canGoBack && setCurrentStep(c => c - 1);
 
+  // Data handlers
   const handleTourDataUpdate = (updates) => {
     setTourData(prev => ({ ...prev, ...updates }));
   };
 
-  const handleStopsUpdate = (stops) => {
-    setTourData(prev => ({ ...prev, tour_stops: stops }));
+  const handleStopsUpdate = (newStops) => {
+    updateStops(newStops);
+    setTourData(prev => ({ ...prev, tour_stops: newStops }));
   };
 
-  // const handleSubmit = async () => {
-  //   setIsSubmitting(true);
-  //   const toastId = toast.loading('Creating your tour...');
+  // Submission logic
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    const toastId = toast.loading(isEditMode ? 'Updating your tour...' : 'Creating your tour...');
 
-  //   try {
-  //     // Validate authentication
-  //     if (!authState.user?.id) {
-  //       throw new Error('User authentication required');
-  //     }
+    try {
+      if (!authState.user?.id) {
+        throw new Error('User authentication required');
+      }
 
-  //     // Use FormData for file uploads
-  //     const formData = new FormData();
+      const formData = new FormData();
       
-  //     // Add tour data as JSON
-  //     formData.append('tour', JSON.stringify({
-  //       title: tourData.title,
-  //       description: tourData.description,
-  //       price: price,
-  //       duration_minutes: Math.ceil(durationSeconds / 60),
-  //       status: 'pending_approval',
-  //       guide_id: authState.user.id,
-  //     }));
-      
-  //     // Add cover image as file
-  //     if (tourData.cover_image_temp && tourData.cover_image_temp.file) {
-  //       formData.append('cover_image', tourData.cover_image_temp.file);
-  //     }
-      
-  //     // Add stops as JSON and media as files
-  //     tourData.tour_stops.forEach((stop, index) => {
-  //       formData.append(`stops[${index}]`, JSON.stringify({
-  //         sequence_no: index + 1,
-  //         stop_name: stop.stop_name || `Stop ${index + 1}`,
-  //         description: stop.description || '',
-  //         location: stop.location ? {
-  //           longitude: stop.location.longitude,
-  //           latitude: stop.location.latitude,
-  //           address: stop.location.address || '',
-  //           city: stop.location.city || '',
-  //           province: stop.location.province || '',
-  //           district: stop.location.district || '',
-  //           postal_code: stop.location.postal_code || ''
-  //         } : null
-  //       }));
-        
-  //       // Add media files for this stop
-  //       stop.media?.forEach((mediaItem, mediaIndex) => {
-  //         if (mediaItem.file) {
-  //           formData.append(`stop_${index}_media`, mediaItem.file);
-  //         }
-  //       });
-  //     });
+      const apiMethod = isEditMode ? updateTour : createCompleteTour;
 
-  //     const response = await createCompleteTour(formData);
-      
-  //     if (response.success) {
-  //       toast.success('Tour created successfully!', { id: toastId });
-  //       // setTimeout(() => navigate('/guide/tourpackages'), 1500);
-  //     } else {
-  //       throw new Error(response.message || 'Failed to create tour');
-  //     }
-
-  //   } catch (error) {
-  //     console.error('Tour submission failed:', error);
-  //     toast.error(
-  //       error.response?.data?.message || 
-  //       error.message ||
-  //       'Failed to create tour. Please try again.',
-  //       { id: toastId }
-  //     );
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
-  // In the handleSubmit function in TourCreate.jsx
-const handleSubmit = async () => {
-  setIsSubmitting(true);
-  const toastId = toast.loading('Creating your tour...');
-
-  try {
-    if (!authState.user?.id) {
-      throw new Error('User authentication required');
-    }
-
-    const formData = new FormData();
-    
-    // Add tour data as JSON
-    const tourJson = {
-      title: tourData.title,
-      description: tourData.description,
-      price: price,
-      duration_minutes: Math.ceil(durationSeconds / 60),
-      status: 'pending_approval',
-      guide_id: authState.user.id,
-    };
-    
-    console.log('Tour JSON:', tourJson);
-    formData.append('tour', JSON.stringify(tourJson));
-    
-    // Add cover image as file (if exists)
-    if (tourData.cover_image_file) {
-      console.log('Adding cover image:', tourData.cover_image_file.name);
-      formData.append('cover_image', tourData.cover_image_file);
-    } else {
-      console.log('No cover image to add');
-    }
-    
-    // Add stops as JSON and media as files
-    tourData.tour_stops.forEach((stop, index) => {
-      const stopJson = {
-        sequence_no: index + 1,
-        stop_name: stop.stop_name || `Stop ${index + 1}`,
-        description: stop.description || '',
-        location: stop.location ? {
-          longitude: stop.location.longitude,
-          latitude: stop.location.latitude,
-          address: stop.location.address || '',
-          city: stop.location.city || '',
-          province: stop.location.province || '',
-          district: stop.location.district || '',
-          postal_code: stop.location.postal_code || ''
-        } : null
+      // Prepare tour data
+      const tourJson = {
+        title: tourData.title,
+        description: tourData.description,
+        price: totalPrice,
+        duration_minutes: Math.ceil(totalAudioDuration / 60),
+        status: 'pending_approval',
+        guide_id: authState.user.id,
+        ...(isEditMode && { id: tourId })
       };
+
+      formData.append('tour', JSON.stringify(tourJson));
       
-      console.log(`Stop ${index} JSON:`, stopJson);
-      formData.append(`stops[${index}]`, JSON.stringify(stopJson));
+      // Add cover image
+      if (tourData.cover_image_file) {
+        formData.append('cover_image', tourData.cover_image_file);
+      }
       
-      // Add media files for this stop
-      if (stop.media && stop.media.length > 0) {
-        stop.media.forEach((mediaItem, mediaIndex) => {
-          if (mediaItem.file) {
-            console.log(`Adding media for stop ${index}:`, mediaItem.file.name);
-            formData.append(`stop_${index}_media`, mediaItem.file);
-          }
-        });
+      // Add stops and media with durations
+      stops.forEach((stop, index) => {
+        // Prepare media metadata for this stop (without file objects)
+        const mediaMetadata = stop.media?.filter(m => !m._deleted).map(mediaItem => ({
+          ...(mediaItem.id && { id: mediaItem.id }),
+          media_type: mediaItem.media_type,
+          duration_seconds: mediaItem.duration_seconds || 0,
+          file_name: mediaItem.file_name || mediaItem.name,
+          file_type: mediaItem.file_type,
+          file_size: mediaItem.file_size,
+          ...(mediaItem.url && { url: mediaItem.url })
+        })) || [];
+
+        const stopJson = {
+          ...(isEditMode && { id: stop.id }),
+          sequence_no: index + 1,
+          stop_name: stop.stop_name || `Stop ${index + 1}`,
+          description: stop.description || '',
+          location: stop.location ? {
+            longitude: stop.location.longitude,
+            latitude: stop.location.latitude,
+            address: stop.location.address || '',
+            city: stop.location.city || '',
+            province: stop.location.province || '',
+            district: stop.location.district || '',
+            postal_code: stop.location.postal_code || ''
+          } : null,
+          // ✅ INCLUDED: Media metadata with durations
+          media: mediaMetadata
+        };
+        
+        formData.append(`stops[${index}]`, JSON.stringify(stopJson));
+        
+        // Add new media files
+        if (stop.media) {
+          stop.media.forEach((mediaItem) => {
+            if (mediaItem.file && !mediaItem.id && !mediaItem._deleted) {
+              formData.append(`stop_${index}_media`, mediaItem.file);
+            }
+          });
+        }
+      });
+
+      // Call API method
+      let response;
+      if (isEditMode) {
+        response = await apiMethod(tourId, formData);
       } else {
-        console.log(`No media for stop ${index}`);
+        response = await apiMethod(formData);
       }
-    });
-
-    // Debug: Log FormData contents
-    console.log('=== FORM DATA CONTENTS ===');
-    for (let [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`${key}: FILE - ${value.name} (${value.size} bytes, ${value.type})`);
+      
+      if (response.success) {
+        toast.success(
+          isEditMode ? 'Tour updated successfully!' : 'Tour created successfully!', 
+          { id: toastId }
+        );
+        navigate('/guide/tourpackages');
       } else {
-        console.log(`${key}:`, value.substring(0, 100) + (value.length > 100 ? '...' : ''));
+        throw new Error(response.message || `Failed to ${isEditMode ? 'update' : 'create'} tour`);
       }
-    }
 
-    const response = await createCompleteTour(formData);
-    
-    if (response.success) {
-      toast.success('Tour created successfully!', { id: toastId });
-      navigate('/guide/tourpackages');
-    } else {
-      throw new Error(response.message || 'Failed to create tour');
+    } catch (error) {
+      let errorMessage = `Failed to ${isEditMode ? 'update' : 'create'} tour. Please try again.`;
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.errors) {
+        const validationErrors = Object.values(error.response.data.errors).flat();
+        errorMessage = validationErrors.join(', ');
+      }
+      
+      toast.error(errorMessage, { id: toastId, duration: 5000 });
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-  } catch (error) {
-    console.error('Tour submission failed:', error);
-    toast.error(
-      error.response?.data?.message || 
-      error.message ||
-      'Failed to create tour. Please try again.',
-      { id: toastId }
-    );
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  // Render helpers
+  const getPageTitle = () => 
+    isEditMode ? UI_LABELS.EDIT.TITLE : UI_LABELS.CREATE.TITLE;
+
+  const getPageDescription = () => 
+    isEditMode ? UI_LABELS.EDIT.DESCRIPTION : UI_LABELS.CREATE.DESCRIPTION;
+
+  const getSubmitButtonText = () => {
+    if (isSubmitting) return isEditMode ? 'Updating...' : 'Submitting...';
+    return isEditMode ? UI_LABELS.EDIT.SUBMIT : UI_LABELS.CREATE.SUBMIT;
+  };
 
   const renderCurrentStep = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-8 h-8 mx-auto mb-4 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+            <p className="text-gray-600">Loading tour data...</p>
+          </div>
+        </div>
+      );
+    }
+
     const commonProps = {
       tourData: {
         ...tourData,
-        price,
-        duration_minutes: Math.ceil(durationSeconds / 60)
+        price: totalPrice,
+        duration_minutes: Math.ceil(totalAudioDuration / 60),
+        tour_stops: stops
       },
+      stops: stops,
       onUpdate: handleTourDataUpdate,
-      stops: tourData.tour_stops,
       onStopsUpdate: handleStopsUpdate,
-      validationWarnings,
-      isEditable: true
+      onValidate: validateAudioDurations
     };
 
     switch (currentStep) {
-      case 1: return <BasicInfoStep {...commonProps}/>;
-      case 2: return <RouteMapStep {...commonProps} />;
-      case 3: return <MediaUploadStep {...commonProps} />;
-      case 4: return <ReviewStep {...commonProps} onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
-      default: return null;
+      case TOUR_CONSTANTS.STEPS.BASIC_INFO:
+        return <BasicInfoStep {...commonProps} />;
+      case TOUR_CONSTANTS.STEPS.ROUTE:
+        return <RouteMapStep {...commonProps} />;
+      case TOUR_CONSTANTS.STEPS.MEDIA:
+        return <MediaUploadStep {...commonProps} />;
+      case TOUR_CONSTANTS.STEPS.REVIEW:
+        return <ReviewStep {...commonProps} onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
+      default:
+        return null;
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+          <p className="text-lg text-gray-700">Loading tour data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative min-h-screen bg-fixed bg-center bg-cover">
-      <div className="px-4 py-8 mx-auto">
-        <div className="mx-8 overflow-hidden bg-white rounded-lg shadow">
-          <div className="p-6 sm:p-8">
-            {renderCurrentStep()}
-          </div>
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-            <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      
+      {/* Main Content */}
+      <main className="flex-1">
+        <div className="py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          {renderCurrentStep()}
+        </div>
+      </main>
+
+      {/* Footer Navigation */}
+      {currentStep !== TOUR_CONSTANTS.STEPS.REVIEW && (
+        <footer className="bg-white border-t border-gray-200">
+          <div className="px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div className="flex justify-between">
               <button
                 onClick={handlePrevious}
                 disabled={!canGoBack}
-                className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                  !canGoBack
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                }`}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 transition-colors bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Previous
               </button>
-
-              {currentStep < tabs.length ? (
-                <button
-                  onClick={handleNext}
-                  disabled={!canGoNext}
-                  className={`inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-md ${
-                    canGoNext
-                      ? 'bg-indigo-600 hover:bg-indigo-700'
-                      : 'bg-gray-300 cursor-not-allowed'
-                  }`}
-                >
-                  Next
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </button>
-              ) : (
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className={`inline-flex items-center px-4 py-2 text-sm font-medium text-white rounded-md ${
-                    !isSubmitting
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : 'bg-green-400 cursor-not-allowed'
-                  }`}
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Tour'}
-                </button>
-              )}
+              
+              <button
+                onClick={handleNext}
+                disabled={!canGoNext}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </button>
             </div>
           </div>
-        </div>
-      </div>
+        </footer>
+      )}
     </div>
   );
 };

@@ -268,3 +268,21 @@
 // };
 
 // export default TourEditPage;
+
+// TourEdit.jsx
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { TourCreate } from './TourCreate';
+
+export const TourEdit = () => {
+  const { id } = useParams();
+  
+  return (
+    <TourCreate 
+      mode="edit"
+      tourId={id}
+    />
+  );
+};
+
+export default TourEdit;

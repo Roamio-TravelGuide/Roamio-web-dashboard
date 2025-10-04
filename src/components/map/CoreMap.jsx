@@ -91,6 +91,17 @@ export const CoreMap = ({
   onMapClick,
   isGeocoding = false
 }) => {
+  useEffect(() => {
+    if (mapContainer.current) {
+      const rect = mapContainer.current.getBoundingClientRect();
+      console.log('CoreMap Container Dimensions:', {
+        width: rect.width,
+        height: rect.height,
+        visible: rect.width > 0 && rect.height > 0
+      });
+    }
+  }, []);
+  
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markersRef = useRef({});
