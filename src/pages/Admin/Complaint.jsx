@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { FaCheck, FaTimes, FaFilter } from "react-icons/fa";
 import { FiChevronDown, FiChevronUp, FiClock } from "react-icons/fi";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
@@ -243,7 +244,7 @@ const Complaints = () => {
     return (
       <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <LoadingSpinner size={48} className="text-indigo-600 mx-auto" />
           <p className="mt-4 text-gray-600">Loading complaints...</p>
         </div>
       </div>

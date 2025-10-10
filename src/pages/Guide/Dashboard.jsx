@@ -7,6 +7,7 @@ import RecentToursTable from '../../components/guide_dashboard/RecentToursTable'
 import RecentHiddenGems from '../../components/guide_dashboard/RecentHiddenGems';
 import { getTourPackagesByGuideId , getHiddenGemByGuideId } from "../../api/guide/dashboardApi";
 import { useAuth } from '../../contexts/authContext';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -233,7 +234,10 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-lg text-gray-600">Loading dashboard...</div>
+        <div className="text-center">
+          <LoadingSpinner size={48} className="text-indigo-600 mx-auto mb-4" />
+          <div className="text-lg text-gray-600">Loading dashboard...</div>
+        </div>
       </div>
     );
   }

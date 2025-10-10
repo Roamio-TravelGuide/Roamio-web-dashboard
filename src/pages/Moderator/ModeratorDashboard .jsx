@@ -6,6 +6,7 @@ import {
   FaChartLine, FaUsers, FaFileAlt, FaClock, FaCalendarAlt,
   FaFilter, FaSort, FaHeart, FaShareAlt, FaChevronLeft, FaChevronRight
 } from 'react-icons/fa';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import axios from 'axios';
 import { getMediaUrl } from '../../utils/constants';
 import { useNavigate } from 'react-router-dom';
@@ -565,7 +566,7 @@ const ModeratorDashboard = () => {
         {/* Tours Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+            <LoadingSpinner size={32} className="text-indigo-600" />
           </div>
         ) : getCurrentTours().length > 0 ? (
           <div className="pb-8">

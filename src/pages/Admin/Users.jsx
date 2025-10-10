@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import {
   FaUser,
   FaUserTie,
@@ -370,8 +371,10 @@ const Users = () => {
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center h-64">
-          <div className="w-12 h-12 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
-          <span className="ml-3 text-gray-600">Loading users...</span>
+          <div className="text-center">
+            <LoadingSpinner size={48} className="text-indigo-600 mx-auto" />
+            <span className="mt-2 text-gray-600">Loading users...</span>
+          </div>
         </div>
       )}
 
