@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   FiMessageSquare,
   FiAlertTriangle,
-  FiMapPin,
   FiMail,
   FiClock,
   FiCheckCircle,
@@ -10,7 +9,6 @@ import {
   FiDollarSign,
   FiTool,
   FiUser,
-  FiHelpCircle,
   FiLoader
 } from 'react-icons/fi';
 import { supportAPI } from '../../api/support';
@@ -350,7 +348,7 @@ const VendorSupport = () => {
         <div className="space-y-4">
           {ticketsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <FiLoader className="w-6 h-6 animate-spin text-indigo-600" />
+              <FiLoader className="w-6 h-6 text-indigo-600 animate-spin" />
               <span className="ml-2 text-gray-600">Loading tickets...</span>
             </div>
           ) : tickets.length > 0 ? (
@@ -366,7 +364,7 @@ const VendorSupport = () => {
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-800">{ticket.subject}</h3>
                           <p className="mt-1 text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
-                          <div className="flex items-center gap-3 mt-3 flex-wrap">
+                          <div className="flex flex-wrap items-center gap-3 mt-3">
                             <span className="flex items-center gap-1 text-sm text-gray-500">
                               <FiClock size={14} /> {formatDate(ticket.created_at)}
                             </span>
@@ -435,7 +433,7 @@ const VendorSupport = () => {
               <p className="mt-2 text-gray-500">You haven't submitted any support tickets yet</p>
               <button
                 onClick={() => setActiveTab('new')}
-                className="mt-4 px-4 py-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+                className="px-4 py-2 mt-4 text-indigo-600 rounded-lg bg-indigo-50 hover:bg-indigo-100"
               >
                 Create your first ticket
               </button>
