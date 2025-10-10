@@ -25,7 +25,6 @@ export const getAllUsers = async (filters = {}) => {
         phone: user.phone_no,
         status: user.status.toLowerCase(),
         role: user.role,
-        avatar: user.profile_picture_url || "/default-avatar.png",
         registeredDate: formatDate(user.registered_date),
         lastLogin: user.last_login ? formatDate(user.last_login) : null,
         bio: user.bio,
