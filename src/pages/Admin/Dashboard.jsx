@@ -18,6 +18,7 @@ import {
   Plus,
   Phone,
 } from "lucide-react";
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { getAllUsers } from "../../api/admin/adminApi";
 import { getTotalRevenue } from "../../api/admin/adminApi";
 import { getTopPerformerRevenue } from "../../api/admin/adminApi";
@@ -823,6 +824,11 @@ const Dashboard = () => {
     mostSoldPackage: null,
   });
 
+  // spinner import
+  // (placed here to keep top imports uncluttered in large file)
+  // We'll use the shared LoadingSpinner for page-level loading
+  
+
   // Prepare quickStatsData
   const quickStatsData = {
     activeUsers,
@@ -986,6 +992,18 @@ const Dashboard = () => {
 
     fetchAllDashboardData();
   }, []);
+
+  // Page-level loading state: show vendor-style spinner while dashboard loads
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <LoadingSpinner size={48} className="text-indigo-600 mx-auto mb-4" />
+          <div className="text-lg text-gray-600">Loading dashboard...</div>
+        </div>
+      </div>
+    );
+  }
 
   const timeFilterOptions = [
     { value: "weekly", label: "Weekly" },

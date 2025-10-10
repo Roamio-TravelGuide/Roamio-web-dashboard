@@ -6,7 +6,9 @@ import {
   FaChartLine, FaUsers, FaFileAlt, FaClock, FaCalendarAlt,
   FaFilter, FaSort, FaHeart, FaShareAlt, FaChevronLeft, FaChevronRight
 } from 'react-icons/fa';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import axios from 'axios';
+import { getMediaUrl } from '../../utils/constants';
 import { useNavigate } from 'react-router-dom';
 
 const ModeratorDashboard = () => {
@@ -226,10 +228,27 @@ const ModeratorDashboard = () => {
       price: apiTour.price,
       originalPrice: apiTour.price * 1.2, // Show discount
       status: apiTour.status,
-      image: apiTour.cover_image_url, // Use actual S3 cover image URL
-      images: [
-        apiTour.cover_image_url
-      ].filter(Boolean), // Remove null/undefined values
+      // Prefer cover image; if missing, fall back to first image found in tour_stops
+      image: (() => {
+        const coverUrl = apiTour.cover_image?.url || apiTour.cover_image_url;
+        if (coverUrl) return getMediaUrl(coverUrl);
+        // find first stop image
+        const firstStopImage = (apiTour.tour_stops || []).flatMap(s => (s.media || []).map(m => m.url || (m.media && m.media.url))).find(Boolean);
+        return firstStopImage ? getMediaUrl(firstStopImage) : '';
+      })(),
+      images: (() => {
+        const coverUrl = apiTour.cover_image?.url || apiTour.cover_image_url;
+        const imgs = [];
+        if (coverUrl) imgs.push(getMediaUrl(coverUrl));
+        // collect up to 3 images from tour stops
+        ((apiTour.tour_stops || [])).forEach(stop => {
+          (stop.media || []).forEach(m => {
+            const url = m.url || (m.media && m.media.url);
+            if (url && imgs.length < 3) imgs.push(getMediaUrl(url));
+          });
+        });
+        return imgs.filter(Boolean);
+      })(),
       createdAt: apiTour.created_at,
       rating: 4.1 + Math.random() * 0.9,
       reviewCount: Math.floor(Math.random() * 500) + 50,
@@ -258,7 +277,7 @@ const ModeratorDashboard = () => {
           params.location = selectedLocation;
         }
 
-        const response = await axios.get(`${API_BASE_URL}/tour-packages`, {
+    const response = await axios.get(`${API_BASE_URL}/tour-package`, {
           params,
           headers: {
             'Content-Type': 'application/json'
@@ -335,7 +354,7 @@ const ModeratorDashboard = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/tour-packages/statistics`);
+  const response = await axios.get(`${API_BASE_URL}/tour-package/statistics`);
       const data = response.data.data;
       setStats({
         pending: data?.pending || 0,
@@ -547,7 +566,7 @@ const ModeratorDashboard = () => {
         {/* Tours Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+            <LoadingSpinner size={32} className="text-indigo-600" />
           </div>
         ) : getCurrentTours().length > 0 ? (
           <div className="pb-8">

@@ -1,4 +1,5 @@
   import React, { useState, useEffect } from "react";
+  import LoadingSpinner from '../../components/ui/LoadingSpinner';
   import { 
     FaMapMarkerAlt, 
     FaStar, 
@@ -172,7 +173,7 @@
 
             {isLoading ? (
               <div className="flex justify-center py-12">
-                <div className="w-8 h-8 border-4 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+                <LoadingSpinner size={32} className="text-indigo-600" />
               </div>
             ) : error ? (
               <div className="p-4 text-center text-red-500 bg-red-100 rounded-lg">

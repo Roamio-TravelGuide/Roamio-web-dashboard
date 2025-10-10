@@ -11,6 +11,7 @@ import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { TOUR_CONSTANTS, UI_LABELS } from '../../utils/tourConstants';
 import { transformTourData } from '../../utils/tourUtils';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 const STEPS = [
   { id: TOUR_CONSTANTS.STEPS.BASIC_INFO, name: 'Basic Info' },
@@ -178,7 +179,6 @@ export const TourCreate = ({ mode = 'create', tourId }) => {
             district: stop.location.district || '',
             postal_code: stop.location.postal_code || ''
           } : null,
-          // ✅ INCLUDED: Media metadata with durations
           media: mediaMetadata
         };
         
@@ -230,7 +230,6 @@ export const TourCreate = ({ mode = 'create', tourId }) => {
     }
   };
 
-  // Render helpers
   const getPageTitle = () => 
     isEditMode ? UI_LABELS.EDIT.TITLE : UI_LABELS.CREATE.TITLE;
 
@@ -247,7 +246,7 @@ export const TourCreate = ({ mode = 'create', tourId }) => {
       return (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <div className="w-8 h-8 mx-auto mb-4 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+            <LoadingSpinner size={32} className="text-indigo-600 mx-auto mb-4" />
             <p className="text-gray-600">Loading tour data...</p>
           </div>
         </div>
@@ -285,7 +284,7 @@ export const TourCreate = ({ mode = 'create', tourId }) => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+          <LoadingSpinner size={48} className="text-indigo-600 mx-auto mb-4" />
           <p className="text-lg text-gray-700">Loading tour data...</p>
         </div>
       </div>

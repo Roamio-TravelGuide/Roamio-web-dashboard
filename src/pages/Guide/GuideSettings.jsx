@@ -13,6 +13,7 @@ import PasswordSection from '../../components/guide_settings/PasswordSection';
 import PerformanceSection from '../../components/guide_settings/PerformanceSection';
 import SupportSection from '../../components/guide_settings/SupportSection';
 import QuickInfoSection from '../../components/guide_settings/QuickInfoSection';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 const GuideSettings = () => {
   const { authState } = useAuth();
@@ -127,7 +128,7 @@ const GuideSettings = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="w-12 h-12 border-b-2 border-blue-600 rounded-full animate-spin"></div>
+        <LoadingSpinner size={48} className="text-indigo-600" />
       </div>
     );
   }

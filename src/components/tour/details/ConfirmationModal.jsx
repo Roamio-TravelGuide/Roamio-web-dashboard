@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Trash2, Loader2 } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
+import LoadingSpinner from '../../ui/LoadingSpinner';
 
 export const ConfirmationModal = ({ 
   isOpen, 
@@ -45,7 +46,7 @@ export const ConfirmationModal = ({
             className="flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
           >
             {isProcessing ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <LoadingSpinner size={16} className="text-white mr-2" />
             ) : (
               <Trash2 className="w-4 h-4 mr-2" />
             )}

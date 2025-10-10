@@ -3,6 +3,7 @@ import {
   ArrowLeft, Headphones, ImageIcon, MapPin, 
   ChevronDown, ChevronRight, AlertCircle, Loader2 
 } from 'lucide-react';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useTourDetail } from '../../hooks/useTourDetail';
 import TourDetailLayout from '../../layouts/TourDetailLayout';
 import AudioPlayer from '../../components/tour/details/AudioPlayer';
@@ -82,7 +83,7 @@ const TourDetail = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="p-6 text-center bg-white border border-gray-100 rounded-lg shadow-xs">
-          <Loader2 className="w-8 h-8 mx-auto mb-4 text-blue-500 animate-spin" />
+            <LoadingSpinner size={32} className="text-indigo-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-700">Loading Tour Details</h3>
           <p className="text-sm text-gray-500">Please wait while we load your tour information</p>
         </div>
