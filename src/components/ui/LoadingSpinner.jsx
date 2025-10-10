@@ -1,15 +1,14 @@
 import React from 'react';
+import { FiLoader } from 'react-icons/fi';
 
-const LoadingSpinner = ({ 
-  size = 24, 
-  className = '' 
-}) => {
+// Unified spinner that matches the Vendor dashboard style (FiLoader icon)
+const LoadingSpinner = ({ size = 24, className = '' }) => {
+  // size can be a number (px) or tailwind size classes via className
+  const style = typeof size === 'number' ? { width: size, height: size } : {};
+
   return (
-    <div className={`inline-block ${className}`}>
-      <div
-        className="border-2 border-gray-200 rounded-full animate-spin border-t-blue-500"
-        style={{ width: size, height: size }}
-      />
+    <div className={`inline-block ${className}`} style={style} aria-hidden="true">
+      <FiLoader className={`animate-spin`} style={{ width: style.width || undefined, height: style.height || undefined }} />
     </div>
   );
 };

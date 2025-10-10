@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
-import { UploadCloud, X, Info, ImageIcon, Loader2 } from 'lucide-react';
+import { UploadCloud, X, Info, ImageIcon } from 'lucide-react';
+import LoadingSpinner from '../ui/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 import { getMediaUrl } from '../../utils/constants';
 import { validateFile } from '../../utils/tourUtils';
@@ -63,7 +64,7 @@ const UploadArea = ({
     <div className="w-full p-6 text-center">
       <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-teal-100">
         {isUploading ? (
-          <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+          <LoadingSpinner size={20} className="text-indigo-600" />
         ) : (
           <UploadCloud className="w-5 h-5 text-blue-600" />
         )}

@@ -8,6 +8,7 @@
     SkipForward, SkipBack, VolumeX, Volume1, RotateCcw, Settings,
     Maximize2, ExternalLink, AlertTriangle, ZoomIn, Download
   } from 'lucide-react';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
   import {TourStopsMap} from '../../components/tour/TourStopsMap';
   import axios from 'axios';
   import { getMediaUrl } from '../../utils/constants';
@@ -487,7 +488,7 @@
                 }`}
                 aria-label="Confirm rejection"
               >
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isSubmitting && <LoadingSpinner size={16} className="text-white" />}
                 <span>{isSubmitting ? 'Rejecting...' : 'Confirm Rejection'}</span>
               </button>
             </div>
@@ -923,7 +924,7 @@
       return (
         <div className="flex items-center justify-center h-screen bg-gray-50">
           <div className="flex flex-col items-center">
-            <Loader2 className="w-8 h-8 mb-4 text-blue-500 animate-spin" />
+            <LoadingSpinner size={32} className="text-indigo-600 mx-auto mb-4" />
             <div className="text-lg text-gray-600">Loading tour details...</div>
           </div>
         </div>
@@ -973,7 +974,7 @@
                     className="flex items-center px-4 py-1.5 text-sm font-medium text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                   >
                     {isApproving ? (
-                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                      <LoadingSpinner size={16} className="text-indigo-600 mr-1.5" />
                     ) : (
                       <CheckCircle className="w-4 h-4 mr-1.5" />
                     )}
@@ -1243,7 +1244,7 @@
                       title="Refresh media URLs"
                     >
                       {isRefreshingMedia ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <LoadingSpinner size={16} className="text-indigo-600" />
                       ) : (
                         <RotateCcw className="w-4 h-4" />
                       )}

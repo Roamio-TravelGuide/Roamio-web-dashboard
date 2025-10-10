@@ -34,6 +34,7 @@ import {
   FiAward,
   FiPlay
 } from 'react-icons/fi';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 const Support = () => {
   const [activeTab, setActiveTab] = useState('guide-help');
@@ -391,7 +392,7 @@ const Support = () => {
               disabled={loading}
               className="flex items-center gap-2 px-6 py-3 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading && <FiLoader className="animate-spin" />}
+              {loading && <LoadingSpinner size={18} className="text-white" />}
               {loading ? 'Submitting...' : 'Submit Request'}
             </button>
           </div>
@@ -400,7 +401,7 @@ const Support = () => {
         <div className="space-y-4">
           {ticketsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <FiLoader className="w-6 h-6 text-indigo-600 animate-spin" />
+              <LoadingSpinner size={24} className="text-indigo-600" />
               <span className="ml-2 text-gray-600">Loading tickets...</span>
             </div>
           ) : tickets.length > 0 ? (

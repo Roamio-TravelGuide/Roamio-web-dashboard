@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { MediaUpload } from '../ui/MediaUpload';
-import { AlertTriangle, CheckCircle, Clock, Volume2, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Volume2, Image as ImageIcon } from 'lucide-react';
+import LoadingSpinner from '../ui/LoadingSpinner';
 import { useMapbox } from '../../hooks/useMaps';
 import { toast } from 'react-hot-toast';
 import { ValidationAlert, SectionHeader } from './common';

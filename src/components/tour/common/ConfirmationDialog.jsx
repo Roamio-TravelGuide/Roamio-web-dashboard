@@ -1,5 +1,6 @@
 import React from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import LoadingSpinner from '../../ui/LoadingSpinner';
 
 const ConfirmationDialog = ({
   isOpen,
@@ -63,7 +64,7 @@ const ConfirmationDialog = ({
               >
                 {isProcessing ? (
                   <span className="flex items-center">
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <LoadingSpinner size={16} className="text-white mr-2" />
                     Processing...
                   </span>
                 ) : (
