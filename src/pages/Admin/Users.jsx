@@ -32,6 +32,8 @@ const Users = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [guideDocuments, setGuideDocuments] = useState([]);
+  const [selectedDocIndex, setSelectedDocIndex] = useState(0);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -148,11 +150,33 @@ const Users = () => {
   const openUserModal = (user) => {
     setSelectedUser(user);
     setIsModalOpen(true);
+    // If the user is a guide, fetch their documents
+    if (user.role === 'tour_guide' || user.role === 'travel_guide' || user.role === 'guide') {
+      fetchGuideDocuments(user.id);
+      setSelectedDocIndex(0);
+    } else {
+      setGuideDocuments([]);
+    }
   };
 
   const closeUserModal = () => {
     setIsModalOpen(false);
     setSelectedUser(null);
+    setGuideDocuments([]);
+  };
+
+  const fetchGuideDocuments = async (userId) => {
+    try {
+      const resp = await axios.get(`${API_BASE_URL}/users/documents/${userId}`);
+      if (resp.data && resp.data.data) {
+        setGuideDocuments(resp.data.data);
+      } else {
+        setGuideDocuments([]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch guide documents', err);
+      setGuideDocuments([]);
+    }
   };
 
   const updateUserStatus = async (newStatus) => {
@@ -372,7 +396,7 @@ const Users = () => {
       {isLoading && (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <LoadingSpinner size={48} className="text-indigo-600 mx-auto" />
+            <LoadingSpinner size={48} className="mx-auto text-indigo-600" />
             <span className="mt-2 text-gray-600">Loading users...</span>
           </div>
         </div>
@@ -583,18 +607,21 @@ const Users = () => {
       {isModalOpen && selectedUser && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.2)" }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.4)" }}
           onClick={closeUserModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="user-modal-title"
         >
           <div
-            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all duration-300"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto transform transition-all duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
               {/* Modal Header */}
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start justify-between gap-4 mb-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-800">
+                  <h3 id="user-modal-title" className="text-2xl font-bold text-gray-800">
                     {selectedUser.name}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
@@ -602,208 +629,173 @@ const Users = () => {
                     {getStatusBadge(selectedUser.status)}
                   </div>
                 </div>
-                <button
-                  onClick={closeUserModal}
-                  className="p-1 text-gray-400 transition-colors rounded-full hover:text-gray-600 hover:bg-gray-100"
-                >
-                  <FaTimes className="w-6 h-6" />
-                </button>
+
+                <div className="flex items-center gap-2">
+                  {/* Approve / Block actions in header for quick access */}
+                  {selectedUser.status === "pending" ? (
+                    <button
+                      onClick={() => updateUserStatus("active")}
+                      className="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
+                    >
+                      <FaCheck className="inline mr-2" /> Approve
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        updateUserStatus(
+                          selectedUser.status === "blocked" ? "active" : "blocked"
+                        )
+                      }
+                      className={`px-3 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+                        selectedUser.status === "blocked"
+                          ? "bg-green-600 hover:bg-green-700"
+                          : "bg-red-600 hover:bg-red-700"
+                      }`}
+                    >
+                      {selectedUser.status === "blocked" ? (
+                        <>
+                          <FaCheck className="inline mr-2" /> Unblock
+                        </>
+                      ) : (
+                        <>
+                          <FaBan className="inline mr-2" /> Block
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  <button
+                    onClick={closeUserModal}
+                    aria-label="Close user details"
+                    className="p-2 text-gray-500 bg-gray-100 rounded-full hover:bg-gray-200"
+                  >
+                    <FaTimes className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-8 lg:flex-row">
-                {/* Left Column - Profile */}
-                <div className="lg:w-1/3">
-                  <div className="flex flex-col items-center">
-                    <div className="relative mb-4">
-                     
-                      <span
-                        className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-2 border-white ${
-                          selectedUser.status === "active"
-                            ? "bg-green-500"
-                            : selectedUser.status === "blocked"
-                            ? "bg-red-500"
-                            : selectedUser.status === "pending"
-                            ? "bg-yellow-500"
-                            : "bg-gray-500"
-                        }`}
-                      ></span>
-                    </div>
+              <div className="grid gap-8 lg:grid-cols-3">
+                <div className="space-y-6">
+                  <div className="p-6 bg-white shadow-md rounded-xl">
+                    {guideDocuments && guideDocuments.length > 0 ? (
+                      <>
+                        {/* Main preview */}
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center justify-center w-full p-4 border rounded-lg bg-gray-50">
+                            <img
+                              src={
+                                (guideDocuments[selectedDocIndex].url || "").startsWith("/")
+                                  ? `${API_BASE_URL.replace("/api/v1", "")}${guideDocuments[selectedDocIndex].url}`
+                                  : guideDocuments[selectedDocIndex].url
+                              }
+                              alt={guideDocuments[selectedDocIndex].name}
+                              className="object-contain w-full max-h-[280px] rounded"
+                            />
+                          </div>
 
-                    <div className="w-full space-y-3">
-                      {selectedUser.status === "pending" && (
-                        <button
-                          onClick={() => updateUserStatus("active")}
-                          className="flex items-center justify-center w-full gap-2 px-4 py-2 font-medium text-white transition-colors bg-green-500 rounded-lg hover:bg-green-600"
-                        >
-                          Approve User
-                        </button>
+                          {/* Open original link just under preview */}
+                          <a
+                            href={
+                              (guideDocuments[selectedDocIndex].url || "").startsWith("/")
+                                ? `${API_BASE_URL.replace("/api/v1", "")}${guideDocuments[selectedDocIndex].url}`
+                                : guideDocuments[selectedDocIndex].url
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-3 text-sm font-medium text-teal-600 hover:underline"
+                          >
+                            Open original
+                          </a>
+                        </div>
+                    
+                      </>
+                    ) : (
+                      <div className="w-full p-10 text-center text-gray-400 border border-dashed rounded-lg bg-gray-50">
+                        No documents uploaded
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column - Details */}
+                <div className="col-span-2 space-y-6">
+                  {/* Contact Information */}
+                  <div className="p-6 bg-white shadow-md rounded-xl">
+                    <h4 className="mb-4 text-lg font-semibold text-gray-800">
+                      Contact Information
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 text-blue-600 bg-blue-100 rounded-full">
+                          <FaEnvelope className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Email</p>
+                          <p className="font-medium">{selectedUser.email}</p>
+                        </div>
+                      </div>
+
+                      {selectedUser.phone && (
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 text-green-600 bg-green-100 rounded-full">
+                            <FaPhone className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Phone</p>
+                            <p className="font-medium">{selectedUser.phone}</p>
+                          </div>
+                        </div>
                       )}
 
-                      {selectedUser.status !== "pending" && (
-                        <button
-                          onClick={() =>
-                            updateUserStatus(
-                              selectedUser.status === "blocked"
-                                ? "active"
-                                : "blocked"
-                            )
-                          }
-                          className={`w-full px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 ${
-                            selectedUser.status === "blocked"
-                              ? "bg-green-500 text-white hover:bg-green-600"
-                              : "bg-red-500 text-white hover:bg-red-600"
-                          } transition-colors`}
-                        >
-                          {selectedUser.status === "blocked"
-                            ? "Unblock User"
-                            : "Block User"}
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="w-full mt-6 space-y-4">
-                      <div className="p-4 rounded-lg bg-gray-50">
-                        <h4 className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
-                          <FaCalendarAlt className="text-blue-500" />
-                          <span>Registration Date</span>
-                        </h4>
-                        <p className="text-gray-600">
-                          {new Date(
-                            selectedUser.registeredDate
-                          ).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </p>
+                      {/* Registration Date */}
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 text-purple-600 bg-purple-100 rounded-full">
+                          <FaCalendarAlt className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Registration Date</p>
+                          <p className="font-medium">
+                            {new Date(selectedUser.registeredDate).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </p>
+                        </div>
                       </div>
 
                       {selectedUser.lastLogin && (
-                        <div className="p-4 rounded-lg bg-gray-50">
-                          <h4 className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
-                            <FaCalendarAlt className="text-green-500" />
-                            <span>Last Login</span>
-                          </h4>
-                          <p className="text-gray-600">
-                            {new Date(selectedUser.lastLogin).toLocaleString(
-                              "en-US",
-                              {
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 text-orange-600 bg-orange-100 rounded-full">
+                            <FaCalendarAlt className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Last Login</p>
+                            <p className="font-medium">
+                              {new Date(selectedUser.lastLogin).toLocaleString("en-US", {
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
                                 hour: "2-digit",
                                 minute: "2-digit",
-                              }
-                            )}
-                          </p>
+                              })}
+                            </p>
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
-                </div>
 
-                {/* Right Column - Details */}
-                <div className="lg:w-2/3">
-                  <div className="space-y-6">
-                    {/* Contact Information */}
-                    <div className="p-5 rounded-lg bg-gray-50">
-                      <h4 className="mb-4 text-lg font-semibold text-gray-800">
-                        Contact Information
-                      </h4>
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 text-blue-600 bg-blue-100 rounded-full">
-                            <FaEnvelope className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Email</p>
-                            <p className="font-medium">{selectedUser.email}</p>
-                          </div>
-                        </div>
-
-                        {selectedUser.phone && (
-                          <div className="flex items-start gap-3">
-                            <div className="p-2 text-green-600 bg-green-100 rounded-full">
-                              <FaPhone className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500">Phone</p>
-                              <p className="font-medium">
-                                {selectedUser.phone}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                  {/* Bio */}
+                  {selectedUser.bio && (
+                    <div className="p-6 bg-white shadow-md rounded-xl">
+                      <h4 className="mb-4 text-lg font-semibold text-gray-800">About</h4>
+                      <p className="text-gray-600 whitespace-pre-line">{selectedUser.bio}</p>
                     </div>
-
-                    {/* Activity Stats */}
-                    <div className="p-5 rounded-lg bg-gray-50">
-                      <h4 className="mb-4 text-lg font-semibold text-gray-800">
-                        Activity
-                      </h4>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <div className="p-3 bg-white border border-gray-100 rounded-lg shadow">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 text-purple-600 bg-purple-100 rounded-full">
-                              <FaBook className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500">Bookings</p>
-                              <p className="text-lg font-bold">
-                                {selectedUser.totalBookings}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="p-3 bg-white border border-gray-100 rounded-lg shadow">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 text-yellow-600 bg-yellow-100 rounded-full">
-                              <FaComment className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-500">Reviews</p>
-                              <p className="text-lg font-bold">
-                                {selectedUser.totalReviews}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        {selectedUser.role !== "traveler" &&
-                          selectedUser.averageRating !== undefined && (
-                            <div className="p-3 bg-white border border-gray-100 rounded-lg shadow">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 text-red-600 bg-red-100 rounded-full">
-                                  <FaStar className="w-4 h-4" />
-                                </div>
-                                <div>
-                                  <p className="text-sm text-gray-500">
-                                    Rating
-                                  </p>
-                                  <p className="text-lg font-bold">
-                                    {selectedUser.averageRating || 0}/5
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-
-                    {/* Bio */}
-                    {selectedUser.bio && (
-                      <div className="p-5 rounded-lg bg-gray-50">
-                        <h4 className="mb-4 text-lg font-semibold text-gray-800">
-                          About
-                        </h4>
-                        <p className="text-gray-600 whitespace-pre-line">
-                          {selectedUser.bio}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
+
             </div>
           </div>
         </div>
