@@ -7,6 +7,8 @@ import RootLayout from '../components/MainLayout/RootLayout';
 
 import Home from '../pages/Landing/Home';
 import About from '../pages/Landing/About';
+import Contact from '../pages/Landing/Contact';
+import Tours from '../pages/Landing/Tours';
 import LoginPage from '../pages/Auth/SignInPage';
 import SignupPage from '../pages/Auth/UnifiedSignup';
 import ResetPassword from '../pages/Auth/ResetPassword';
@@ -48,6 +50,8 @@ const AppRoutes = () => {
         <Route element={<RootLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/tours" element={<Tours />} />
         </Route>
 
         {/* Auth routes (without layout) */}

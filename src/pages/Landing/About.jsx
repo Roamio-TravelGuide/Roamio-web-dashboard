@@ -1,131 +1,192 @@
 import React from 'react';
 import { images } from '../../assets/assets';
-import { FaCompass, FaHeadphones, FaMapMarkedAlt, FaUsers } from 'react-icons/fa';
+import { FaCompass, FaHeadphones, FaMapMarkedAlt, FaUsers, FaStar } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const About = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/" className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center shadow-lg">
+                  <FaHeadphones className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-slate-900">Roamio</h1>
+              </Link>
+              
+              <nav className="hidden md:flex items-center gap-6">
+                {['Home', 'Tours', 'About', 'Contact'].map((item) => (
+                  <Link
+                    key={item}
+                    to={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
+                    className={`text-sm font-medium transition-colors duration-300 ${
+                      item === 'About' 
+                        ? 'text-teal-600 font-semibold' 
+                        : 'text-slate-600 hover:text-teal-600'
+                    }`}
+                  >
+                    {item}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button className="px-4 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all duration-300 shadow-lg">
+                Sign In
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
       <div 
-        className="relative flex items-center justify-center h-screen bg-gray-900 text-white overflow-hidden"
+        className="relative flex items-center justify-center h-screen text-white overflow-hidden"
         style={{
-          backgroundImage: `url(${images.waterfall})`,
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url(${images.Waterfall})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30"></div>
         <div className="relative z-10 text-center px-4 max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fadeIn">
-            Our <span className="text-teal-400">Story</span>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            Our <span className="bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">Story</span>
           </h1>
-          <p className="text-xl md:text-2xl mb-8 leading-relaxed animate-fadeIn delay-100">
+          <p className="text-xl md:text-2xl mb-8 leading-relaxed text-slate-200">
             Revolutionizing travel through immersive audio experiences that connect you to places in ways you've never imagined.
           </p>
-          <div className="animate-fadeIn delay-200">
+          <div>
             <Link 
               to="/tours" 
-              className="inline-block px-8 py-3 bg-gradient-to-r from-teal-600 to-blue-700 text-white rounded-lg hover:from-teal-700 hover:to-blue-800 font-medium transition-all duration-300 shadow-md hover:shadow-lg text-lg"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-teal-500 to-blue-600 text-white text-lg font-semibold rounded-2xl hover:from-teal-400 hover:to-blue-500 transition-all duration-500 hover:scale-105 hover:shadow-2xl shadow-lg"
             >
               Explore Our Tours
             </Link>
           </div>
         </div>
         <div className="absolute bottom-8 left-0 right-0 flex justify-center animate-bounce">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
+          <div className="w-px h-12 bg-gradient-to-b from-teal-400 to-transparent"></div>
         </div>
       </div>
 
       {/* Mission Section */}
-      <section className="py-24 px-4 max-w-6xl mx-auto">
+      <section className="py-20 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-            <span className="relative inline-block">
-              Our Mission
-              <span className="absolute bottom-0 left-0 right-0 h-2 bg-teal-400/30 -z-10 transform translate-y-2"></span>
-            </span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 rounded-full border border-teal-100 mb-6">
+            <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
+            <span className="text-sm font-medium text-teal-700">Our Mission</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+            Transforming How You <span className="bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">Experience Travel</span>
           </h2>
-          <div className="w-24 h-1 bg-teal-600 mx-auto mb-6"></div>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <div className="w-24 h-1 bg-gradient-to-r from-teal-500 to-blue-500 mx-auto mb-6 rounded-full"></div>
+          <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
             At Roamio, we believe every place has a story to tell. Our mission is to transform how people experience locations by creating deeply engaging audio journeys that bring destinations to life.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-4">Why We Started</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Founded in 2025 by a team of travel enthusiasts and audio engineers, Roamio was born from a simple observation: most travel apps focus on logistics, but none truly capture the soul of a place.
+            <h3 className="text-2xl font-semibold text-slate-900 mb-4">Why We Started</h3>
+            <p className="text-slate-600 leading-relaxed">
+              Founded by a team of travel enthusiasts and audio engineers, Roamio was born from a simple observation: most travel apps focus on logistics, but none truly capture the soul of a place.
             </p>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-slate-600 leading-relaxed">
               We set out to change that by combining rich storytelling with precise location technology, creating experiences that feel like having a knowledgeable local guide in your ear.
             </p>
             <div className="pt-4">
-              <Link 
-                to="/team" 
-                className="inline-block px-6 py-2 border-2 border-teal-600 text-teal-600 rounded-lg font-medium hover:bg-teal-600/10 transition-colors duration-300"
-              >
-                Meet Our Team
-              </Link>
+              <div className="flex items-center gap-6 text-sm text-slate-500">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-teal-600">50K+</div>
+                  <div>Happy Travelers</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">200+</div>
+                  <div>Audio Tours</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-teal-600">4.9</div>
+                  <div>Rating</div>
+                </div>
+              </div>
             </div>
           </div>
           <div className="relative group">
-            <div className="absolute inset-0 bg-teal-600 rounded-xl transform rotate-1 group-hover:rotate-2 transition-transform duration-500 -z-10"></div>
-            <img 
-              src={images.team} 
-              alt="Team meeting" 
-              className="w-full h-auto object-cover rounded-xl shadow-xl transform group-hover:-translate-y-1 transition-transform duration-500"
-            />
+            <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/20 to-blue-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div 
+              className="relative rounded-2xl overflow-hidden shadow-2xl transform group-hover:scale-105 transition-transform duration-500"
+              style={{
+                backgroundImage: `url(${images.Train})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                aspectRatio: '4/3'
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-blue-500/10"></div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Values Section */}
-      <section className="py-24 bg-gradient-to-br from-gray-50 to-white">
-        <div className="max-w-6xl mx-auto px-4">
+      <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50/30">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-              Our <span className="text-teal-600">Core Values</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full border border-blue-100 mb-6">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-blue-700">Our Values</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+              Core <span className="bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">Principles</span>
             </h2>
-            <div className="w-24 h-1 bg-teal-600 mx-auto mb-6"></div>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               These principles guide everything we create at Roamio
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                icon: <FaCompass className="text-4xl mb-4 text-teal-600" />,
+                icon: <FaCompass className="w-8 h-8" />,
                 title: "Discovery",
-                description: "We believe travel should be about uncovering hidden gems and unexpected stories."
+                description: "We believe travel should be about uncovering hidden gems and unexpected stories.",
+                color: "teal"
               },
               {
-                icon: <FaHeadphones className="text-4xl mb-4 text-teal-600" />,
+                icon: <FaHeadphones className="w-8 h-8" />,
                 title: "Immersion",
-                description: "Our audio experiences are designed to fully transport you to another place."
+                description: "Our audio experiences are designed to fully transport you to another place.",
+                color: "blue"
               },
               {
-                icon: <FaMapMarkedAlt className="text-4xl mb-4 text-teal-600" />,
+                icon: <FaMapMarkedAlt className="w-8 h-8" />,
                 title: "Accuracy",
-                description: "Every location pin and audio cue is meticulously researched and tested."
+                description: "Every location pin and audio cue is meticulously researched and tested.",
+                color: "teal"
               },
               {
-                icon: <FaUsers className="text-4xl mb-4 text-teal-600" />,
+                icon: <FaUsers className="w-8 h-8" />,
                 title: "Community",
-                description: "We collaborate with local storytellers to create authentic experiences."
+                description: "We collaborate with local storytellers to create authentic experiences.",
+                color: "blue"
               }
             ].map((value, index) => (
               <div 
                 key={index} 
-                className="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-2 border border-gray-100 hover:border-teal-100 flex flex-col items-center text-center"
+                className="group bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-2 flex flex-col items-center text-center"
               >
-                <div className="bg-teal-50 p-4 rounded-full mb-4">{value.icon}</div>
-                <h3 className="text-xl font-semibold mb-3 text-gray-800">{value.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{value.description}</p>
+                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-${value.color}-500 to-${value.color}-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                  <div className="text-white">
+                    {value.icon}
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold mb-3 text-slate-900 group-hover:text-teal-700 transition-colors duration-300">{value.title}</h3>
+                <p className="text-slate-600 leading-relaxed text-sm">{value.description}</p>
               </div>
             ))}
           </div>
@@ -133,59 +194,55 @@ const About = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-              Voices From Our <span className="text-teal-600">Community</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 rounded-full border border-teal-100 mb-6">
+              <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-teal-700">Testimonials</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+              Voices From Our <span className="bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">Community</span>
             </h2>
-            <div className="w-24 h-1 bg-teal-600 mx-auto mb-6"></div>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               Hear what our users and partners say about their Roamio experiences
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
               {
                 quote: "Roamio transformed how I experience cities. It's like having a local friend in every destination.",
                 author: "Sarah K., Travel Blogger",
-                avatar: images.sarah,
                 rating: 5
               },
               {
                 quote: "As a history teacher, I use Roamio to bring historical sites to life for my students. Incredible educational tool!",
                 author: "Michael T., Educator",
-                avatar: images.kyler,
                 rating: 5
               },
               {
                 quote: "The production quality is outstanding. I feel completely immersed in each location's story.",
                 author: "David L., Audio Enthusiast",
-                avatar: images.jhon,
                 rating: 5
               }
             ].map((testimonial, index) => (
               <div 
                 key={index} 
-                className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-teal-100 group"
+                className="group bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-slate-200/60 shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105"
               >
                 <div className="flex mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
+                    <FaStar key={i} className="w-4 h-4 text-yellow-400 fill-current" />
                   ))}
                 </div>
-                <div className="text-gray-600 italic mb-6 leading-relaxed">"{testimonial.quote}"</div>
+                <div className="text-slate-600 italic mb-6 leading-relaxed text-sm">"{testimonial.quote}"</div>
                 <div className="flex items-center">
-                  <img 
-                    src={testimonial.avatar} 
-                    alt={testimonial.author} 
-                    className="w-12 h-12 rounded-full mr-4 object-cover border-2 border-white shadow-sm group-hover:border-teal-200 transition-colors"
-                  />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm mr-3">
+                    {testimonial.author.split(' ')[0][0]}
+                  </div>
                   <div className="text-left">
-                    <div className="font-semibold text-gray-800">{testimonial.author}</div>
+                    <div className="font-semibold text-slate-900 text-sm">{testimonial.author}</div>
                   </div>
                 </div>
               </div>
@@ -195,30 +252,29 @@ const About = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-24 bg-gradient-to-r from-teal-600 to-blue-700 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/diagonal-striped-brick.png')" }}></div>
-        <div className="max-w-4xl mx-auto text-center px-4 relative z-10">
+      <section className="relative py-20 bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 text-white overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="max-w-4xl mx-auto text-center px-6 relative z-10">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Ready to Experience <span className="text-teal-200">Travel Differently</span>?
+            Ready to Experience <span className="bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">Travel Differently</span>?
           </h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl mb-8 max-w-2xl mx-auto leading-relaxed text-slate-300">
             Download Roamio today and discover the world through immersive audio journeys.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <a
-              href="https://play.google.com/store"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block px-8 py-3 bg-white text-teal-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-300 shadow-md hover:shadow-lg"
-            >
-              Get the App
-            </a>
-            <Link 
-              to="/tours" 
-              className="inline-block px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-colors duration-300 shadow-md hover:shadow-lg"
+            <Link
+              to="/tours"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-teal-500 to-blue-600 text-white text-lg font-semibold rounded-2xl hover:from-teal-400 hover:to-blue-500 transition-all duration-500 hover:scale-105 hover:shadow-2xl shadow-lg"
             >
               Explore Tours
             </Link>
+            <button className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white text-lg font-semibold rounded-2xl hover:bg-white/20 transition-all duration-500 hover:scale-105 hover:shadow-2xl">
+              Download App
+            </button>
           </div>
         </div>
       </section>
