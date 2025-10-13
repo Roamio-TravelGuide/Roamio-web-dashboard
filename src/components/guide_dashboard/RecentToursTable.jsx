@@ -1,5 +1,6 @@
 import { FiEye, FiEdit, FiClock, FiMoreHorizontal } from 'react-icons/fi';
 import { getMediaUrl } from '../../utils/constants';
+import { useNavigate } from 'react-router-dom';
 
 const RecentToursTable = ({ tours = [] }) => {
   // Filter and sort pending tours by creation date (newest first)
@@ -14,6 +15,11 @@ const RecentToursTable = ({ tours = [] }) => {
       year: 'numeric'
     });
   };
+
+  const navigate = useNavigate();
+  const viewTour = (id) => {
+    navigate(`/guide/tour/view/${id}`);
+  }
 
   const getDaysWaiting = (createdAt) => {
     const createdDate = new Date(createdAt);
@@ -33,9 +39,7 @@ const RecentToursTable = ({ tours = [] }) => {
             </span>
           )}
         </div>
-        <button className="text-sm text-indigo-600 hover:text-indigo-800">
-          View All Pending
-        </button>
+  
       </div>
 
       {pendingTours.length > 0 ? (
@@ -120,22 +124,11 @@ const RecentToursTable = ({ tours = [] }) => {
                     <td className="py-4">
                       <div className="flex items-center gap-2">
                         <button 
+                          onClick={() => viewTour(tour.id)}
                           className="p-2 text-gray-500 rounded-md hover:bg-gray-100"
                           title="Preview"
                         >
                           <FiEye className="w-4 h-4" />
-                        </button>
-                        <button 
-                          className="p-2 text-gray-500 rounded-md hover:bg-gray-100"
-                          title="Edit"
-                        >
-                          <FiEdit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          className="p-2 text-gray-500 rounded-md hover:bg-gray-100"
-                          title="More options"
-                        >
-                          <FiMoreHorizontal className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
