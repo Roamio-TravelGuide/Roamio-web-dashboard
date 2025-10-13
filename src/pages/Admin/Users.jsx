@@ -286,7 +286,7 @@ const Users = () => {
                     Travelers
                   </button>
                   <button
-                    onClick={() => handleUserTypeSelect("tour_guide")}
+                    onClick={() => handleUserTypeSelect("travel_guide")}
                     className={`flex w-full items-center px-4 py-2 text-sm ${
                       selectedUserType === "tour_guide"
                         ? "bg-blue-50 text-blue-700"

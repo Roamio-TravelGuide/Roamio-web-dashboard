@@ -1,10 +1,17 @@
 import React from 'react';
-import { FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight,FiClock } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { getMediaUrl } from '../../utils/constants';
 
 const TopPerformingTours = ({ tours = [] }) => {
   // Sort tours by bookings and get top 3
   const topTours = [...tours].sort((a, b) => b.bookings - a.bookings).slice(0, 3);
   const hasTours = tours.length > 0;
+  const navigate = useNavigate();
+
+  const goToTourPackages = () => {
+    navigate('/guide/tourpackages');
+  };
 
   return (
     <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
@@ -18,7 +25,7 @@ const TopPerformingTours = ({ tours = [] }) => {
             </p>
           </div>
           {hasTours && tours.length > 3 && (
-            <button className="flex items-center px-4 py-2 text-sm font-medium text-blue-600 transition-colors duration-200 rounded-lg hover:bg-blue-50">
+            <button onClick={goToTourPackages} className="flex items-center px-4 py-2 text-sm font-medium text-blue-600 transition-colors duration-200 rounded-lg hover:bg-blue-50">
               View All Tours
               <FiArrowRight className="ml-2" />
             </button>
@@ -55,15 +62,15 @@ const TourCard = ({ tour, rank }) => {
     <div className="overflow-hidden transition-all duration-200 border border-gray-200 rounded-xl hover:shadow-md">
       <div className="relative h-40 bg-gray-100">
         {tour.cover_image ? (
-          <img 
-            src={tour.cover_image.url} 
+          <img
+            src={getMediaUrl(tour.cover_image.url)}
             alt={tour.title}
             className="object-cover w-full h-full"
             loading="lazy"
           />
         ) : (
-          <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-gray-50 to-gray-200">
-            <span className="text-sm text-gray-400">Tour Image</span>
+          <div className="flex items-center justify-center w-full h-full bg-gray-200">
+            <FiClock className="text-gray-400" />
           </div>
         )}
         <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
@@ -79,8 +86,8 @@ const TourCard = ({ tour, rank }) => {
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 overflow-hidden bg-gray-100 rounded-full">
               {tour.guide.user.profile_picture_url ? (
-                <img 
-                  src={tour.guide.user.profile_picture_url} 
+                <img
+                  src={getMediaUrl(tour.guide.user.profile_picture_url)}
                   alt={tour.guide.user.name}
                   className="object-cover w-full h-full"
                 />
