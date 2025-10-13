@@ -1,4 +1,5 @@
 import { FiEye, FiEdit, FiClock, FiMoreHorizontal } from 'react-icons/fi';
+import { getMediaUrl } from '../../utils/constants';
 
 const RecentToursTable = ({ tours = [] }) => {
   // Filter and sort pending tours by creation date (newest first)
@@ -59,8 +60,8 @@ const RecentToursTable = ({ tours = [] }) => {
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0 w-12 h-12 overflow-hidden bg-gray-100 rounded-md">
                           {tour.cover_image ? (
-                            <img 
-                              src={tour.cover_image.url} 
+                            <img
+                              src={getMediaUrl(tour.cover_image.url)}
                               alt={tour.title}
                               className="object-cover w-full h-full"
                             />
@@ -82,8 +83,8 @@ const RecentToursTable = ({ tours = [] }) => {
                       <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 overflow-hidden bg-gray-100 rounded-full">
                           {tour.guide.user.profile_picture_url ? (
-                            <img 
-                              src={tour.guide.user.profile_picture_url} 
+                            <img
+                              src={getMediaUrl(tour.guide.user.profile_picture_url)}
                               alt={tour.guide.user.name}
                               className="object-cover w-full h-full"
                             />
