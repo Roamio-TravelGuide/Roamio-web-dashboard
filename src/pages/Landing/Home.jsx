@@ -166,14 +166,10 @@ const Home = () => {
   </div>
 
   {/* Hero Content */}
-  <div className="relative flex flex-row items-center justify-between w-full max-w-7xl gap-1 -mb-10">
+  <div className="relative flex flex-row items-center justify-between w-full max-w-7xl gap-1 mb-2">
     {/* Hero Text */}
     <div className="flex flex-col items-start max-w-2xl">
       <div className="mb-6">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 rounded-full border border-teal-100 mb-6">
-          <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
-          <span className="text-sm font-medium text-teal-700">Immersive Audio Experiences</span>
-        </div>
         <h1 className="text-5xl lg:text-6xl font-light leading-tight tracking-tight text-slate-900 mb-6">
           Your Next
           <span className="block bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent font-semibold">
