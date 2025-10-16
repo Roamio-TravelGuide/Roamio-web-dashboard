@@ -16,6 +16,7 @@ import {
   FaRegQuestionCircle,
 } from "react-icons/fa";
 import React from "react";
+import { icons } from "lucide-react";
 
 // Helper function to create icon elements
 const createIcon = (IconComponent) =>
@@ -63,6 +64,11 @@ export const menuConfig = {
         path: "/moderator/dashboard",
         icon: createIcon(FaCog),
       },
+      {
+        title: "Hidden Gems",
+        path: "/moderator/hiddengem",
+        icons: createIcon(FaCog),
+      }
     ],
   },
   admin: {

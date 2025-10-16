@@ -30,7 +30,7 @@ const UnifiedSignup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   
-  const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({
     name: '',
     email: '',
     contactNumber: '',
@@ -44,7 +44,7 @@ const UnifiedSignup = () => {
     longitude: null,
     password: '',
     confirmPassword: '',
-    verificationDocument:'',
+    verificationDocument: null, 
     years_of_experience:'',
   });
   
@@ -206,26 +206,46 @@ const UnifiedSignup = () => {
     }, 300);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const handleInputChange = (e) => {
+  const { name, value, files, type } = e.target;
+
+  if (type === 'file' && files) {
+    // File input
+    setFormData(prev => ({
+      ...prev,
+      [name]: files[0],   // store the File object
+    }));
+  } else {
+    // Text/number inputs
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
-    }
-  };
+  }
+
+  if (errors[name]) {
+    setErrors(prev => ({
+      ...prev,
+      [name]: undefined
+    }));
+  }
+};
+
 
   const validateCurrentLevel = () => {
     const newErrors = {};
     
     if (!selectedUserType) return false;
     
+    // Helper: treat null/undefined or empty strings as blank. Files are considered non-blank when present.
+    const isBlank = (v) => {
+      if (v === undefined || v === null) return true;
+      if (typeof v === 'string') return v.trim() === '';
+      if (v instanceof File) return false; // file present => not blank
+      // For other types (numbers, objects) consider them non-blank by default
+      return false;
+    };
+
     const relevantFields = fieldConfigs.filter(field => 
       field.showFor.includes(selectedUserType) && 
       field.required && 
@@ -234,7 +254,7 @@ const UnifiedSignup = () => {
     
     relevantFields.forEach(field => {
       const value = formData[field.key];
-      if (!value?.trim()) {
+      if (isBlank(value)) {
         newErrors[field.key] = `${field.label} is required`;
       }
     });
@@ -254,19 +274,19 @@ const UnifiedSignup = () => {
       newErrors.confirmPassword = 'Passwords do not match';
     }
     
-    if (selectedUserType === 'guide' && !formData.guideId.trim()) {
+    if (selectedUserType === 'guide' && isBlank(formData.guideId)) {
       newErrors.guideId = 'Guide license ID is required';
     }
     
     if (selectedUserType === 'restaurant') {
       // On level 1 we only require the restaurant type; address is collected on level 2
-      if (currentLevel === 1 && !formData.restaurantType.trim()) {
+      if (currentLevel === 1 && isBlank(formData.restaurantType)) {
         newErrors.restaurantType = 'Restaurant type is required';
       }
       if (currentLevel === 2) {
         // For restaurants: allow either structured fields OR a single fullAddress fallback
-        const hasStructured = formData.streetNumber?.trim() && formData.streetName?.trim() && formData.city?.trim();
-        const hasFull = formData.fullAddress?.trim();
+        const hasStructured = !isBlank(formData.streetNumber) && !isBlank(formData.streetName) && !isBlank(formData.city);
+        const hasFull = !isBlank(formData.fullAddress);
         if (!hasStructured && !hasFull) {
           newErrors.streetNumber = newErrors.streetNumber || 'Provide street number, street name and city, or paste full address';
         }
@@ -317,11 +337,28 @@ const UnifiedSignup = () => {
         bio: ''
       };
 
-      if (selectedUserType === 'guide') {
-        payload.license = formData.guideId;
-        payload.years_of_experience = 0;
-        payload.languages_spoken = ['English'];
-      } else if (selectedUserType === 'restaurant') {
+    let bodyToSend = payload;
+
+    if (selectedUserType === "guide") {
+      // Build multipart/form-data
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phone_no', formData.contactNumber);
+      formDataToSend.append('password', formData.password);
+      formDataToSend.append('role', roleMap[selectedUserType]);
+      formDataToSend.append('license', formData.guideId);
+      formDataToSend.append('years_of_experience', formData.years_of_experience || 0);
+      formDataToSend.append('languages_spoken[]', 'English');
+      // attach file if present
+      if (formData.verificationDocument) {
+        formDataToSend.append('verificationDocument', formData.verificationDocument);
+      }
+
+      bodyToSend = formDataToSend;
+    }
+    
+      else if (selectedUserType === 'restaurant') {
         payload.business_name = formData.name;
         payload.business_type = formData.restaurantType;
         payload.restaurantType = formData.restaurantType;
@@ -416,7 +453,7 @@ const UnifiedSignup = () => {
         payload.longitude = longitude;
       }
 
-      await signup(payload);
+  await signup(bodyToSend);
       
       // Show success toast
       toast.success('Account created successfully!', { id: toastId });
@@ -464,17 +501,31 @@ const UnifiedSignup = () => {
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <Icon className="w-5 h-5 text-gray-400" />
           </div>
-          <input
-            id={key}
-            name={key}
-            type={inputType}
-            value={formData[key]}
-            onChange={handleInputChange}
-            placeholder={placeholder}
-            className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 ${
-              errors[key] ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white hover:border-gray-400'
-            }`}
-          />
+          {type === 'file' ? (
+            <input
+              id={key}
+              name={key}
+              type="file"
+              accept="image/*"
+              onChange={handleInputChange}
+              placeholder={placeholder}
+              className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 ${
+                errors[key] ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white hover:border-gray-400'
+              }`}
+            />
+          ) : (
+            <input
+              id={key}
+              name={key}
+              type={inputType}
+              value={formData[key]}
+              onChange={handleInputChange}
+              placeholder={placeholder}
+              className={`block w-full pl-10 pr-10 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 ${
+                errors[key] ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white hover:border-gray-400'
+              }`}
+            />
+          )}
           {isPassword && (
             <button
               type="button"
