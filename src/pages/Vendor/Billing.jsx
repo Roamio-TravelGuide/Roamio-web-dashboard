@@ -44,6 +44,7 @@ const CheckoutForm = ({ amount, planName, onSuccess, onError, onCancel }) => {
 
     try {
       // Create payment intent on server
+      console.log('Creating payment intent for amount:', amount, 'plan:', planName);
       const { data } = await paymentApi.createPaymentIntent({
         amount,
         currency: 'usd',
@@ -52,28 +53,40 @@ const CheckoutForm = ({ amount, planName, onSuccess, onError, onCancel }) => {
         }
       });
 
+      console.log('Payment intent created:', data);
       const { clientSecret } = data;
 
       // Get the card element
       const cardNumberElement = elements.getElement(CardNumberElement);
 
       // Confirm the payment on the client
+      console.log('Confirming payment with client secret...');
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardNumberElement,
           billing_details: {
             // You can add billing details here if needed
           },
-        }
+        },
+        return_url: window.location.href, // Add return URL for web
       });
 
+      console.log('Payment confirmation result:', result);
+
       if (result.error) {
+        console.error('Payment error:', result.error);
         setError(result.error.message);
         onError && onError(result.error);
       } else {
         // The payment has been processed!
+        console.log('Payment intent status:', result.paymentIntent.status);
         if (result.paymentIntent.status === 'succeeded') {
+          console.log('Payment succeeded, calling onSuccess...');
           onSuccess && onSuccess(result.paymentIntent);
+        } else {
+          console.log('Payment not succeeded, status:', result.paymentIntent.status);
+          setError('Payment was not completed successfully');
+          onError && onError(new Error('Payment not completed'));
         }
       }
     } catch (err) {
@@ -214,8 +227,8 @@ const StripePaymentModal = ({ amount, planName, onSuccess, onError, onCancel, is
 };
 
 const VendorBilling = () => {
-  // Sample data - in a real app, this would come from an API or state management
-  const currentPlan = {
+  // State for current plan - in a real app, this would come from an API
+  const [currentPlan, setCurrentPlan] = useState({
     name: "Professional",
     price: "$29.99/month",
     features: [
@@ -225,7 +238,7 @@ const VendorBilling = () => {
       "Custom branding"
     ],
     renewalDate: "2023-12-15"
-  };
+  });
 
   const transactions = [
     { id: 1, date: "2023-11-15", amount: "$29.99", status: "Completed" },
@@ -235,9 +248,34 @@ const VendorBilling = () => {
 
   const availablePlans = [
     { name: "Basic", price: "$9.99/month", recommended: false, actualPrice: 9.99 },
-    { name: "Professional", price: "$29.99/month", recommended: true, actualPrice: 29.99 },
+    { name: "Professional", price: "$29.99/month", recommended: false, actualPrice: 29.99 },
     { name: "Enterprise", price: "$99.99/month", recommended: false, actualPrice: 99.99 }
   ];
+
+  // Helper function to get plan features
+  const getPlanFeatures = (planName) => {
+    const features = {
+      "Basic": [
+        "Up to 10 products",
+        "Basic analytics",
+        "Email support"
+      ],
+      "Professional": [
+        "Up to 50 products",
+        "Advanced analytics",
+        "Priority support",
+        "Custom branding"
+      ],
+      "Enterprise": [
+        "Unlimited products",
+        "Advanced analytics",
+        "24/7 phone support",
+        "Custom branding",
+        "API access"
+      ]
+    };
+    return features[planName] || [];
+  };
 
   // State for payment processing
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -263,15 +301,41 @@ const VendorBilling = () => {
   const handlePaymentSuccess = async (paymentIntent) => {
     console.log('Payment succeeded:', paymentIntent);
     setShowPaymentModal(false);
-    const { data } = await paymentApi.createStripPayment(paymentIntent);
-    setSelectedPlan(null);
-    // You might want to refresh the payment history here
-    alert('Payment successful! Your subscription has been updated.');
+
+    try {
+      // Include user ID in the payment data for proper recording
+      const paymentData = {
+        ...paymentIntent,
+        metadata: {
+          ...paymentIntent.metadata,
+          userId: 'current-user-id', // Replace with actual user ID from auth context
+          planName: selectedPlan?.name
+        }
+      };
+
+      const response = await paymentApi.createStripPayment(paymentData);
+      console.log('Payment recorded successfully:', response.data);
+
+      // Update current plan to the selected plan
+      setCurrentPlan({
+        name: selectedPlan.name,
+        price: selectedPlan.price,
+        features: getPlanFeatures(selectedPlan.name), // You might want to define this function
+        renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 days from now
+      });
+
+      setSelectedPlan(null);
+      // You might want to refresh the payment history here
+      alert('Payment successful! Your subscription has been updated.');
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      alert('Payment was processed but failed to record. Please contact support.');
+    }
   };
 
   const handlePaymentError = (error) => {
     console.error('Payment error:', error);
-    alert('Payment failed. Please try again.');
+    alert(`Payment failed: ${error.message || 'Please try again.'}`);
   };
 
 
@@ -355,21 +419,19 @@ const VendorBilling = () => {
           {availablePlans.map((plan, index) => (
             <div
               key={index}
-              className={`border rounded-lg p-4 ${plan.recommended ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200'}`}
+              className={`border rounded-lg p-4 ${currentPlan.name === plan.name ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50' : 'border-gray-200'}`}
             >
-              {plan.recommended && (
+              {currentPlan.name === plan.name && (
                 <span className="inline-block px-2 py-1 mb-2 text-xs text-white bg-blue-500 rounded-full">
-                  Recommended
+                  Current Plan
                 </span>
               )}
               <h4 className="mb-1 text-lg font-semibold">{plan.name}</h4>
               <p className="mb-3 text-gray-600">{plan.price}</p>
               <button
-                className={`w-full py-2 px-4 rounded-md ${plan.recommended
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : currentPlan.name === plan.name
-                      ? 'bg-gray-400 text-white cursor-not-allowed'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                className={`w-full py-2 px-4 rounded-md ${currentPlan.name === plan.name
+                    ? 'bg-blue-600 text-white cursor-not-allowed'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                   }`}
                 onClick={() => handleUpgradeClick(plan)}
                 disabled={currentPlan.name === plan.name}
