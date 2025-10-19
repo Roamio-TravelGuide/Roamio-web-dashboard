@@ -18,7 +18,7 @@ import TourDet from '../pages/Guide/TourDetail';
 import TourPackages from '../pages/Guide/TourPackages';
 import Support from '../pages/Guide/Support';
 import TourEarnings from '../pages/Guide/TourEarnings';
-import TourSettings from '../pages/Guide/GuideSettings';
+// import TourSettings from '../pages/Guide/GuideSettings';
 import TourEditPage from '../pages/Guide/TourEdit';
 
 
@@ -70,13 +70,14 @@ const AppRoutes = () => {
             <Route path="/guide/tour/view/:id" element={<TourDet/>} />
             <Route path="/guide/tour/edit/:id" element={<TourEditPage/>} />
             <Route path="/guide/earnings" element={<TourEarnings/>} />
-            <Route path="/guide/settings" element={<TourSettings/>} />
+            {/* <Route path="/guide/settings" element={<TourSettings/>} /> */}
           </Route>
 
           <Route element={<ModeratorLayout/>}>
               <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
-              {/* <Route path = "/tour/:id" element={<TourDetail/>}> </Route> */}
-              <Route path="/moderator/hiddengem" element={<HiddenGemsModeration/>}/>
+        {/* moderator tour detail should be here so moderator navbar remains visible */}
+        <Route path="/moderator/tour/:id" element={<TourDetail/>} />
+        <Route path="/moderator/hiddengem" element={<HiddenGemsModeration/>}/>
           </Route>
 
           <Route element={<AdminLayout/>}>
@@ -84,8 +85,6 @@ const AppRoutes = () => {
               <Route path="/admin/users" element={<Users/>} />
               <Route path="/admin/complaints" element={<Complaints/>} />
               <Route path="/admin/tourpackage" element={<Tourpackage/>} />
-            <Route path="/moderator/dashboard" element={<ModeratorDashboard/>} />
-            <Route path="/moderator/tour/:id" element={<TourDetail/>} />
           </Route>
 
           <Route element={<VendorLayout />}>
