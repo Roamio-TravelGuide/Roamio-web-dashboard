@@ -7,6 +7,7 @@ import {
   FaExclamationTriangle, FaSync, FaInfoCircle
 } from 'react-icons/fa';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import HiddenPlaceDetailModal from '../../components/modals/HiddenPlaceDetailModal';
 import { getMediaUrl } from '../../utils/constants';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -150,11 +151,14 @@ const HiddenGemsModeration = () => {
     pending: 0, 
     approved: 0, 
     rejected: 0,
-    draft: 0,
     total: 0
   });
 
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Modal state for detailed view
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedGem, setSelectedGem] = useState(null);
 
   const statusTabs = [
     { 
@@ -177,13 +181,6 @@ const HiddenGemsModeration = () => {
       count: stats.rejected,
       color: 'red',
       description: 'Gems that were not approved'
-    },
-    { 
-      key: 'draft', 
-      label: 'Drafts', 
-      count: stats.draft,
-      color: 'gray',
-      description: 'Gems saved as drafts by travelers'
     }
   ];
 
@@ -248,7 +245,6 @@ const HiddenGemsModeration = () => {
         pending: 0,
         approved: 0,
         rejected: 0,
-        draft: 0,
         total: 0
       });
     } catch (err) {
@@ -297,31 +293,37 @@ const HiddenGemsModeration = () => {
   };
 
   const handleViewDetails = (gemId) => {
-    navigate(`/moderator/hidden-gem/${gemId}`);
+    const gem = hiddenGems.find(g => g.id === gemId);
+    if (gem) {
+      setSelectedGem(gem);
+      setIsModalOpen(true);
+    }
   };
 
   const handleApprove = async (gemId) => {
     const success = await updateGemStatus(gemId, 'approved');
     if (success) {
       console.log(`Hidden gem ${gemId} approved successfully`);
+      // Close modal if it's open
+      if (isModalOpen) {
+        setIsModalOpen(false);
+        setSelectedGem(null);
+      }
     }
+    return success;
   };
 
   const handleReject = async (gemId) => {
-    const reason = prompt('Please provide a reason for rejection:', 'Does not meet guidelines');
-    if (reason !== null) {
-      const success = await updateGemStatus(gemId, 'rejected', reason);
-      if (success) {
-        console.log(`Hidden gem ${gemId} rejected successfully`);
+    const success = await updateGemStatus(gemId, 'rejected', 'Rejected by moderator');
+    if (success) {
+      console.log(`Hidden gem ${gemId} rejected successfully`);
+      // Close modal if it's open
+      if (isModalOpen) {
+        setIsModalOpen(false);
+        setSelectedGem(null);
       }
     }
-  };
-
-  const handleRequestInfo = async (gemId) => {
-    const success = await updateGemStatus(gemId, 'draft', 'Need more information');
-    if (success) {
-      console.log(`Requested more info for gem ${gemId}`);
-    }
+    return success;
   };
 
   const handleRefresh = () => {
@@ -350,8 +352,7 @@ const HiddenGemsModeration = () => {
     const config = {
       pending: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Pending' },
       approved: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
-      rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
-      draft: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Draft' }
+      rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' }
     }[status] || { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Unknown' };
 
     return (
@@ -666,15 +667,6 @@ const HiddenGemsModeration = () => {
                       >
                         View Details
                       </button>
-                      {activeTab === 'pending' && (
-                        <button
-                          onClick={() => handleRequestInfo(gem.id)}
-                          disabled={isActionLoading}
-                          className="px-3 py-2 font-medium text-gray-700 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
-                        >
-                          Request Info
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -714,6 +706,19 @@ const HiddenGemsModeration = () => {
           </div>
         )}
       </div>
+      
+      {/* Hidden Place Details Modal */}
+      <HiddenPlaceDetailModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedGem(null);
+        }}
+        selectedPlace={selectedGem}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        isActionLoading={isActionLoading}
+      />
     </div>
   );
 };

@@ -1,17 +1,17 @@
-import apiClient from '../apiClient';
+import apiClient from "../apiClient";
 
-const BASE_URL = '/hiddenGem';
+const BASE_URL = "/hiddenGem";
 
 export const getHiddenGemsForModeration = async (filters = {}) => {
   try {
     const {
-      status = 'pending',
-      search = '',
-      location = 'all',
+      status = "pending",
+      search = "",
+      location = "all",
       page = 1,
       limit = 10,
-      sortBy = 'created_at',
-      sortOrder = 'desc'
+      sortBy = "created_at",
+      sortOrder = "desc",
     } = filters;
 
     const params = {
@@ -19,40 +19,44 @@ export const getHiddenGemsForModeration = async (filters = {}) => {
       page,
       limit,
       sortBy,
-      sortOrder
+      sortOrder,
     };
 
     if (search) {
       params.search = search;
     }
 
-    if (location && location !== 'all') {
+    if (location && location !== "all") {
       params.location = location;
     }
 
     const response = await apiClient.get(`${BASE_URL}/moderation`, { params });
-    
+
     if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to fetch hidden gems');
+      throw new Error(response.data.message || "Failed to fetch hidden gems");
     }
-    
+
     return response.data;
   } catch (error) {
-    console.error('Error fetching hidden gems for moderation:', error);
-    
+    console.error("Error fetching hidden gems for moderation:", error);
+
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          throw new Error('Session expired. Please log in again.');
+          throw new Error("Session expired. Please log in again.");
         case 403:
-          throw new Error('You do not have permission to moderate hidden gems.');
+          throw new Error(
+            "You do not have permission to moderate hidden gems."
+          );
         case 500:
-          throw new Error('Server error. Please try again later.');
+          throw new Error("Server error. Please try again later.");
         default:
-          throw new Error(error.response.data?.message || 'Failed to fetch hidden gems');
+          throw new Error(
+            error.response.data?.message || "Failed to fetch hidden gems"
+          );
       }
     } else {
-      throw new Error(error.message || 'Network error occurred');
+      throw new Error(error.message || "Network error occurred");
     }
   }
 };
@@ -63,39 +67,41 @@ export const updateHiddenGemStatus = async (gemId, statusData) => {
 
     const response = await apiClient.patch(`${BASE_URL}/${gemId}/status`, {
       status,
-      rejectionReason
+      rejectionReason,
     });
 
     if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to update gem status');
+      throw new Error(response.data.message || "Failed to update gem status");
     }
 
     return response.data;
   } catch (error) {
-    console.error('Error updating hidden gem status:', error);
-    
+    console.error("Error updating hidden gem status:", error);
+
     if (error.response?.data?.errors) {
       const errorMessages = Object.values(error.response.data.errors)
         .flat()
-        .join(', ');
+        .join(", ");
       throw errorMessages;
     }
-    
+
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          throw new Error('Session expired. Please log in again.');
+          throw new Error("Session expired. Please log in again.");
         case 403:
-          throw new Error('You do not have permission to update gem status.');
+          throw new Error("You do not have permission to update gem status.");
         case 404:
-          throw new Error('Hidden gem not found.');
+          throw new Error("Hidden gem not found.");
         case 500:
-          throw new Error('Server error. Please try again later.');
+          throw new Error("Server error. Please try again later.");
         default:
-          throw new Error(error.response.data?.message || 'Failed to update gem status');
+          throw new Error(
+            error.response.data?.message || "Failed to update gem status"
+          );
       }
     } else {
-      throw new Error(error.message || 'Network error occurred');
+      throw new Error(error.message || "Network error occurred");
     }
   }
 };
@@ -103,28 +109,34 @@ export const updateHiddenGemStatus = async (gemId, statusData) => {
 export const getModerationStats = async () => {
   try {
     const response = await apiClient.get(`${BASE_URL}/moderation/stats`);
-    
+
     if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to fetch moderation stats');
+      throw new Error(
+        response.data.message || "Failed to fetch moderation stats"
+      );
     }
-    
+
     return response.data;
   } catch (error) {
-    console.error('Error fetching moderation stats:', error);
-    
+    console.error("Error fetching moderation stats:", error);
+
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          throw new Error('Session expired. Please log in again.');
+          throw new Error("Session expired. Please log in again.");
         case 403:
-          throw new Error('You do not have permission to view moderation stats.');
+          throw new Error(
+            "You do not have permission to view moderation stats."
+          );
         case 500:
-          throw new Error('Server error. Please try again later.');
+          throw new Error("Server error. Please try again later.");
         default:
-          throw new Error(error.response.data?.message || 'Failed to fetch moderation stats');
+          throw new Error(
+            error.response.data?.message || "Failed to fetch moderation stats"
+          );
       }
     } else {
-      throw new Error(error.message || 'Network error occurred');
+      throw new Error(error.message || "Network error occurred");
     }
   }
 };
@@ -132,67 +144,79 @@ export const getModerationStats = async () => {
 export const getHiddenGemDetails = async (gemId) => {
   try {
     const response = await apiClient.get(`${BASE_URL}/${gemId}`);
-    
+
     if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to fetch hidden gem details');
+      throw new Error(
+        response.data.message || "Failed to fetch hidden gem details"
+      );
     }
-    
+
     return response.data;
   } catch (error) {
-    console.error('Error fetching hidden gem details:', error);
-    
+    console.error("Error fetching hidden gem details:", error);
+
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          throw new Error('Session expired. Please log in again.');
+          throw new Error("Session expired. Please log in again.");
         case 403:
-          throw new Error('You do not have permission to view this gem.');
+          throw new Error("You do not have permission to view this gem.");
         case 404:
-          throw new Error('Hidden gem not found.');
+          throw new Error("Hidden gem not found.");
         case 500:
-          throw new Error('Server error. Please try again later.');
+          throw new Error("Server error. Please try again later.");
         default:
-          throw new Error(error.response.data?.message || 'Failed to fetch hidden gem details');
+          throw new Error(
+            error.response.data?.message || "Failed to fetch hidden gem details"
+          );
       }
     } else {
-      throw new Error(error.message || 'Network error occurred');
+      throw new Error(error.message || "Network error occurred");
     }
   }
 };
 
 // Additional moderator functions
-export const bulkUpdateGemStatus = async (gemIds, status, rejectionReason = '') => {
+export const bulkUpdateGemStatus = async (
+  gemIds,
+  status,
+  rejectionReason = ""
+) => {
   try {
     const response = await apiClient.patch(`${BASE_URL}/bulk-status`, {
       gemIds,
       status,
-      rejectionReason
+      rejectionReason,
     });
 
     if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to update gems status');
+      throw new Error(response.data.message || "Failed to update gems status");
     }
 
     return response.data;
   } catch (error) {
-    console.error('Error bulk updating gem status:', error);
-    throw error.response?.data?.message || 'Failed to bulk update gem status';
+    console.error("Error bulk updating gem status:", error);
+    throw error.response?.data?.message || "Failed to bulk update gem status";
   }
 };
 
 export const getModerationActivity = async (page = 1, limit = 20) => {
   try {
     const response = await apiClient.get(`${BASE_URL}/moderation/activity`, {
-      params: { page, limit }
+      params: { page, limit },
     });
-    
+
     if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to fetch moderation activity');
+      throw new Error(
+        response.data.message || "Failed to fetch moderation activity"
+      );
     }
-    
+
     return response.data;
   } catch (error) {
-    console.error('Error fetching moderation activity:', error);
-    throw error.response?.data?.message || 'Failed to fetch moderation activity';
+    console.error("Error fetching moderation activity:", error);
+    throw (
+      error.response?.data?.message || "Failed to fetch moderation activity"
+    );
   }
 };

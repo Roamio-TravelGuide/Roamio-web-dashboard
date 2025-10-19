@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  FaMapMarkerAlt, FaStar, FaEye, FaSearch, FaChevronDown, 
-  FaChartLine, FaUsers, FaFileAlt, FaClock, FaCalendarAlt,
-  FaFilter, FaSort, FaHeart, FaShareAlt, FaChevronLeft, FaChevronRight
+  FaMapMarkerAlt,FaSearch, FaChevronDown, 
+  FaChevronLeft, FaChevronRight
 } from 'react-icons/fa';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import axios from 'axios';
@@ -218,17 +217,16 @@ const ModeratorDashboard = () => {
       title: apiTour.title,
       description: apiTour.description || 'Experience the beauty and culture of this amazing destination...',
       duration: apiTour.duration_minutes,
-      location: apiTour.location || 'Multiple locations',
+      // location: apiTour.location || 'Multiple locations',
       guide: {
         name: apiTour.guide?.user?.name || 'Expert Guide',
-        avatar: apiTour.guide?.user?.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg',
+        // avatar: apiTour.guide?.user?.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg',
         experience: apiTour.guide?.years_of_experience || Math.floor(Math.random() * 10) + 1,
-        rating: 4.2 + Math.random() * 0.8 // Random rating between 4.2-5.0
+        
       },
       price: apiTour.price,
-      originalPrice: apiTour.price * 1.2, // Show discount
+      originalPrice: apiTour.price, // Show discount
       status: apiTour.status,
-      // Prefer cover image; if missing, fall back to first image found in tour_stops
       image: (() => {
         const coverUrl = apiTour.cover_image?.url || apiTour.cover_image_url;
         if (coverUrl) return getMediaUrl(coverUrl);
@@ -422,11 +420,11 @@ const ModeratorDashboard = () => {
     };
   };
 
-  const formatDuration = (minutes) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-  };
+  // const formatDuration = (minutes) => {
+  //   const hours = Math.floor(minutes / 60);
+  //   const mins = minutes % 60;
+  //   return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  // };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -453,7 +451,7 @@ const ModeratorDashboard = () => {
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'LKR',
       minimumFractionDigits: 0
     }).format(price);
   };
@@ -606,12 +604,7 @@ const ModeratorDashboard = () => {
                       {getStatusBadge(tour.status)}
                     </div>
                     <div className="absolute flex space-x-1 top-3 right-3">
-                      <button className="p-1.5 bg-white/80 rounded-full hover:bg-white transition-colors">
-                        <FaHeart className="w-4 h-4 text-gray-600" />
-                      </button>
-                      <button className="p-1.5 bg-white/80 rounded-full hover:bg-white transition-colors">
-                        <FaShareAlt className="w-4 h-4 text-gray-600" />
-                      </button>
+ 
                     </div>
                    
                   </div>
@@ -625,9 +618,9 @@ const ModeratorDashboard = () => {
                         <span>{tour.location}</span>
                       </div>
                       <div className="flex items-center">
-                        <FaStar className="w-3 h-3 mr-1 text-yellow-400" />
-                        <span className="text-sm font-medium">{tour.rating.toFixed(1)}</span>
-                        <span className="ml-1 text-xs text-gray-500">({tour.reviewCount})</span>
+                        {/* <FaStar className="w-3 h-3 mr-1 text-yellow-400" /> */}
+                        {/* <span className="text-sm font-medium">{tour.rating.toFixed(1)}</span> */}
+                        {/* <span className="ml-1 text-xs text-gray-500">({tour.reviewCount})</span> */}
                       </div>
                     </div>
 
@@ -645,11 +638,6 @@ const ModeratorDashboard = () => {
 
                     {/* Guide Info */}
                     <div className="flex items-center mb-3">
-                      <img 
-                        src={tour.guide.avatar} 
-                        alt={tour.guide.name}
-                        className="w-6 h-6 mr-2 rounded-full"
-                      />
                       <span className="text-sm text-gray-600">{tour.guide.name}</span>
                       <span className="ml-auto text-xs text-gray-500">
                         {tour.guide.experience}y exp
@@ -658,10 +646,10 @@ const ModeratorDashboard = () => {
 
                     {/* Duration & Price */}
                     <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
+                      {/* <div className="flex items-center text-sm text-gray-600">
                         <FaClock className="w-3 h-3 mr-1" />
                         <span>{formatDuration(tour.duration)}</span>
-                      </div>
+                      </div> */}
                       <div className="text-right">
                         {tour.originalPrice > tour.price && (
                           <span className="text-xs text-gray-500 line-through">
