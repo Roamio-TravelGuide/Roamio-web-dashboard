@@ -220,3 +220,146 @@ export const getModerationActivity = async (page = 1, limit = 20) => {
     );
   }
 };
+
+// Tour Package Moderation Functions
+export const getTourPackagesForModeration = async (filters = {}) => {
+  try {
+    const {
+      status = "pending_approval",
+      search = "",
+      page = 1,
+      limit = 10,
+      sortBy = "created_at",
+      sortOrder = "desc",
+    } = filters;
+
+    const params = {
+      status,
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    };
+
+    if (search) {
+      params.search = search;
+    }
+
+    const response = await apiClient.get("/tour-package", { params });
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to fetch tour packages");
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching tour packages for moderation:", error);
+
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          throw new Error("Session expired. Please log in again.");
+        case 403:
+          throw new Error(
+            "You do not have permission to moderate tour packages."
+          );
+        case 500:
+          throw new Error("Server error. Please try again later.");
+        default:
+          throw new Error(
+            error.response.data?.message || "Failed to fetch tour packages"
+          );
+      }
+    } else {
+      throw new Error(error.message || "Network error occurred");
+    }
+  }
+};
+
+export const updateTourPackageStatus = async (packageId, statusData) => {
+  try {
+    const { status, rejection_reason } = statusData;
+
+    const response = await apiClient.patch(
+      `/tour-package/${packageId}/status`,
+      {
+        status,
+        rejection_reason,
+      }
+    );
+
+    if (!response.data.success) {
+      throw new Error(
+        response.data.message || "Failed to update package status"
+      );
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating tour package status:", error);
+
+    if (error.response?.data?.errors) {
+      const errorMessages = Object.values(error.response.data.errors)
+        .flat()
+        .join(", ");
+      throw errorMessages;
+    }
+
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          throw new Error("Session expired. Please log in again.");
+        case 403:
+          throw new Error(
+            "You do not have permission to update package status."
+          );
+        case 404:
+          throw new Error("Tour package not found.");
+        case 500:
+          throw new Error("Server error. Please try again later.");
+        default:
+          throw new Error(
+            error.response.data?.message || "Failed to update package status"
+          );
+      }
+    } else {
+      throw new Error(error.message || "Network error occurred");
+    }
+  }
+};
+
+export const getTourPackageDetails = async (packageId) => {
+  try {
+    const response = await apiClient.get(`/tour-package/${packageId}`);
+
+    if (!response.data.success) {
+      throw new Error(
+        response.data.message || "Failed to fetch tour package details"
+      );
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching tour package details:", error);
+
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          throw new Error("Session expired. Please log in again.");
+        case 403:
+          throw new Error("You do not have permission to view this package.");
+        case 404:
+          throw new Error("Tour package not found.");
+        case 500:
+          throw new Error("Server error. Please try again later.");
+        default:
+          throw new Error(
+            error.response.data?.message ||
+              "Failed to fetch tour package details"
+          );
+      }
+    } else {
+      throw new Error(error.message || "Network error occurred");
+    }
+  }
+};
