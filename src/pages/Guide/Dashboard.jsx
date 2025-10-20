@@ -6,6 +6,7 @@ import TopPerformingTours from '../../components/guide_dashboard/TopPerformingTo
 import RecentToursTable from '../../components/guide_dashboard/RecentToursTable';
 import RecentHiddenGems from '../../components/guide_dashboard/RecentHiddenGems';
 import { getTourPackagesByGuideId , getHiddenGemByGuideId } from "../../api/guide/dashboardApi";
+import { getGuideDashboardStats, getGuidePerformance } from "../../api/guide/guideApi";
 import { useAuth } from '../../contexts/authContext';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
@@ -80,6 +81,7 @@ const Dashboard = () => {
       setError(null);
       
       if (!authState.user?.id) {
+        console.error('User not authenticated:', authState);
         throw new Error('User not authenticated');
       }
 
@@ -104,25 +106,69 @@ const Dashboard = () => {
       const publishedTours = response.data.filter(tour => tour.status === 'published').length;
       const totalDownloads = response.data.reduce((sum, tour) => sum + (tour._count?.downloads || 0), 0);
       const totalRevenue = response.data.reduce((sum, tour) => sum + ((tour._count?.downloads || 0) * tour.price), 0);
-      
-      // Calculate average rating using only numeric ratings. Default to 0 for new guides/no ratings.
-      const ratedTours = transformedTours.filter(tour => typeof tour.rating === 'number');
-      const averageRating = ratedTours.length > 0
-        ? ratedTours.reduce((sum, tour) => sum + (tour.rating ?? 0), 0) / ratedTours.length
-        : 0;
 
-      setStats(prevStats => ({
-        ...prevStats,
+      console.log('Calculated stats from tours:', {
         totalTours,
         publishedTours,
-        totalEarnings: totalRevenue,
-        averageRating: Math.round(averageRating * 10) / 10,
-        tours: transformedTours,
-        reviews: getSampleReviews(transformedTours),
-        recentActivities: generateRecentActivities(transformedTours)
-      }));
+        totalDownloads,
+        totalRevenue
+      });
 
-    } catch (err) {
+      // Now fetch real performance data
+      let realStats = {
+        totalEarnings: totalRevenue,
+        averageRating: 0,
+        totalReviews: 0,
+        hiddenPlaces: 0
+      };
+
+      try {
+        // Get the guide ID first (might be different from user ID)
+        const guideId = authState.user.guide?.id || authState.user.id;
+        
+        // Fetch real dashboard stats
+        console.log('Fetching real dashboard stats for user:', authState.user.id, 'guide:', guideId);
+        console.log('Auth state user:', authState.user);
+        const dashboardStatsResponse = await getGuideDashboardStats(authState.user.id, guideId);
+        console.log('Dashboard stats response:', dashboardStatsResponse);
+        
+        if (dashboardStatsResponse.success) {
+          realStats = {
+            totalEarnings: dashboardStatsResponse.data.totalEarnings || totalRevenue,
+            averageRating: dashboardStatsResponse.data.averageRating || 0,
+            totalReviews: dashboardStatsResponse.data.totalReviews || 0,
+            hiddenPlaces: dashboardStatsResponse.data.totalHiddenPlaces || 0
+          };
+          console.log('Real stats fetched successfully:', realStats);
+        } else {
+          console.warn('Dashboard stats response was not successful:', dashboardStatsResponse);
+        }
+      } catch (statsError) {
+        console.warn('Could not fetch real stats, using calculated stats:', statsError);
+        // Calculate average rating using only numeric ratings. Default to 0 for new guides/no ratings.
+        const ratedTours = transformedTours.filter(tour => typeof tour.rating === 'number');
+        const averageRating = ratedTours.length > 0
+          ? ratedTours.reduce((sum, tour) => sum + (tour.rating ?? 0), 0) / ratedTours.length
+          : 0;
+        realStats.averageRating = Math.round(averageRating * 10) / 10;
+      }
+
+      setStats(prevStats => {
+        const finalStats = {
+          ...prevStats,
+          totalTours,
+          publishedTours,
+          totalEarnings: realStats.totalEarnings,
+          averageRating: realStats.averageRating,
+          hiddenPlaces: realStats.hiddenPlaces,
+          tours: transformedTours,
+          reviews: getSampleReviews(transformedTours),
+          recentActivities: generateRecentActivities(transformedTours)
+        };
+        
+        console.log('Setting final stats:', finalStats);
+        return finalStats;
+      });    } catch (err) {
       setError('Failed to load tours. Please try again.');
       console.error('Error fetching tours:', err);
     } finally {
@@ -141,9 +187,11 @@ const Dashboard = () => {
       if (response.data && Array.isArray(response.data)) {
         setHiddenGems(response.data);
 
+        // Only set hidden places count if we don't have real data from the API
         setStats(prevStats => ({
           ...prevStats,
-          hiddenPlaces: response.data.length
+          // Don't override if we already have real data (totalHiddenPlaces is system-wide, not guide-specific)
+          // hiddenPlaces: response.data.length  // This was guide-specific count, but requirement is system-wide total
         }));
         
       }
@@ -225,10 +273,15 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    console.log('useEffect triggered. Auth state user ID:', authState.user?.id);
+    console.log('Full auth state:', authState);
+    
     if (authState.user?.id) {
+      console.log('User authenticated, fetching data...');
       fetchTourPackages();
       fetchHiddenGems();
-
+    } else {
+      console.log('User not authenticated or no user ID');
     }
   }, [authState.user?.id]);
 
