@@ -108,7 +108,7 @@ export const TourDetailLayout = ({
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Price</p>
-                    <p className="text-sm font-medium text-gray-700">${tour.price.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-gray-700">Rs.{tour.price.toFixed(2)}</p>
                   </div>
                 </div>
                 

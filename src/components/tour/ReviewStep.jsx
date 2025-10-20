@@ -203,8 +203,8 @@ export const ReviewStep = ({
               {/* Pricing Information */}
               <ValidationAlert type="info" title="Pricing Information">
                 <ul className="mt-2 space-y-1 text-sm">
-                  <li>• LKR {TOUR_CONSTANTS.PRICE_PER_MINUTE} per minute of audio</li>
                   <li>• Minimum price: {formatPrice(TOUR_CONSTANTS.MINIMUM_PRICE)}</li>
+                  <li>• LKR {TOUR_CONSTANTS.PRICE_PER_MINUTE} per minute of audio</li>                 
                   <li>• Price calculated automatically</li>
                 </ul>
               </ValidationAlert>

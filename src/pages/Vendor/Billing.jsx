@@ -47,7 +47,7 @@ const CheckoutForm = ({ amount, planName, onSuccess, onError, onCancel }) => {
       console.log('Creating payment intent for amount:', amount, 'plan:', planName);
       const { data } = await paymentApi.createPaymentIntent({
         amount,
-        currency: 'usd',
+        currency: 'inr', // Changed to Indian Rupees
         metadata: {
           planName: planName
         }
@@ -109,15 +109,15 @@ const CheckoutForm = ({ amount, planName, onSuccess, onError, onCancel }) => {
 
   return (
     <div className="p-6">
-      <h3 className="text-xl font-semibold mb-4">Complete Your Payment</h3>
-      <p className="text-gray-600 mb-6">You are subscribing to the <span className="font-semibold">{planName}</span> plan for ${amount}/month</p>
+      <h3 className="mb-4 text-xl font-semibold">Complete Your Payment</h3>
+      <p className="mb-6 text-gray-600">You are subscribing to the <span className="font-semibold">{planName}</span> plan for Rs {amount}/month</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block mb-2 text-sm font-medium text-gray-700">
             Card Number
           </label>
-          <div className="border p-3 rounded-md">
+          <div className="p-3 border rounded-md">
             <CardNumberElement
               options={{
                 style: {
@@ -138,10 +138,10 @@ const CheckoutForm = ({ amount, planName, onSuccess, onError, onCancel }) => {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Expiration Date
             </label>
-            <div className="border p-3 rounded-md">
+            <div className="p-3 border rounded-md">
               <CardExpiryElement
                 options={{
                   style: {
@@ -160,10 +160,10 @@ const CheckoutForm = ({ amount, planName, onSuccess, onError, onCancel }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               CVC
             </label>
-            <div className="border p-3 rounded-md">
+            <div className="p-3 border rounded-md">
               <CardCvcElement
                 options={{
                   style: {
@@ -182,20 +182,20 @@ const CheckoutForm = ({ amount, planName, onSuccess, onError, onCancel }) => {
           </div>
         </div>
 
-        {error && <div className="text-red-500 text-sm p-3 bg-red-50 rounded-md">{error}</div>}
+        {error && <div className="p-3 text-sm text-red-500 rounded-md bg-red-50">{error}</div>}
 
-        <div className="flex space-x-3 pt-4">
+        <div className="flex pt-4 space-x-3">
           <button
             type="submit"
             disabled={!stripe || processing}
-            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
+            className="flex-1 px-4 py-3 font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            {processing ? 'Processing...' : `Pay $${amount}`}
+            {processing ? 'Processing...' : `Pay Rs ${amount}`}
           </button>
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-md hover:bg-gray-300 font-medium"
+            className="flex-1 px-4 py-3 font-medium text-gray-800 bg-gray-200 rounded-md hover:bg-gray-300"
           >
             Cancel
           </button>
@@ -210,8 +210,8 @@ const StripePaymentModal = ({ amount, planName, onSuccess, onError, onCancel, is
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/50">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-xl">
         <Elements stripe={stripePromise}>
           <CheckoutForm
             amount={amount}
@@ -230,7 +230,7 @@ const VendorBilling = () => {
   // State for current plan - in a real app, this would come from an API
   const [currentPlan, setCurrentPlan] = useState({
     name: "Professional",
-    price: "$29.99/month",
+    price: "Rs 2,999/month",
     features: [
       "Up to 50 products",
       "Advanced analytics",
@@ -240,38 +240,39 @@ const VendorBilling = () => {
     renewalDate: "2023-12-15"
   });
 
-  const transactions = [
-    { id: 1, date: "2023-11-15", amount: "$29.99", status: "Completed" },
-    { id: 2, date: "2023-10-15", amount: "$29.99", status: "Completed" },
-    { id: 3, date: "2023-09-15", amount: "$29.99", status: "Completed" }
+  const availablePlans = [
+    { name: "Basic", price: "Rs 999/month", recommended: false, actualPrice: 999 },
+    { name: "Professional", price: "Rs 2,999/month", recommended: false, actualPrice: 2999 },
+    { name: "Enterprise", price: "Rs 9,999/month", recommended: false, actualPrice: 9999 }
   ];
 
-  const availablePlans = [
-    { name: "Basic", price: "$9.99/month", recommended: false, actualPrice: 9.99 },
-    { name: "Professional", price: "$29.99/month", recommended: false, actualPrice: 29.99 },
-    { name: "Enterprise", price: "$99.99/month", recommended: false, actualPrice: 99.99 }
-  ];
+  // State for transactions
+  const [transactions, setTransactions] = useState([
+    { id: 1, date: "2023-11-15", amount: "Rs 2,999", status: "Completed", description: "Professional Plan Subscription" },
+    { id: 2, date: "2023-10-15", amount: "Rs 2,999", status: "Completed", description: "Professional Plan Subscription" },
+    { id: 3, date: "2023-09-15", amount: "Rs 2,999", status: "Completed", description: "Professional Plan Subscription" }
+  ]);
 
   // Helper function to get plan features
   const getPlanFeatures = (planName) => {
     const features = {
       "Basic": [
-        "Up to 10 products",
-        "Basic analytics",
+        "Up to 10 maximum tours",
+        "Will be shown if the tourist is with 5km radius",
         "Email support"
       ],
       "Professional": [
-        "Up to 50 products",
-        "Advanced analytics",
+        "Up to 50 maximum tours",
+        "Will be shown if the tourist is with 10km radius",
         "Priority support",
         "Custom branding"
       ],
       "Enterprise": [
-        "Unlimited products",
-        "Advanced analytics",
+        "Will be shown at the top",
+        "Roamio will give 10% discount to the users",
         "24/7 phone support",
         "Custom branding",
-        "API access"
+        
       ]
     };
     return features[planName] || [];
@@ -320,9 +321,20 @@ const VendorBilling = () => {
       setCurrentPlan({
         name: selectedPlan.name,
         price: selectedPlan.price,
-        features: getPlanFeatures(selectedPlan.name), // You might want to define this function
+        features: getPlanFeatures(selectedPlan.name),
         renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 days from now
       });
+
+      // Add the new transaction to history
+      const newTransaction = {
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        amount: `Rs ${selectedPlan.actualPrice.toLocaleString()}`,
+        status: "Completed",
+        description: `${selectedPlan.name} Plan Subscription`
+      };
+      
+      setTransactions(prev => [newTransaction, ...prev]);
 
       setSelectedPlan(null);
       // You might want to refresh the payment history here
@@ -385,8 +397,8 @@ const VendorBilling = () => {
               <tr>
                 <th className="px-4 py-3 text-xs font-medium text-left text-gray-500 uppercase">Date</th>
                 <th className="px-4 py-3 text-xs font-medium text-left text-gray-500 uppercase">Amount</th>
+                <th className="px-4 py-3 text-xs font-medium text-left text-gray-500 uppercase">Description</th>
                 <th className="px-4 py-3 text-xs font-medium text-left text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-xs font-medium text-left text-gray-500 uppercase">Invoice</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -394,6 +406,7 @@ const VendorBilling = () => {
                 <tr key={transaction.id}>
                   <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{transaction.date}</td>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{transaction.amount}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{transaction.description}</td>
                   <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${transaction.status === 'Completed'
                         ? 'bg-green-100 text-green-800'
@@ -401,9 +414,6 @@ const VendorBilling = () => {
                       }`}>
                       {transaction.status}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-blue-600 whitespace-nowrap hover:text-blue-800">
-                    <a href="#" className="hover:underline">Download</a>
                   </td>
                 </tr>
               ))}

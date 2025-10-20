@@ -498,7 +498,7 @@ const HiddenGemsModeration = () => {
                     className="w-64 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-                
+{/*                 
                 <select
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
@@ -517,7 +517,7 @@ const HiddenGemsModeration = () => {
                   {sortOptions.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
-                </select>
+                </select> */}
 
                 {(searchQuery || selectedLocation !== 'all') && (
                   <button
