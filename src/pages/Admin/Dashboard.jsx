@@ -63,7 +63,7 @@ const StatsCard = ({
           {subtitle && <p className="mb-2 text-xs text-gray-500">{subtitle}</p>}
           {trend && (
             <div className="flex items-center gap-1">
-              <div
+              {/* <div
                 className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                   trend.isPositive
                     ? "bg-green-100 text-green-700 border border-green-200"
@@ -76,8 +76,7 @@ const StatsCard = ({
                   <ArrowDownRight className="w-3 h-3" />
                 )}
                 {Math.abs(trend.value)}%
-              </div>
-              <span className="text-xs text-gray-500">vs last period</span>
+              </div> */}
             </div>
           )}
         </div>
@@ -290,14 +289,10 @@ const RevenueChart = ({
         <div className="flex items-center gap-4">
           <div className="text-right">
             <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="w-5 h-5 text-green-600" />
-              <p className="text-3xl font-bold text-gray-900">{data.total}</p>
+              <p className="text-3xl font-bold text-gray-900">Rs.{data.total}</p>
             </div>
             <div className="flex items-center justify-end gap-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <p className="text-sm font-medium text-green-600">
-                +12.5% growth
-              </p>
+          
             </div>
           </div>
           <TimeFilterComponent />
@@ -402,7 +397,7 @@ const RevenueChart = ({
         {/* Hover tooltips */}
         <div className="absolute px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg top-4 right-4">
           <p className="text-xs text-gray-600">
-            Peak: ${Math.max(...data.values).toLocaleString()}
+            Peak: Rs.{Math.max(...data.values).toLocaleString()}
           </p>
         </div>
       </div>
@@ -410,9 +405,7 @@ const RevenueChart = ({
   );
 };
 
-// SalesChart Component
-// SalesChart Component
-// SalesChart Component - Proper fix
+
 const SalesChart = ({ timeFilter, loading, TimeFilterComponent, soldPackagesData }) => {
   // Helper function to get correct monthly data
   const getCorrectMonthlyData = () => {
@@ -507,10 +500,7 @@ const SalesChart = ({ timeFilter, loading, TimeFilterComponent, soldPackagesData
             <p className="text-3xl font-bold text-gray-900">
               {data.total.toLocaleString()}
             </p>
-            <div className="flex items-center justify-end gap-1 mt-1">
-              <TrendingUp className="w-4 h-4 text-green-600" />
-              <p className="text-sm font-medium text-green-600">+8.3% growth</p>
-            </div>
+            
           </div>
           <TimeFilterComponent />
         </div>
@@ -599,7 +589,7 @@ const TopPerformers = ({ data, loading, error }) => {
           </div>
           Top Performers
         </h3>
-        <div className="flex flex-col items-center justify-center h-full p-4 text-center bg-red-50 border-red-200 rounded-xl">
+        <div className="flex flex-col items-center justify-center h-full p-4 text-center border-red-200 bg-red-50 rounded-xl">
           <p className="font-semibold text-red-600">
             Failed to load top performers data.
           </p>
@@ -998,7 +988,7 @@ const Dashboard = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <LoadingSpinner size={48} className="text-indigo-600 mx-auto mb-4" />
+          <LoadingSpinner size={48} className="mx-auto mb-4 text-indigo-600" />
           <div className="text-lg text-gray-600">Loading dashboard...</div>
         </div>
       </div>
@@ -1167,10 +1157,7 @@ const Dashboard = () => {
                     Rs.{totalRevenue.toLocaleString()}
                   </p>
                   <div className="flex items-center gap-1 mt-1">
-                    <ArrowUpRight className="w-3 h-3 text-green-600" />
-                    <span className="text-xs font-medium text-green-600">
-                      +12.5%
-                    </span>
+                    
                   </div>
                 </div>
               </div>
@@ -1188,10 +1175,7 @@ const Dashboard = () => {
                     {soldPackages}
                   </p>
                   <div className="flex items-center gap-1 mt-1">
-                    <ArrowUpRight className="w-3 h-3 text-green-600" />
-                    <span className="text-xs font-medium text-green-600">
-                      +8.3%
-                    </span>
+                 
                   </div>
                 </div>
               </div>
@@ -1207,10 +1191,7 @@ const Dashboard = () => {
                   </p>
                   <p className="text-lg font-bold text-gray-900">4.8</p>
                   <div className="flex items-center gap-1 mt-1">
-                    <ArrowUpRight className="w-3 h-3 text-green-600" />
-                    <span className="text-xs font-medium text-green-600">
-                      +0.2
-                    </span>
+                 
                   </div>
                 </div>
               </div>

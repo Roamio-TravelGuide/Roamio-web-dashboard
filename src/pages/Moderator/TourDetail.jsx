@@ -924,7 +924,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
       return (
         <div className="flex items-center justify-center h-screen bg-gray-50">
           <div className="flex flex-col items-center">
-            <LoadingSpinner size={32} className="text-indigo-600 mx-auto mb-4" />
+            <LoadingSpinner size={32} className="mx-auto mb-4 text-indigo-600" />
             <div className="text-lg text-gray-600">Loading tour details...</div>
           </div>
         </div>
@@ -1030,7 +1030,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
                   </div>
                   <div className="flex items-center space-x-1.5">
                     <span className="text-lg">💰</span>
-                    <span className="font-bold text-green-600">${tour.price.toFixed(2)}</span>
+                    <span className="font-bold text-green-600">Rs.{tour.price.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center space-x-1.5">
                     <MapPin className="w-4 h-4 text-purple-500" />

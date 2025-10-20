@@ -6,45 +6,7 @@ import { Link } from 'react-router-dom';
 const About = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center shadow-lg">
-                  <FaHeadphones className="w-5 h-5 text-white" />
-                </div>
-                <h1 className="text-2xl font-bold text-slate-900">Roamio</h1>
-              </Link>
-              
-              <nav className="hidden md:flex items-center gap-6">
-                {['Home', 'Tours', 'About', 'Contact'].map((item) => (
-                  <Link
-                    key={item}
-                    to={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
-                    className={`text-sm font-medium transition-colors duration-300 ${
-                      item === 'About' 
-                        ? 'text-teal-600 font-semibold' 
-                        : 'text-slate-600 hover:text-teal-600'
-                    }`}
-                  >
-                    {item}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button className="px-4 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all duration-300 shadow-lg">
-                Sign In
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
+      {/* Hero Section with Navbar Overlay */}
       <div 
         className="relative flex items-center justify-center h-screen text-white overflow-hidden"
         style={{
@@ -53,7 +15,48 @@ const About = () => {
           backgroundPosition: 'center',
         }}
       >
-        <div className="relative z-10 text-center px-4 max-w-4xl">
+        {/* Navigation Overlay */}
+        <div className="absolute top-0 left-0 right-0 z-50">
+          <div className="relative flex flex-row items-center justify-between w-full max-w-7xl px-6 py-4 mx-auto">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <img src={images.darkLogo} alt="Roamio" className="h-24 w-24" />
+            </div>
+
+            {/* Navigation Menu */}
+            <div className="items-center hidden px-6 py-3 border rounded-full md:flex bg-white backdrop-blur-xl border-slate-200/60 shadow-lg">
+              <nav className="flex items-center gap-8 ">
+                {[
+                  { path: "/", label: "Home" },
+                  { path: "/tours", label: "Tours" },
+                  { path: "/about", label: "About Us" },
+                  { path: "/contact", label: "Contact" },
+                ].map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="text-sm font-medium text-slate-700 transition-all duration-300 hover:text-teal-500 hover:scale-110"
+                >
+                  {item.label}
+                </Link>
+                ))}
+              </nav>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <Link
+                to="/login"
+                className="flex items-center justify-center gap-3 px-6 py-3 text-sm font-semibold text-white transition-all duration-300 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 hover:scale-105 hover:shadow-2xl shadow-lg transform hover:-translate-y-1"
+              >
+                <span>Sign In</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 text-center px-4 max-w-4xl mt-16">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
             Our <span className="bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">Story</span>
           </h1>
@@ -69,11 +72,14 @@ const About = () => {
             </Link>
           </div>
         </div>
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center animate-bounce">
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-0 right-0 flex justify-center animate-bounce z-10">
           <div className="w-px h-12 bg-gradient-to-b from-teal-400 to-transparent"></div>
         </div>
       </div>
 
+      {/* Rest of the About page content remains the same */}
       {/* Mission Section */}
       <section className="py-20 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-16">

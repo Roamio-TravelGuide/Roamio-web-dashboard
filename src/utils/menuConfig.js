@@ -50,24 +50,24 @@ export const menuConfig = {
         path: "/guide/support",
         icon: createIcon(FaRegQuestionCircle),
       },
-      // {
-      //   title: "Settings",
-      //   path: "/guide/settings",
-      //   icon: createIcon(FaCog),
-      // },
+      {
+        title: "Settings",
+        path: "/guide/settings",
+        icon: createIcon(FaCog),
+      },
     ],
   },
   moderator: {
     navItems: [
       {
-        title: "Profile",
+        title: "Tours",
         path: "/moderator/dashboard",
-        icon: createIcon(FaCog),
+        icon: createIcon(FaMapMarkedAlt),
       },
       {
         title: "Hidden Gems",
         path: "/moderator/hiddengem",
-        icons: createIcon(FaCog),
+        icon: createIcon(FaRegStar),
       }
     ],
   },

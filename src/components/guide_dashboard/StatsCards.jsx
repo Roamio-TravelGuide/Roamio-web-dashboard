@@ -17,7 +17,7 @@ const StatsCards = ({ stats }) => {
         iconBg="bg-amber-100"
         title="Total Earnings"
         value={formatCurrency(stats.totalEarnings)}
-        trend="+12% from last month"
+        
         trendColor="text-green-600"
       />
       
