@@ -102,26 +102,26 @@ const TourCard = ({ tour, rank }) => {
             </span>
           </div>
           
-          <div className="text-right">
+          {/* <div className="text-right">
             <p className="text-xs text-gray-500">Bookings</p>
             <p className="text-lg font-bold text-gray-700">
               {tour.bookings.toLocaleString()}
             </p>
-          </div>
+          </div> */}
         </div>
         
         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
           <div>
-            <p className="text-xs text-gray-500">Rating</p>
+            {/* <p className="text-xs text-gray-500">Rating</p>
             <p className="text-sm font-medium text-gray-700">
               {tour.rating ? `${tour.rating.toFixed(1)} ★` : 'N/A'}
-            </p>
+            </p> */}
           </div>
           <div>
-            <p className="text-xs text-gray-500">Revenue</p>
+            {/* <p className="text-xs text-gray-500">Revenue</p>
             <p className="text-sm font-medium text-gray-700">
               ${tour.revenue ? tour.revenue.toLocaleString() : '0'}
-            </p>
+            </p> */}
           </div>
         </div>
       </div>

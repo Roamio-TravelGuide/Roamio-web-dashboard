@@ -537,7 +537,7 @@ const ModeratorDashboard = () => {
                   />
                 </div>
                 
-                <select
+                {/* <select
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
                   className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -545,9 +545,9 @@ const ModeratorDashboard = () => {
                   {locationOptions.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
-                </select>
+                </select> */}
 
-                <select
+                {/* <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -555,7 +555,7 @@ const ModeratorDashboard = () => {
                   {sortOptions.map(option => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
-                </select>
+                </select> */}
               </div>
             </div>
           </div>

@@ -105,10 +105,11 @@ const Dashboard = () => {
       const totalDownloads = response.data.reduce((sum, tour) => sum + (tour._count?.downloads || 0), 0);
       const totalRevenue = response.data.reduce((sum, tour) => sum + ((tour._count?.downloads || 0) * tour.price), 0);
       
-      // Calculate average rating (placeholder - you'll need actual rating data)
-      const averageRating = transformedTours.filter(tour => tour.rating).length > 0 
-        ? transformedTours.reduce((sum, tour) => sum + (tour.rating || 0), 0) / transformedTours.filter(tour => tour.rating).length
-        : 4.7;
+      // Calculate average rating using only numeric ratings. Default to 0 for new guides/no ratings.
+      const ratedTours = transformedTours.filter(tour => typeof tour.rating === 'number');
+      const averageRating = ratedTours.length > 0
+        ? ratedTours.reduce((sum, tour) => sum + (tour.rating ?? 0), 0) / ratedTours.length
+        : 0;
 
       setStats(prevStats => ({
         ...prevStats,
@@ -235,7 +236,7 @@ const Dashboard = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-center">
-          <LoadingSpinner size={48} className="text-indigo-600 mx-auto mb-4" />
+          <LoadingSpinner size={48} className="mx-auto mb-4 text-indigo-600" />
           <div className="text-lg text-gray-600">Loading dashboard...</div>
         </div>
       </div>
@@ -271,7 +272,6 @@ const Dashboard = () => {
             </div>
 
             <RecentToursTable tours={stats.tours} />
-            <RecentHiddenGems hiddenGems={hiddenGems} />
           </div>
         </div>
       </div>
