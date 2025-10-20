@@ -42,6 +42,10 @@ const TourEarnings = () => {
     totalTransactions: 23
   };
 
+  const totalEarnings = tourPackages.reduce((sum, pkg) => sum + pkg.revenue, 0);
+  const totalDownloads = tourPackages.reduce((sum, pkg) => sum + pkg.downloads, 0);
+  const avgRating = tourPackages.reduce((sum, pkg) => sum + pkg.rating, 0) / tourPackages.length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="pb-12 mt-5">
@@ -158,6 +162,6 @@ const TourEarnings = () => {
       </div>
     </div>
   );
-};
+}
 
 export default TourEarnings;
