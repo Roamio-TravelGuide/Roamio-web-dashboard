@@ -6,7 +6,7 @@ import TopPerformingTours from '../../components/guide_dashboard/TopPerformingTo
 import RecentToursTable from '../../components/guide_dashboard/RecentToursTable';
 import RecentHiddenGems from '../../components/guide_dashboard/RecentHiddenGems';
 import { getTourPackagesByGuideId , getHiddenGemByGuideId } from "../../api/guide/dashboardApi";
-import { getGuideDashboardStats, getGuidePerformance } from "../../api/guide/guideApi";
+import { getGuideDashboardStats, getGuidePerformance , getRevenueById } from "../../api/guide/guideApi";
 import { useAuth } from '../../contexts/authContext';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
@@ -283,6 +283,24 @@ const Dashboard = () => {
     } else {
       console.log('User not authenticated or no user ID');
     }
+  }, [authState.user?.id]);
+
+  useEffect(() => {
+    const fetchTotalEarnings = async () => {
+      if (!authState.user?.id) return;
+      try {
+        const response = await getRevenueById(authState.user.id);
+        if (response.data && Array.isArray(response.data) && response.data[0]?.total_revenue) {
+          setStats(prev => ({
+            ...prev,
+            totalEarnings: response.data[0].total_revenue
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching total earnings:', err);
+      }
+    };
+    fetchTotalEarnings();
   }, [authState.user?.id]);
 
   if (loading) {

@@ -11,6 +11,26 @@ export const getGuidePerformance = async (userId) => {
   }
 };
 
+export const getRevenueById = async (id) => {
+  try {
+    const response = await apiClient.get(`/payment/revenue/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching revenue by ID:", error);
+    throw error;
+  }
+};
+
+export const getPaidPackagesById = async (id) => {
+  try {
+    const response = await apiClient.get(`/payment/showPaidPackages/${id}`);
+    return response.data;
+  }
+  catch (error) {
+    console.error("Error fetching paid packages by ID:", error);
+    throw error;
+  } 
+};
 // Get guide's earnings from payments
 export const getGuideEarnings = async (guideId) => {
   try {
