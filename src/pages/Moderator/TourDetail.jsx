@@ -12,6 +12,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
   import {TourStopsMap} from '../../components/tour/TourStopsMap';
   import axios from 'axios';
   import { getMediaUrl } from '../../utils/constants';
+  import { updateTourPackageStatus } from '../../api/moderator/moderatorApi';
 
   const API_BASE_URL = 'http://localhost:3001/api/v1';
 
@@ -776,16 +777,12 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
       const toastId = toast.loading('Approving tour...');
       
       try {
-        const response = await axios.patch(
-          `${API_BASE_URL}/tour-package/${id}/status`,
-          { status: 'published' },
-          {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 15000
-          }
-        );
+        console.log('🚀 Frontend: Approving tour with ID:', id);
+        const response = await updateTourPackageStatus(id, { 
+          status: 'published' 
+        });
 
-        if (response.status === 200 && response.data?.success) {
+        if (response?.success) {
           setTour(prev => prev ? { ...prev, status: 'published', rejection_reason: undefined } : null);
           setError(null);
           
@@ -794,7 +791,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
             duration: 5000
           });
         } else {
-          throw new Error(response.data?.message || 'Unexpected response format');
+          throw new Error(response?.message || 'Unexpected response format');
         }
       } catch (error) {
         console.error('Approval failed:', error);
@@ -832,19 +829,13 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
       const toastId = toast.loading('Rejecting tour...');
 
       try {
-        const response = await axios.patch(
-          `${API_BASE_URL}/tour-package/${id}/status`,
-          {
-            status: 'rejected',
-            rejection_reason: rejectionReason
-          },
-          {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 15000
-          }
-        );
+        console.log('🚀 Frontend: Rejecting tour with ID:', id, 'Reason:', rejectionReason);
+        const response = await updateTourPackageStatus(id, {
+          status: 'rejected',
+          rejection_reason: rejectionReason
+        });
 
-        if (response.status === 200 && response.data?.success) {
+        if (response?.success) {
           setTour(prev => prev ? { 
             ...prev, 
             status: 'rejected', 
